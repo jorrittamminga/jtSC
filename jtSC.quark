@@ -1,0 +1,10 @@
+(
+	name:			"jtSC",
+	path:			"jtSC",
+	summary:		"extensions, classes and pseudo-Ugens",
+	author:			"Jorrit Tamminga",
+	version:		0.1,
+	schelp: 		"HelpSource",
+	dependencies: 	["wblib", "KDTree", "KMeans", "XML", "ZArchive"],
+	url:			"http://www.jorrittamminga.nl"
+)
