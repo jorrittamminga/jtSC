@@ -1,0 +1,1 @@
+( 'minTime': 0.0, 'threshold_loudness': 6.7011481947042, 'threshold_specflatness': 0.19162747026048, 'holdTime': 1.0059213140891 )
