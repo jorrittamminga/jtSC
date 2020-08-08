@@ -1,17 +1,18 @@
 SplayJT : PluginJT {
 	var <runn, outBus;
 
-	*new {arg inBus, target, outBus, run=false;
-		^super.new.init(inBus, target, outBus, run=false);
+	*new {arg inBus, target, outBus, settings=(run:0);
+		^super.new.init(inBus, target, outBus, settings);
 	}
 
-	init {arg arginBus, argtarget, argoutBus, argrun;
+	init {arg arginBus, argtarget, argoutBus, argsettings;
 		bus=arginBus;
 		target=argtarget;
 		outBus=argoutBus??{bus.copy};
 		if (outBus.class!=Bus, {outBus=outBus.asBus});
-		runn=argrun;
-		bypass=argrun.not;
+		settings=argsettings??{(run:0)};
+		if (settings[\run]!=nil, {settings[\run]=0});
+		bypass=settings[\run]<1.0;
 		id=UniqueID.next;
 		//this.initializeVars;
 		this.isThreaded;
@@ -73,9 +74,10 @@ SplayGUIJT : GUIJT {
 		freeOnClose=argonClose;
 		this.initAll;
 
-		views[\bypass]=Button(parent, bounds)
+		viewsPreset[\run]=Button(parent, bounds)
 		.states_([[\bypassed],[\ON, Color.black, Color.green]]).action_{|b|
-			classJT.bypass_(b.value<1)
+			classJT.bypass_(b.value<1);
+			classJT.settings[\run]=b.value;
 		}.value_(classJT.bypass.not.binaryValue);
 		parent.rebounds;
 		if (hasWindow, {window.rebounds});

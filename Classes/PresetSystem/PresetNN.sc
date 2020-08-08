@@ -1,4 +1,6 @@
 /*
+- verschillende nn.scmirZ én bijbehorende trainingsEvent.scd per PresetNN, zodat je meerdere mappings kunt opslaan (en moet je het NN opnieuw initializeren voordat je een nieuwe load?)
+- en/of verschillende paths voor de nn.scmirZ/trainingsEvent.scd combi
 - init NeuralNet als er een preset veranderd wordt....
 - update GUI van de input als de preset (index) verandert
 - parent kan ook die van de preset zijn
@@ -239,13 +241,10 @@ PresetNN {
 	saveNN {
 		neuralNet.save(path++"nn.scmirZ");
 	}
-
 	deleteNN {
 		(path++"nn.scmirZ").postln;
 		File.delete(path++"nn.scmirZ");
-
 	}
-
 	//rescalePresets {}
 
 	makeGUI {arg parent, bounds=350@20;

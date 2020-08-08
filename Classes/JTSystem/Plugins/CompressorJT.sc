@@ -14,7 +14,6 @@ CompressorJT : PluginJT {
 		uGen=arguGen;
 		settings=argsettings??{()};
 		synthdefsettings=();
-		bypass=false;
 		id=UniqueID.next;
 		//this.initializeVars;
 		defaultSettings=(
@@ -58,8 +57,17 @@ CompressorJT : PluginJT {
 				, makeUpGain: ControlSpec(-20, 20, 0, 1)
 			);
 		});
-		bypassFunc={};
 
+		//----------------------------------------------------- bypass settings
+		controlSpecs[\run]=ControlSpec(0.0, 1.0, 0, 1);
+		bypass=if (settings[\run]==nil, {
+			settings[\run]=1.0;
+			false
+		},{
+			settings[\run]<1.0
+		});
+		bypassFunc={};
+		//-----------------------------------------------------
 		this.isThreaded;
 		if (threaded, {
 			this.makeSynth;
@@ -118,6 +126,7 @@ CompressorJT : PluginJT {
 		};
 		id=synth.collect(_.nodeID);
 		if (synth.size==1, {synth=synth[0]; id=id[0]});
+		if (bypass, {this.bypass_(bypass)});
 	}
 
 	makeGUI {arg parent, bounds=350@20, updateFreq=20, frontFlag=true;
@@ -143,22 +152,19 @@ CompressorJTGUI : GUIJT {
 		this.initAll;
 		keys=classJT.settings.keys;
 		keys.remove(\thresh);
+		keys.remove(\run);
 		oscGUI=();
 		updateFreq=argupdateFreq;
 		dBLow= -80;
 
-		views[\bypass]=Button(parent, bounds)
+		viewsPreset[\run]=Button(parent, bounds)
 		.states_([["bypassed"],["ON", Color.black, Color.green]]).action_{|b|
+			var run=b.value.binaryValue;
 			classJT.bypass_(b.value<1);
-			if (b.value==0, {
-				//classJT.synth.asArray.do(_.run(false));
-				synth[\meterBefore].run(false);
-				synth[\meterAfter].run(false);
-			},{
-				//classJT.synth.asArray.do(_.run(true));
-				synth[\meterBefore].run(true);
-				synth[\meterAfter].run(true);
-			})
+			classJT.settings[\run]=b.value;
+			[\meterBefore, \meterAfter].do{|key|
+				if (synth[key]!=nil, {synth[key].run(run)})
+			};
 		}.value_(classJT.bypass.not.binaryValue);
 
 		views[\meterBefore]=LevelIndicator(parent, bounds)
@@ -182,11 +188,18 @@ CompressorJTGUI : GUIJT {
 
 		[\meterBefore,\meterAfter].do{|key,i|
 			var cmdName=("/compressor" ++ classJT.synth.asArray[0].nodeID ++ key).asString;
-			synth[key]=SynthDef(cmdName, {
-				var in=In.ar(classJT.bus.asArray[0].index);
-				SendPeakRMS.kr(in, updateFreq, 3.0, cmdName);
-				//Out.ar(0, SinOsc.ar(440,0,0))
-			}).add.play(classJT.synth.asArray[0], addAction: [\addBefore,\addAfter][i]).register;
+			var run=classJT.bypass.not??{true};
+			{
+				synth[key]=SynthDef(cmdName, {
+					var in=In.ar(classJT.bus.asArray[0].index);
+					SendPeakRMS.kr(in, updateFreq, 3.0, cmdName);
+					//Out.ar(0, SinOsc.ar(440,0,0))
+				}).add.play(classJT.synth.asArray[0], addAction: [\addBefore,\addAfter][i]).register;
+				synth[key].server.sync;
+				if (run==false, {
+					synth[key].run(false)});
+			}.fork;
+
 			oscGUI[key]=OSCFunc({|msg|
 				var db=msg[3+1].ampdb;
 				var value=db.linlin(dBLow, 0, 0, 1);
@@ -210,7 +223,6 @@ CompressorJTGUI : GUIJT {
 		this.postInitAll;
 		this.reboundsAll;
 		//window.userCanClose_(false);
-
 		window.onClose=window.onClose.addFunc({
 			oscGUI.do(_.free);
 			synth.do{|synth| if (synth.isPlaying, {synth.free})};

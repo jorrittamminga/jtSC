@@ -243,8 +243,6 @@ GUIJT {
 				*/
 			});
 		});
-
-
 		^presetSystem
 	}
 
@@ -270,7 +268,6 @@ GUIJT {
 			, {boundz.y=boundz.x*0.125});
 		round=controlSpec.step;
 		if (round<0.00000001, {round=defaultRound.copy});
-		//"cs ".post; controlSpec.post; " round ".post; round.postln;
 		^type.new(parent, boundz, label, controlSpec, action
 			, value, false, labelWidth, numberWidth
 			, layout: layout

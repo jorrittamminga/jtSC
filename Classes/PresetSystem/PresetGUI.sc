@@ -60,6 +60,19 @@ guiType 3: interpolate + script
 				{guis[\fileName].stringColor_(Color.black)}.defer
 			})
 		});
+		functions[\removeSubFolder]=functions[\removeSubFolder].addFunc({|ps|
+			if (guis[\fileName]!=nil, {
+				{guis[\fileName].stringColor_(Color.grey)}.defer
+			})
+		});
+		functions[\addSubFolder]=functions[\addSubFolder].addFunc({|ps|
+			if (guis[\fileName]!=nil, {
+				{guis[\fileName].stringColor_(Color.black)}.defer
+			})
+		});
+
+
+
 		functions[\update]=functions[\update].addFunc({|ps|
 
 			if (guis[\presetList]!=nil, {
@@ -101,7 +114,7 @@ guiType 3: interpolate + script
 			})
 		});
 		if (guiType>0, {
-			if (type==\master, {
+			if ((type==\master)||(type==\subfolder), {
 				functions[\index]=functions[\index].addFunc({
 					guis.name.string_(
 						fileNameWithoutExtension.split($_).copyToEnd(1).join);
@@ -130,18 +143,18 @@ guiType 3: interpolate + script
 		});
 	}
 
-	guiRestore {
+	guiRestore {arg value;
 		if (canScript, {
-			this.restoreS
+			this.restoreS(value)
 		},{
 			if (canInterpolate, {
 				if (interpolate==1, {
-					this.restoreI
+					this.restoreI(value)
 				},{
-					this.restore
+					this.restore(value)
 				})
 			},{
-				this.restore;
+				this.restore(value);
 			})
 		});
 	}
@@ -161,7 +174,7 @@ guiType 3: interpolate + script
 		var listBounds=0@0, textBounds=4, knobBounds=0@0, cv, cvs, font
 		, argbounds=bounds.copy;
 		var numberOfKnobs;
-		var extraX;
+		var extraX, masterFlag=((type==\master)||(type==\subfolder)).binaryValue;
 
 		hasGUI=true;
 
@@ -178,10 +191,10 @@ guiType 3: interpolate + script
 
 		//=================================== CALCULATE DIMENSIONS
 		//interpolate eznumber=2 knobs, textview=3 knobs
-		numberOfKnobs=4+((type==\master).binaryValue*2);//-, s, r, gui, (i), (script)
-		numberOfKnobs=numberOfKnobs+textBounds+((type==\master).binaryValue*textBounds);
+		numberOfKnobs=4+(masterFlag*2);//-, s, r, gui, (i), (script)
+		numberOfKnobs=numberOfKnobs+textBounds+(masterFlag*textBounds);
 		numberOfKnobs=numberOfKnobs+(canInterpolate.binaryValue*4);// was *3
-		numberOfKnobs=numberOfKnobs+(canScript.binaryValue*(type==\master).binaryValue);
+		numberOfKnobs=numberOfKnobs+(canScript.binaryValue*masterFlag);
 
 		knobBounds=(bounds.x/numberOfKnobs-2).floor@bounds.y;
 		extraX=argguiflag.not.binaryValue*knobBounds.x;
@@ -195,7 +208,7 @@ guiType 3: interpolate + script
 		cv.addFlowLayout(0@0, 4@0);
 		cv.background_(Color.grey(0.8));
 
-		if ( (type==\master) && (guiType==1), {
+		if ( ((type==\master)||(type==\subfolder)) && (guiType==1), {
 			cvs=2.collect{|i|
 				var c=CompositeView(cv, (bounds.x/2-8).floor@(bounds.y-8));
 				c.addFlowLayout(0@0, 4@4);
@@ -212,14 +225,14 @@ guiType 3: interpolate + script
 			listBounds=((bounds.x/3).floor-8)@(bounds.y-8);
 		});
 		guis=();
-		if (type==\master, {
+		if ((type==\master)||(type==\subfolder), {
 			if (guiType==1, {
 				guis[\presetList]=ListView(cvs[0], (listBounds.x+extraX)@listBounds.y)
 				.items_(fileNamesWithoutNumbers)
 				.action_{|list|
 					if (list.selection.size==1, {
-						this.index_(list.value);
-						this.guiRestore;
+						//this.index_(list.value);//dubbelopperdepop als er ook een guiRestore volgt!
+						this.guiRestore(list.value);
 					});
 				}.canFocus_(false).font_(font);
 
@@ -243,15 +256,15 @@ guiType 3: interpolate + script
 					, (knobBounds.x*textBounds+extraX)@bounds.y)
 				.items_(fileNamesWithoutNumbers)
 				.action_{|list|
-					this.index_(list.value);
-					this.guiRestore;
+					//this.index_(list.value);
+					this.guiRestore(list.value);
 				}.canFocus_(false).font_(font);
 			});
 			if (guiType==0, {
 				guis[\presetList]=EZNumber(cvs[1], 70@bounds.y, "nr:"
 					, ControlSpec(0, fileNamesWithoutExtensions.size-1, 0, 1), {|ez|
-						this.index_(ez.value);
-						this.guiRestore;
+						//this.index_(ez.value);
+						this.guiRestore(ez.value);
 				}, 0, false, 20).font_(font);
 			});
 			guis[\addBefore]=Button(cvs[1], knobBounds).states_([ ["±"] ]).action_{
@@ -276,7 +289,7 @@ guiType 3: interpolate + script
 		}.canFocus_(false).font_(font);
 		/*
 		guis[\current]=Button(cvs[1], knobBounds).states_([ ["c"] ]).action_{
-			this.restoreCurrent
+		this.restoreCurrent
 		}.canFocus_(false).font_(font);
 		*/
 		if (canInterpolate, {
@@ -329,7 +342,7 @@ guiType 3: interpolate + script
 		});
 
 		if (guiType>0, {
-			if (type!=\master, {
+			if (type==\slave, {
 
 				guis[\fileName]=StaticText(cvs[1]
 					, cvs[1].decorator.bounds.width-cvs[1].decorator.left
@@ -382,6 +395,7 @@ guiType 3: interpolate + script
 			}.canFocus_(false).value_(this.guiFlag.binaryValue)
 			.font_(Font(Font.defaultSerifFace, knobBounds.y/2));
 		});
+
 		this.guiFunctions(guiType);
 
 		if (includeSlaves, {

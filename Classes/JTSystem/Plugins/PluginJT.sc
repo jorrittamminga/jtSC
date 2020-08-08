@@ -10,7 +10,16 @@ PluginJT : JT {
 	bypass_ {arg flag=true;
 		bypass=flag;
 		bypassFunc.value(flag);
+		settings[\run]=flag.not.binaryValue;
 		synth.asArray.do(_.run(flag.not));
 	}
 
+	addPresetSystem {arg path, folderName="master", index=0;
+		var func={arg preset;
+			if (preset[\run]!=nil, {
+				this.bypass_(preset[\run]<1.0)
+			});
+		};
+		this.metaAddPresetSystem(path, folderName, index, func)
+	}
 }

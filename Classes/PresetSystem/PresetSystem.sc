@@ -1,13 +1,15 @@
 /*
+- deleten bij subfolder gaat nog een beetje onhandig...
+- maak een veel genester subfolders systeem (dus ipv die soort uitzonderingspositie van 'subfolder')
+- index_ gebeurt wel wat vaak...
+
 - maak een dynamic variant (waarbij de views/controlspecs/etc kunnen veranderen per preset), is nu voornamelijk static (omdat bij de initialisatie alles al wordt vastgelegd)
 - wat is het verschil (of het nut) van canInterpolate en interpolate?
-- maak het mogelijk dat een preset een folder is! (b.v. voor PresetMorph of PresetNN)
 -
 - make UNDO function!!!! priority number one!
 - maak een backup systeem, dat je makkelijk terug kan naar de vorige preset als je 'm per ongeluk overschrijft (zoals ik de hele tijd doe....)
 -
 - misschien entries van de slave ook vullen met nil, zoals de presets????
-- update is wat lomp hoor, bij initialisatie wordt deze functie 2x uitgevoerd voor master
 - check of er nieuwe gui objecten zijn toegevoegd die nog niet in de opgeslagen presets zitten
 - PresetScript doet veel dingen dubbel, zoals index_ en getValues. fork(AppClock) is niet het meest efficient maar anders gaat het mis met view.value
 
@@ -28,14 +30,15 @@
 - disableSlaves, enableSlaves
 */
 PresetSystem {
-	var <path, <localpath, <folderName, <>fileNameWithoutExtension, <>fileName
+	var <path, <>localpath, <folderName, <>fileNameWithoutExtension, <>fileName
+	, <>subfolderName, <>hasSubFolder
 	, <>fullPath, <fileNames, <fileNamesWithoutExtensions, <entries, <fileExists, <>size
 	, <preLoad, <fileNamesWithoutNumbers;
 	var <presets;
 	var <views, <values, <defaultValues, <controlSpecs, <actions, <newValues;
 	var <allActions, <allViews, <enabledViews, <disabledViews;
 	var <index, <indices;
-	var <type, <slaves, <allSlaves, <disabledSlaves, <enabledSlaves, <masters;
+	var <>type, <slaves, <allSlaves, <disabledSlaves, <enabledSlaves, <masters, <>masterPresetSystem;
 	var <>restoreAction, <>nextAction, <>prevAction, <restoreActionType;
 	//interpolation variables
 	var <>timeKey, <>curveKey, <>extraKey, <routines, <routineFunctions, <time, steps, stepSize, <>resolution, waitTime, <extra, <>interpolate, <canInterpolate
@@ -61,13 +64,6 @@ PresetSystem {
 		index=0;
 		size=argsize;
 		preLoad=argpreLoad;
-		/*
-		repairFlag=true;
-		preLoad=switch(preLoad, true, {true}, false, {repairFlag=true; false}, \norepair, {
-		repairFlag=false;
-		true;
-		});
-		*/
 		fileName=argfileName;
 		//--------------------------------------------- MASTER/SLAVES
 		type=argtype;
@@ -96,14 +92,16 @@ PresetSystem {
 		//--------------------------------------------- PATH
 		folderName=argFolderName??{"master"};
 		this.path_(argpath);
-		this.update;//????
+		if (type!=\master, {
+			this.update;
+		});
 		//--------------------------------------------------- ACTIONS
 		this.initFunctions([\update, \index, \store, \delete, \restore, \interpolate
-			, \move, \delete, \path, \rename, \renumber]);//restore
+			, \move, \delete, \path, \rename, \renumber
+			, \removeSubFolder, \addSubFolder
+		]);//restore
 		//restoreAction=if (sortedKeys, {{}},{restore
-
 		this.restoreActionType_(0);
-
 		functions[\path]={this.restore(0)};
 		nextAction={
 			this.restore;
@@ -161,6 +159,7 @@ PresetSystem {
 	}
 	//--------------------------------------------------- FILE HANDELING
 	path_ {arg argpath, loadAll=false;
+		var forceInit=false;
 		path=argpath ?? {
 			var p=thisProcess.nowExecutingPath;
 			if (p==nil, {
@@ -170,14 +169,33 @@ PresetSystem {
 		};
 		if (PathName(path).isFile, {path=path.dirname++"/presets/"});
 		if (File.exists(path).not, {
+			forceInit=true;
+			fileName=nil;
 			File.mkdir(path);
 		});
 		localpath=path++folderName++"/";
+		if (type==\subfolder, {
+			preLoad=true;
+			if (subfolderName==nil, {subfolderName="0000"});
+			localpath=localpath++subfolderName++"/";
+		});
 		if (File.exists(localpath).not, {
 			File.mkdir(localpath);
 		});
 		index=0;
+		if (PathName(localpath).entries[0]!=nil, {
+			if (PathName(localpath).entries[0].isFolder, {
+				hasSubFolder=true;
+				type=\subfolder;
+				preLoad=true;
+				subfolderName=PathName(localpath).entries[0].folderName;
+				localpath=PathName(localpath).entries[0].fullPath;
+			},{
+				//hasSubFolder=false;
+			});
+		});
 		fullPath=PathName(localpath).entries[0]??{
+			//this.makeFile
 			var file;
 			//this.newFileName;
 			fileName=fileName??{"0000.scd"};
@@ -191,9 +209,12 @@ PresetSystem {
 		fileName=fullPath.fileName;
 		fullPath=fullPath.fullPath;
 		slaves.do{|p|
+			if (forceInit==true, {
+				p.fileName=fileName;
+				p.subfolderName=fileNameWithoutExtension;
+			});
 			p.path_(path);
 		};
-
 		masters.do{|p|
 			p.path_(path, loadAll);
 		};
@@ -202,6 +223,26 @@ PresetSystem {
 			this.update;
 			functions[\path].value;
 		});
+		/*
+		if (type==\master, {
+		"path_ update if type==master";
+		this.update;
+		functions[\path].value;
+		});
+		*/
+	}
+	//makeFolder {}
+	makeFile {arg getValues=true;
+		var file, path;
+		//this.newFileName;
+		if (getValues, {this.getValues});
+		fileName=fileName??{"0000.scd"};
+		path=localpath++fileName;
+		file=File(path, "w");
+		file.write(values.asCompileString);
+		file.close;
+		//writeFlag=true;
+		^path.asPathName
 	}
 	name {arg name;
 		fileNameWithoutExtension=fileNameWithoutExtension.split($_)[0]++"_"++name;
@@ -209,27 +250,46 @@ PresetSystem {
 		fullPath=(localpath++fileName);
 		this.update;
 	}
-	renumber {arg name, i;
+	renumberFunc{arg name, i, fromMaster=false, cond;
 		var file, tmpfullPath=fullPath;
-		this.index_(i);
-		//this.name(name);
-		fileNameWithoutExtension=fileNameWithoutExtension.split($_)[0]++"_"++name;
-		fileName=fileNameWithoutExtension++".scd";
-		fullPath=(localpath++fileName);
-		if (File.exists(tmpfullPath), {
-			File.copy(tmpfullPath, fullPath);
-			File.delete(tmpfullPath);
-			slaves.do{|ps| ps.renumber(name, i)};//dit kan een boosdoener zijn!!!
+		if ((type==\subfolder)&&(fromMaster==true), {
+			tmpfullPath=localpath;
+			subfolderName=subfolderName.split($_)[0]++"_"++name;
+			localpath=(path++folderName++"/"++subfolderName++"/");//localpath_()
+			fullPath=(localpath++fileName);
+			if (File.exists(tmpfullPath), {
+				("mv "++tmpfullPath ++ " " ++ localpath).unixCmd({cond.unhang;});
+				cond.hang;
+			});
+		},{
+			this.index_(i);
+			fileNameWithoutExtension=fileNameWithoutExtension.split($_)[0]++"_"++name;
+			fileName=fileNameWithoutExtension++".scd";
+			fullPath=(localpath++fileName);
+			if (File.exists(tmpfullPath), {
+				File.copy(tmpfullPath, fullPath);
+				File.delete(tmpfullPath);
+				slaves.do{|ps|
+					ps.renumberFunc(name, i, true, cond)
+				};//dit kan een boosdoener zijn!!!
+			});
 		});
 		functions[\renumber].value;
-		masters.do{|ps| ps.renumber(name, i)};
-		this.update;//beetje brute force hoor.....
+		masters.do{|ps| ps.renumberFunc(name, i, true)};
+		//if (File.exists(localpath), {this.update;});
+	}
+	renumber {arg name, i, fromMaster=false;
+		var cond=Condition.new;
+		{
+			this.renumberFunc(name, i, fromMaster, cond);
+			this.update;
+		}.fork(AppClock)
 	}
 	//folderName_ {}
 	update {
 		//var indices;
 		entries=PathName(localpath).entries;
-		if (type==\master, {
+		if ((type==\master)||(type==\subfolder), {
 			size=entries.size;
 			slaves.do{|ps| ps.size=size};
 		});
@@ -276,16 +336,20 @@ PresetSystem {
 				//presets[indices[i]]=pathName.fullPath.load;
 			};
 		});
-		slaves.do{|ps| ps.update};//brute force....
+
+		slaves.do{|ps|
+			if (File.exists(ps.localpath), {ps.update});
+		};//brute force....
 		masters.do{|ps| ps.update};//brute force....
+
 		functions[\update].value;
 	}
-	index_ {arg i, action=true;
+	index_ {arg i, action=true, fromMaster=false;
 		if (i!=nil, {
 			//index=i.clip(0, size-1);
 			index=i;
 			if (action, {
-				if (type==\master, {
+				if ((type==\master)||(type==\subfolder), {
 					if (preLoad, {
 						fullPath=entries[index];
 					},{
@@ -297,7 +361,7 @@ PresetSystem {
 					/*
 					if (fileNameWithoutExtension.split($_)[0].interpret.asInteger!=index, {this.newFileName});
 					*/
-					this.slaveIndex;
+					if (type==\master, {this.slaveIndex});
 					functions[\index].value;
 				},{
 
@@ -307,11 +371,22 @@ PresetSystem {
 		});
 	}
 	slaveIndex{
+		var tmpPath;
 		slaves.do{|ps|
-			ps.index_(index);
-			ps.fileName=fileName;
-			ps.fileNameWithoutExtension=fileNameWithoutExtension;
-			ps.fullPath=(ps.localpath++fileName);
+			if ((ps.hasSubFolder==true)||(type==\subfolder), {
+				ps.subfolderName=fileNameWithoutExtension;
+				ps.localpath=ps.path++ps.folderName++"/"++ps.subfolderName++"/";//maak hier een aparte functie van als deze vaker voorkomt!
+				ps.fullPath=(ps.localpath++ps.fileName);
+				if (File.exists(ps.localpath), {
+					ps.index_(0);
+					ps.update;
+				});
+			},{
+				ps.index_(index);
+				ps.fileName=fileName;
+				ps.fileNameWithoutExtension=fileNameWithoutExtension;
+				ps.fullPath=(ps.localpath++fileName);
+			})
 		};
 	}
 	newFileName {arg f;
@@ -330,10 +405,16 @@ PresetSystem {
 		restoreAction.value(this);
 		//----------------------------------------------- end of restore
 		slaves.do{|presetsystem|
-			if (presetsystem.canInterpolate, {
-				presetsystem.restoreI(index)
+			if (presetsystem.type==\subfolder, {
+				if (File.exists(presetsystem.localpath), {
+					presetsystem.restore
+				});
 			},{
-				presetsystem.restore//(index) beter???
+				if (presetsystem.canInterpolate, {
+					presetsystem.restoreI(index)
+				},{
+					presetsystem.restore//(index) beter???
+				})
 			})
 		};
 		masters.do{|presetsystem| presetsystem.doRestore };
@@ -355,8 +436,7 @@ PresetSystem {
 	}
 	restore {arg i;
 		var file, extra;
-		//this.setCurrent;
-		this.index_(i);
+		this.index_(i);//alleen doen als i en index verschillend zijn? of alleen doen als i!=nil && (i!=index)
 		if (preLoad, {
 			if (presets[index]!=nil, {
 				newValues=presets[index];
@@ -390,8 +470,6 @@ PresetSystem {
 	restoreCurrent {
 		if (current!=nil, {
 			newValues=current;
-			"current ".post; current.postln;
-			"do restore".postln;
 			this.doRestore;
 		});
 		/*
@@ -400,13 +478,44 @@ PresetSystem {
 		}
 		*/
 	}
+	addSubFolder{
+		var tmppath;
+		if (type==\subfolder, {
+			tmppath=(path++folderName++"/"++masterPresetSystem.fileNameWithoutExtension++"/");
+			if (File.exists(tmppath).not, {
+				localpath=tmppath;
+				File.mkdir(localpath);
+				fileName=nil;
+				fullPath=PathName(localpath).entries[0]??{this.makeFile(true)};
+				fileName=fullPath.fileName;
+				fileNameWithoutExtension=fullPath.fileNameWithoutExtension;
+				fullPath=fullPath.fullPath;
+				this.index_(0, false);
+				this.update;
+				functions[\addSubFolder].value;
+			});
+		});
+	}
+	removeSubFolder{arg i;
+		var tmppath, cond=Condition.new;
+		if (type==\subfolder, {
+			tmppath=(path++folderName++"/"++masterPresetSystem.fileNameWithoutExtension++"/");
+			{
+				if (File.exists(tmppath), {
+					("rm -r "++tmppath).unixCmd({cond.unhang});cond.hang;
+					functions[\removeSubFolder].value;
+				});
+
+			}.fork(AppClock)
+		});
+	}
 	store {arg i, name;//make difference between store and write (or save)
 		var file;
 		this.index_(i);
 		if (name!=nil, {
 			if (File.exists(fullPath), {File.delete(fullPath)});
 			this.name(name);
-			slaves.do{|ps| ps.renumber(name, i)};//klopt dit?
+			slaves.do{|ps| ps.renumber(name, i, true)};//klopt dit?
 		});
 		file=File(fullPath, "w");
 		this.getValues;
@@ -425,78 +534,83 @@ PresetSystem {
 		slaves.do{|presetsystem| presetsystem.store(i, name) };
 	}
 	add {arg increment=1;
-		index=index+increment;
-		this.shiftfiles(index);
-		this.newFileName;
-		this.store;
-		this.slaveIndex;
-		this.update;
-		masters.do{|ps| ps.add(increment)};
+		{
+			index=index+increment;
+			this.shiftfiles(index);
+			this.newFileName;
+			this.store;
+			this.slaveIndex;
+			this.update;
+			masters.do{|ps| ps.add(increment)};
+		}.fork(AppClock)
 	}
 	insert {arg i=0, fileName="", all=false;
-		this.getValues;
-		index=i;
-		presets=presets.insert(index, values);
-		this.shiftfiles(index, 1);
-		entries=entries.insert(index, this.fileWrite(index.asDigits(10, 4).asDigit
-			++fileName).asPathName);
-		if (all, {
-			slaves.do{|ps| ps.insert(i, fileName)};
-		});
-		this.update;
-		this.slaveIndex;
+		{
+			this.getValues;
+			index=i;
+			presets=presets.insert(index, values);
+			this.shiftfiles(index, 1);
+			entries=entries.insert(index, this.fileWrite(index.asDigits(10, 4).asDigit
+				++fileName).asPathName);
+			if (all, {
+				slaves.do{|ps| ps.insert(i, fileName)};
+			});
+			this.update;
+			this.slaveIndex;
+		}.fork(AppClock)
 	}
-	swapPreset {arg source, target;
-	}
+	swapPreset {arg source, target;}
 	move {arg source, target;
 		var tmpfullPath, sourcePath, tmpfullPath2, tmpfileName;
 		var fileName1=entries[target].fileNameWithoutExtension, fileName2;
 		var source2, target2;
-		index=target;
-		presets=presets.move(source, target);
-		tmpfullPath=entries[source];
-		if (tmpfullPath!=nil, {
-			tmpfileName=tmpfullPath.fileNameWithoutExtension
-			.split($_).copyToEnd(1).join;
-			tmpfullPath=tmpfullPath.fullPath.dirname++"/"++
-			"9999"++"_"++
-			tmpfileName
-			++".scd"
-			;
-		});
-		sourcePath=entries[source].fullPath;
-		this.rename(sourcePath.basename, tmpfullPath.basename);
-		slaves.do{|ps| ps.rename(sourcePath.basename, tmpfullPath.basename)};
-		entries[source]=tmpfullPath.asPathName;
-		entries=entries.move(source, target);
-		if ((source-target).abs>1, {
-			this.shiftfiles(
-				[source,target].minItem
-				//, -1
-				, if (source<target, {-1},{1})
-				, ([source,target].maxItem-1)
-			);
-		},{
-			fileName2=source.asDigits(10,4).asDigit++"_"
-			++(fileName1.split($_).copyToEnd(1).join);
-			fileName1=fileName1++".scd";
-			fileName2=fileName2++".scd";
-			this.rename(fileName1, fileName2);
-			slaves.do{|ps| ps.rename(fileName1, fileName2)};
-		});
-		if (tmpfullPath!=nil, {
-			tmpfullPath2=
-			tmpfullPath.dirname++"/"++
-			target.asDigits(10, 4).asDigit++"_"++
-			tmpfileName
-			++".scd"
-			;
-		});
-		this.rename(tmpfullPath.basename, tmpfullPath2.basename);
-		slaves.do{|ps| ps.rename(tmpfullPath.basename, tmpfullPath2.basename)};
-		entries[target]=tmpfullPath.asPathName;
-		this.update;
-		this.slaveIndex;
+		{
+			index=target;
+			presets=presets.move(source, target);
+			tmpfullPath=entries[source];
+			if (tmpfullPath!=nil, {
+				tmpfileName=tmpfullPath.fileNameWithoutExtension
+				.split($_).copyToEnd(1).join;
+				tmpfullPath=tmpfullPath.fullPath.dirname++"/"++
+				"9999"++"_"++
+				tmpfileName
+				++".scd"
+				;
+			});
+			sourcePath=entries[source].fullPath;
+			this.rename(sourcePath.basename, tmpfullPath.basename);
+			slaves.do{|ps| ps.rename(sourcePath.basename, tmpfullPath.basename)};
+			entries[source]=tmpfullPath.asPathName;
+			entries=entries.move(source, target);
+			if ((source-target).abs>1, {
+				this.shiftfiles(
+					[source,target].minItem
+					//, -1
+					, if (source<target, {-1},{1})
+					, ([source,target].maxItem-1)
+				);
+			},{
+				fileName2=source.asDigits(10,4).asDigit++"_"
+				++(fileName1.split($_).copyToEnd(1).join);
+				fileName1=fileName1++".scd";
+				fileName2=fileName2++".scd";
+				this.rename(fileName1, fileName2);
+				slaves.do{|ps| ps.rename(fileName1, fileName2)};
+			});
+			if (tmpfullPath!=nil, {
+				tmpfullPath2=
+				tmpfullPath.dirname++"/"++
+				target.asDigits(10, 4).asDigit++"_"++
+				tmpfileName
+				++".scd"
+				;
+			});
+			this.rename(tmpfullPath.basename, tmpfullPath2.basename);
+			slaves.do{|ps| ps.rename(tmpfullPath.basename, tmpfullPath2.basename)};
+			entries[target]=tmpfullPath.asPathName;
+			this.update;
+			this.slaveIndex;
+		}.fork(AppClock)
 	}
 
 	fileWrite {arg fileName;
@@ -516,32 +630,46 @@ PresetSystem {
 		//File.copy(path1, path2);
 	}
 	delete {arg i;
-		this.index_(i);
-		if (File.exists(fullPath)&&(PathName(localpath).entries.size>1), {
-			File.delete(fullPath);
-			functions[\delete].value(fileName);
-			slaves.do{|presetsystem|
-				if (File.exists(presetsystem.fullPath), {
-					File.delete(presetsystem.fullPath)
-				})
-			};
-			if (type==\master, {
-				this.shiftfiles(index, -1);
-				this.update;
-				this.index_(index.clip(0, fileNamesWithoutExtensions.size-1));
-				this.restore;
-			},{
-				this.update;
+		var tmp, cond=Condition.new;
+		{
+			this.index_(i);
+			if (File.exists(fullPath)&&(PathName(localpath).entries.size>1), {
+				File.delete(fullPath);
+				functions[\delete].value(fileName);
+				slaves.do{|presetsystem|
+					if (presetsystem.type==\subfolder, {
+						tmp=presetsystem.path++presetsystem.folderName++"/"++PathName(fullPath).fileNameWithoutExtension;
+						if (File.exists(tmp), {
+							("rm -r "++tmp).unixCmd({cond.unhang});cond.hang;
+						});
+					},{
+						if (File.exists(presetsystem.fullPath), {
+							File.delete(presetsystem.fullPath)
+						})
+					})
+				};
+				if ((type==\master)||(type==\subfolder), {
+					this.shiftfiles(index, -1);
+					slaves.do{|presetsystem|
+						if (presetsystem.type==\subfolder, {
+							presetsystem.localpath=PathName(presetsystem.path++presetsystem.folderName).entries.clipAt(index).fullPath;
+						});
+					};
+					this.update;
+					this.index_(index.clip(0, fileNamesWithoutExtensions.size-1));
+					this.restore;
+				},{
+					this.update;
+				});
 			});
-		});
-		masters.do{|ps| ps.delete(i)};
+			masters.do{|ps| ps.delete(i)};
+		}.fork(AppClock)
 	}
 	deleteFile {arg path;
 		if (File.exists(path), {
 			File.delete(path)
 		})
 	}
-
 	rename {arg fileName1, fileName2;
 		var path1=localpath++fileName1, path2=localpath++fileName2;
 		if (File.exists(path1), {
@@ -557,7 +685,7 @@ PresetSystem {
 		});
 	}
 	shiftfiles {arg i, shift=1, end;
-		var pathnames;
+		var pathnames, cond=Condition.new;
 		pathnames=if (end==nil, {
 			PathName(localpath).entries.copyToEnd(i);
 		},{
@@ -566,14 +694,25 @@ PresetSystem {
 		if (shift>0, {pathnames=pathnames.reverse});
 		pathnames.do{|pathName, j|
 			var newPathName, fileNameWithoutExtension=pathName.fileNameWithoutExtension
-			, split, fileName=pathName.fileName;
+			, split, fileName=pathName.fileName, oldfileNameWithoutExtension;
+			oldfileNameWithoutExtension=fileNameWithoutExtension.copy;
 			split=fileNameWithoutExtension.split($_);
 			split[0]=(split[0].interpret+shift).asDigits(10, 4).asDigit;
 			fileNameWithoutExtension=split.join("_");
 			newPathName=localpath++fileNameWithoutExtension++".scd";
 			this.rename(fileName, fileNameWithoutExtension++".scd");
 			slaves.do{|presetsystem|
-				presetsystem.rename(fileName, fileNameWithoutExtension++".scd")
+				var folderOld, folderNew;
+				if (presetsystem.type==\subfolder, {
+					folderOld=presetsystem.path++presetsystem.folderName++"/"++oldfileNameWithoutExtension;
+					folderNew=presetsystem.path++presetsystem.folderName++"/"++fileNameWithoutExtension;
+					if (File.exists(folderOld), {
+						("mv "++folderOld ++ " " ++ folderNew).unixCmd({cond.unhang;});
+						cond.hang;
+					});
+				},{
+					presetsystem.rename(fileName, fileNameWithoutExtension++".scd")
+				})
 			};
 		};
 		masters.do{|ps| ps.shiftfiles(i, shift)};
@@ -633,11 +772,68 @@ PresetSystem {
 	);
 	}
 	*/
+	addPresetSystem {arg presetsystem, argtype=\subfolder;
+		{
+			var makeSubFolder=false;
+			var presets, cv;
+			presetsystem.type=argtype;
+			presetsystem.masterPresetSystem=this;
+			//---------------------------------------------------------------------- extra GUI
+			makeSubFolder=PathName(path++presetsystem.folderName).entries[0].isFile;
+			if ((argtype==\subfolder)&&(makeSubFolder), {
+				var cond=Condition.new;
+				presets=PathName(presetsystem.localpath).entries;
+				fileNamesWithoutExtensions.do{|subfoldername, i|
+					var newDir=presetsystem.localpath++subfoldername++"/";
+					File.mkdir(newDir);
+					presets.do{|preset|
+						var newPath=newDir++preset.fileName;
+						("cp "++ preset.fullPath ++ " " ++ newPath).unixCmd({cond.unhang});
+						cond.hang;
+					};
+				};
+				presetsystem.localpath=presetsystem.localpath++fileNamesWithoutExtensions[0]++"/";
+				presets.do{|p| File.delete(p.fullPath)};
+				presetsystem.hasSubFolder=true;
+				presetsystem.index=0;
+				presetsystem.update;
+			});
+			//---------------------------------------------------------------------- change GUI
+			if (presetsystem.hasGUI==true, {
+				cv=CompositeView(presetsystem.parent, (presetsystem.parent.bounds.width-8)@20);
+				cv.addFlowLayout(0@0, 0@0);
+				cv.background_(Color.grey(0.8));
+				presetsystem.guis[\fileName]=StaticText(cv, 100@20)
+				.string_(fileNamesWithoutNumbers[index])
+				.stringColor_(Color.black).font_(Font("Monaco",10));//font
+				Button(cv, 20@20).states_([ ["+"] ]).action_{ presetsystem.addSubFolder };
+				Button(cv, 20@20).states_([ ["-"] ]).action_{ presetsystem.removeSubFolder };
+
+				functions[\index]=functions[\index].addFunc({
+					var tmppath=(presetsystem.path++presetsystem.folderName++"/"++fileNameWithoutExtension++"/");
+					{
+						//presetsystem.guis[\subFolderName].string_(fileNameWithoutExtension);
+						presetsystem.guis[\fileName].stringColor_(
+							if (File.exists(tmppath), {Color.black},{Color.grey})
+						)
+					}.defer
+				})
+
+			});
+			//----------------------------------------------------------------------
+			if ((argtype==\slave)||(argtype==\subfolder), {
+				presetsystem.type=argtype;
+				slaves=slaves.add(presetsystem);
+				allSlaves=allSlaves.add(presetsystem);
+			});
+		}.fork(AppClock)
+	}
 	addSlave {arg views, folderName, type=\slave, preload;
 		var presetSystem;
 		if (folderName==nil, {folderName="slave"++slaves.size});
 		presetSystem=PresetSystem.new(views, path, folderName, type, size, preload??{preLoad}
 			, fileName??{"0000.scd"});
+		presetSystem.masterPresetSystem=this;
 		slaves=slaves.add(presetSystem);
 		allSlaves=allSlaves.add(presetSystem);
 		^presetSystem

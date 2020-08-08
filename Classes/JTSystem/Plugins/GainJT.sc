@@ -12,8 +12,6 @@ GainJT : PluginJT {
 		target=argtarget;
 		settings=argsettings??{()};
 		addAction=argaddAction;
-		bypass=false;
-		bypassFunc={};
 		id=UniqueID.next;
 		//this.initializeVars;
 
@@ -23,7 +21,16 @@ GainJT : PluginJT {
 		defaultSettings.keysValuesDo{|key,val|
 			if (settings[key]==nil, {settings[key]=val})
 		};
-
+		//----------------------------------------------------- bypass settings
+		controlSpecs[\run]=ControlSpec(0.0, 1.0, 0, 1);
+		bypass=if (settings[\run]==nil, {
+			settings[\run]=1.0;
+			false
+		},{
+			settings[\run]<1.0
+		});
+		bypassFunc={};
+		//-----------------------------------------------------
 		this.isThreaded;
 		if (threaded, {
 			this.makeSynth;
@@ -56,6 +63,7 @@ GainJT : PluginJT {
 		};
 		id=synth.collect(_.nodeID);
 		if (synth.size==1, {synth=synth[0]; id=id[0]});
+		if (bypass, {this.bypass_(bypass)});
 	}
 
 	makeGUI {arg parent, bounds=100@20, onClose=false;
@@ -63,6 +71,19 @@ GainJT : PluginJT {
 		^gui
 		//this.initAll;
 	}
+
+	addPresetSystem {arg path, folderName="master", index=0;
+		var func={arg preset;
+			if (preset[\run]!=nil, {
+				this.bypass_(preset[\run]<1.0)
+			});
+			if (preset[\boost]!=nil, {
+				this.boost(preset[\boost])
+			});
+		};
+		this.metaAddPresetSystem(path, folderName, index, func)
+	}
+
 }
 
 
@@ -88,13 +109,13 @@ GainGUIJT : GUIJT {
 
 		this.initAll;
 
-		views[\bypass]=Button(parent, bounds)
+		viewsPreset[\run]=Button(parent, bounds)
 		.states_([[\bypassed],[\ON, Color.black, Color.green]]).action_{|b|
-			//eq.synth.asArray.do{|syn| syn.run(b.value>0)}
-			classJT.bypass_(b.value<1)
+			classJT.bypass_(b.value<1);
+			classJT.settings[\run]=b.value;
 		}.value_(classJT.bypass.not.binaryValue);
 
-		views[\boost]=EZKnob(parent, bounds.x@bounds.x, \boost, controlSpecs[\boost], {|ez|
+		viewsPreset[\boost]=EZKnob(parent, bounds.x@bounds.x, \boost, controlSpecs[\boost], {|ez|
 			classJT.boost(ez.value)
 		}, settings[\boost], false, 60);
 		parent.rebounds;

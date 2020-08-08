@@ -1,4 +1,5 @@
 /*
+het gaat mis als de folder of path leeg is...
 bij loop en 'verkeerde' samplerate gaat het bij de tweede (en daaropvolgende) loops mis qua afspeelsnelheid!
 er gaat soms nog iets mis met ff, vooral als je een nieuwe sample laadt....
 */
@@ -61,6 +62,7 @@ PlayerJT : JT {
 				b.index
 			},{b})
 		};
+		numChannels=2;
 
 		pathFunction={
 			var soundFile, init=false;
@@ -105,7 +107,6 @@ PlayerJT : JT {
 			});
 			pathFunc.value(this);
 		};
-
 		this.path_(argpath);
 	}
 
@@ -118,12 +119,21 @@ PlayerJT : JT {
 		var tmpIsPlaying=false;
 		var soundFile, init=false;
 		if (File.exists(name), {
-			if (name.isFolder, {name=PathName(name).entries[0].fullPath});
+			if (name.isFolder, {
+				if (PathName(name).entries.size>0, {
+					name=PathName(name).entries[0].fullPath
+				},{
+					name=nil
+				});
+			});
 			path=name;
-			if (this.isThreaded, {
-				pathFunction.value
-			},{
-				{pathFunction.value}.fork});
+			if (path!=nil, {
+				if (this.isThreaded, {
+					pathFunction.value
+				},{
+					{pathFunction.value}.fork
+				});
+			});
 		},{
 			"file " ++ name ++ " does not exist!".postln;
 		});

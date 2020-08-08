@@ -26,7 +26,7 @@ JT {
 		^threaded
 	}
 
-	addPresetSystem {arg path, folderName="master", index=0;//setFlag=true
+	metaAddPresetSystem {arg path, folderName="master", index=0, func;//setFlag=true
 		var tmpPath;
 		hasPresetSystem=true;
 		if (path.class==PresetSystem, {
@@ -51,9 +51,14 @@ JT {
 							synth.asArray.do{|syn| syn.set(key,val)};
 						})
 					};
+					func.value(preset.deepCopy);
 				});
 			})
 		});
+	}
+
+	addPresetSystem {arg path, folderName="master", index=0;
+		this.metaAddPresetSystem(path, folderName, index)
 	}
 
 	addPlugins {arg type, plugin, replaceSynth=false;

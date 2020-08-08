@@ -112,7 +112,6 @@ IOJTGUI : GUIJT {
 								, Color.green(1.5)] ])}.defer;
 						});
 					};
-
 					views[label][key]=Button(c, channelbounds).states_([ [letter] ])
 					.action_{
 						if (plugin.gui==nil, {

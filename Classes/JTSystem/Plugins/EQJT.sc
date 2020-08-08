@@ -50,7 +50,16 @@ EQJT : PluginJT {
 		defaultSettings.keysValuesDo{|key,val|
 			if (settings[key]==nil, {settings[key]=val})
 		};
-
+		//----------------------------------------------------- bypass settings
+		controlSpecs[\run]=ControlSpec(0.0, 1.0, 0, 1);
+		bypass=if (settings[\run]==nil, {
+			settings[\run]=1.0;
+			false
+		},{
+			settings[\run]<1.0
+		});
+		bypassFunc={};
+		//-----------------------------------------------------
 		this.isThreaded;
 		if (threaded, {
 			this.makeSynth;
@@ -59,7 +68,6 @@ EQJT : PluginJT {
 				this.makeSynth;
 			}.fork
 		});
-
 	}
 
 	makeSynth {
@@ -90,6 +98,7 @@ EQJT : PluginJT {
 		};
 		id=synth.collect(_.nodeID);
 		if (synth.size==1, {synth=synth[0]; id=id[0]});
+		if (bypass, {this.bypass_(bypass)});
 	}
 
 	makeGUI {arg parent, bounds=400@20, showscope, onClose=false;
@@ -123,17 +132,16 @@ EQGUIJT : GUIJT {
 		freeOnClose=argonClose;
 
 		this.initAll;
-
 		maxHeight=eq.order.collect{arg e; (hpf:1, ls:3, mid:3, hs:3, lpf:1)[e]}.maxItem;
-
 		width2=(bounds.x/eq.order.size).floor-parent.decorator.gap.x;
 
 		//parent.resize_(5);
 		//if (hasWindow, {window.resize_(5)});
-		views[\bypass]=Button(parent, bounds)
+		viewsPreset[\run]=Button(parent, bounds)
 		.states_([[\bypassed],[\ON, Color.black, Color.green]]).action_{|b|
 			//eq.synth.asArray.do{|syn| syn.run(b.value>0)}
-			classJT.bypass_(b.value<1)
+			classJT.bypass_(b.value<1);
+			classJT.settings[\run]=b.value;
 		}.value_(classJT.bypass.not.binaryValue);
 
 		eq.order.do{|type, i|

@@ -80,9 +80,9 @@ OutJT : IOJT {
 				if (plugins[\MasterFader]==nil, {this.addPlugin(\MasterFader)});
 				EQJT(bus, synth, type, settings)
 			}}
-			, \Splay, {{arg outBus=0, run=false;
+			, \Splay, {{arg outBus=0, settings=(run:0);
 				if (plugins[\MasterFader]==nil, {this.addPlugin(\MasterFader)});
-				SplayJT(bus, synth, outBus, run)
+				SplayJT(bus, synth, outBus, settings)
 			}}
 			, \Compressor, {{arg uGen=\CompanderC, settings=(thresh: -10, slopeAbove: 0.5
 				, clampTime:0.01, relaxTime:0.1, limiter:false, sanitize:false);
