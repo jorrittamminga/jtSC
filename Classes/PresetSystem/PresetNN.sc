@@ -32,6 +32,8 @@ PresetNN {
 		preset=argpreset;
 		presetNormalized=[];
 		path=argpath??{preset.path};
+		preset.hasNN=true;
+		preset.presetNN=this;
 		trainingSet=[];
 		trainingEvent=();
 		nin=argnin??{2};
@@ -75,6 +77,7 @@ PresetNN {
 	}
 
 	path_ {arg argpath;
+		var prevpath=path;
 		path=argpath ?? {var p;
 			//preset.path++preset.folderName++"/neuralnet/"
 			p=preset.path.deepCopy.split($/);
@@ -83,14 +86,23 @@ PresetNN {
 			p=p++preset.folderName++"/";
 			p
 		};
-		if (File.exists(path).not, {File.mkdir(path)});
+		if (File.exists(path), {
+			if (path!=prevpath, {
+				this.loadtrainingEvent;
+				this.loadNN;
+				this.calculate;
+			})
+		},{
+			File.mkdir(path);
+			trainingEvent=();
+			if (gui!=nil, { {gui.views[\trainingEvent].items_(trainingEvent.keys.asArray.sort)}.defer });
+		});
 	}
 
 	calculate {arg arginput;
 		var value, values;
 		input=arginput??{input};
 		out=neuralNet.calculate(input);
-
 		if (reshapeFlag, {
 			out=out.reshapeLike(shape);
 		});
@@ -99,7 +111,6 @@ PresetNN {
 			actionsList[i].value(value);
 			/*
 			{
-			[i, value, actionsList[i], viewsList[i]].postln;
 			viewsList[i].value_(value)
 			}.defer;
 			*/
@@ -118,9 +129,8 @@ PresetNN {
 		})
 	}
 
-	makeTrainigSet {
+	makeTrainingSet {
 		trainingSet=[];
-		"trainingEvent: ".post; trainingEvent.postln;
 		trainingEvent.keysValuesDo{|index, input|
 			var normalizedPreset=this.normalizePreset(index).flat;
 			if ((input.size==nin) && (normalizedPreset.size==nout), {
@@ -138,7 +148,7 @@ PresetNN {
 	}
 
 	train {arg autoSave=true;//arg errortarget=0.001, maxepochs=100000;
-		this.makeTrainigSet;
+		this.makeTrainingSet;
 		"trainigSet: ".post; trainingSet.postcs;
 
 		"start trainig....".postln;
@@ -147,6 +157,7 @@ PresetNN {
 			//neuralNet.train(trainingSet, errortarget, 10);
 			if (autoSave, {
 				this.saveNN;
+				this.savetrainingEvent;
 			})
 		});
 		"training is finished".postln;
@@ -225,13 +236,17 @@ PresetNN {
 		file.write(trainingEvent.asCompileString);
 		file.close;
 	}
-	loadtrainingEvent {
+	loadtrainingEvent {arg reset=true;
 		var file;
 		if (File.exists(path++"trainingEvent.scd"), {
 			file=File(path++"trainingEvent.scd", "r");
 			trainingEvent=file.readAllString.interpret;
 			file.close;
+
+		},{
+			if (reset==true, {trainingEvent=()});
 		});
+		if (gui!=nil, { {gui.views[\trainingEvent].items_(trainingEvent.keys.asArray.sort)}.defer });
 	}
 	loadNN {
 		if (File.exists(path++"nn.scmirZ"), {
@@ -242,7 +257,6 @@ PresetNN {
 		neuralNet.save(path++"nn.scmirZ");
 	}
 	deleteNN {
-		(path++"nn.scmirZ").postln;
 		File.delete(path++"nn.scmirZ");
 	}
 	//rescalePresets {}

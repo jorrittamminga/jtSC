@@ -19,7 +19,7 @@ GUIJT {
 		margin=margin??{4@4};
 		gap=gap??{4@4};
 		background=background??{Color.grey};
-		font=font??{Font(Font.defaultMonoFace, 10)};
+		font=font??{Font("Monaco", 10)};
 		freeOnClose=freeOnClose??{false};
 		if (parent.class==String, {nameString=parent; parent=nil});
 		if (classJT!=nil, {

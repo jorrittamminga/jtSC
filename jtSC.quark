@@ -1,7 +1,7 @@
 (
 	name:			"jtSC",
 	path:			"jtSC",
-	summary:		"extensions, classes and pseudo-Ugens",
+	summary:		"extensions, classes and pseudo-Ugens. needs SCMIR",
 	author:			"Jorrit Tamminga",
 	version:		0.1,
 	schelp: 		"HelpSource",

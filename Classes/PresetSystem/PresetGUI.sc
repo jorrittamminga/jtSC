@@ -80,9 +80,8 @@ guiType 3: interpolate + script
 					this.removePresetNumbers;
 					//guis[\presetList].items_(fileNamesWithoutExtensions);
 					guis[\presetList].items_(fileNamesWithoutNumbers);
-					//fileNamesWithoutExtensionsWithoutNumbers
 					guis[\presetList].value_(index);
-					//if (type==\master, {gui[\name].string_(blabla)})
+					if (guis[\name]!=nil, {guis[\name].string_(fileNamesWithoutNumbers[index])})
 				}.defer
 			});
 
@@ -229,6 +228,7 @@ guiType 3: interpolate + script
 			if (guiType==1, {
 				guis[\presetList]=ListView(cvs[0], (listBounds.x+extraX)@listBounds.y)
 				.items_(fileNamesWithoutNumbers)
+				//.items_(fileNamesWithoutExtensions)
 				.action_{|list|
 					if (list.selection.size==1, {
 						//this.index_(list.value);//dubbelopperdepop als er ook een guiRestore volgt!
@@ -255,6 +255,7 @@ guiType 3: interpolate + script
 				guis[\presetList]=PopUpMenu(cvs[1]
 					, (knobBounds.x*textBounds+extraX)@bounds.y)
 				.items_(fileNamesWithoutNumbers)
+				//.items_(fileNamesWithoutExtensions)
 				.action_{|list|
 					//this.index_(list.value);
 					this.guiRestore(list.value);
@@ -349,6 +350,7 @@ guiType 3: interpolate + script
 					//(knobBounds.x*textBounds+extraX)
 					@knobBounds.y)
 				.string_(fileNamesWithoutNumbers[index])
+				//.string_(fileNamesWithoutExtensions[index])
 				.stringColor_(Color.black).font_(font);
 			},{
 				if (guiType==1, {

@@ -1,40 +1,45 @@
 (
 var path=thisProcess.nowExecutingPath.dirname++"/presets1/";
 var acts=PathName(path).entries.collect{|p| p.folderName.asString}++["act3"], act;
-var w1, w2, w3, w4, cv;
-var views1=(), views2=(), views3=(), views4=();
-var ps1, ps2, ps3, pm2, pm4, ps4;
-w1=Window("Main", Rect(400,1000,400,400)).front; w1.addFlowLayout; w1.alwaysOnTop_(true); w1.onClose_{w2.close; w3.close; w4.close};
-w2=Window.new.front; w2.addFlowLayout; w2.alwaysOnTop_(true);
-w3=Window.new.front; w3.addFlowLayout; w3.alwaysOnTop_(true);
-w4=Window.new.front; w4.addFlowLayout; w4.alwaysOnTop_(true);
+var cv;
+var w=(), views=(), ps=(), pm=();
+
+w[1]=Window("Main", Rect(0,1000,400,400)).front; w[1].addFlowLayout; w[1].alwaysOnTop_(true); w[1].onClose_{w.keysValuesDo{|key,w| w.close}};
+views[1]=();
+(2..5).do{|i| views[i]=(); w[i]=Window.new.front; w[i].addFlowLayout; w[i].alwaysOnTop_(true)};
 
 act=acts[0];
 
-[\amp,\freq,\rq].do{|key| views1[key]=EZSlider(w1, 350@20, key, key, {|ez| })};
-[\amp,\freq,\rq].do{|key| views2[key]=EZSlider(w2, 350@20, key, key, {|ez| })};
-[\amp,\freq,\rq].do{|key| views3[key]=EZSlider(w3, 350@20, key, key, {|ez| })};
-[\amp,\freq,\rq, \db].do{|key| views4[key]=EZSlider(w4, 350@20, key, key, {|ez| })};
+[\amp,\freq,\rq].do{|key| views[1][key]=EZSlider(w[1], 350@20, key, key, {|ez| })};
+[\amp,\freq,\rq].do{|key| views[2][key]=EZSlider(w[2], 350@20, key, key, {|ez| })};
+[\amp,\freq,\rq].do{|key| views[3][key]=EZSlider(w[3], 350@20, key, key, {|ez| })};
+[\amp,\freq,\rq, \db].do{|key| views[4][key]=EZSlider(w[4], 350@20, key, key, {|ez| })};
+[\amp,\freq,\rq, \db, \phase, \boostcut].do{|key| views[5][key]=EZSlider(w[5], 350@20, key, key, {|ez| [key, ez.value].postln})};
 
-ps1=PresetSystem(views1, path++act++"/", "master");
-ps1.makeGUI(w1, 350@20, 1);
+ps[1]=PresetSystem(views[1], path++act++"/", "master");
+ps[1].makeGUI(w[1], 350@20, 1);
 
-ps2=PresetSystem(views2, path++act++"/", "morph");
-ps2.makeGUI(w2, 350@20, 1);
-pm2=PresetMorph(ps2, method: 'clipAt', guiType:'presets');
-pm2.makeGUI(w2);
+ps[2]=PresetSystem(views[2], path++act++"/", "morph");
+ps[2].makeGUI(w[2], 350@20, 1);
+pm[2]=PresetMorph(ps[2], method: 'clipAt', guiType:'presets');
+pm[2].makeGUI(w[2]);
 
-ps4=PresetSystem(views4, path++act++"/", "neuralnet");
-ps4.makeGUI(w4, 350@20, 1);
-pm4=PresetNN(ps4, 3
-	, path: path++act++"/neuralnets/"
-);
-pm4.makeGUI(w4);
+ps[4]=PresetSystem(views[4], path++act++"/", "neuralnet");
+ps[4].makeGUI(w[4], 350@20, 1);
+pm[4]=PresetNN(ps[4], 2);
+pm[4].makeGUI(w[4]);
 
-ps1.addPresetSystem(ps2, \subfolder);
-ps1.addSlave(views3, "slave").makeGUI(w3, 350@20);
+ps[5]=PresetSystem(views[5], path++act++"/", "neuralnet2");
+ps[5].makeGUI(w[5], 350@20, 1);
+pm[5]=PresetNN(ps[5], 2);
+pm[5].makeGUI(w[5]);
 
-PopUpMenu(w1, 350@20).items_( acts ).action_{|p|
-	ps1.path_((path++acts[p.value]++"/"));
+ps[1].addPresetSystem(ps[2], \subfolder);
+ps[1].addPresetSystem(ps[4]);
+ps[1].addPresetSystem(ps[5]);
+ps[1].addSlave(views[3], "slave").makeGUI(w[3], 350@20);
+
+PopUpMenu(w[1], 350@20).items_( acts ).action_{|p|
+	ps[1].path_((path++acts[p.value]++"/"));
 };
 )

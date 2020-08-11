@@ -19,7 +19,6 @@ PresetNNGUI : GUIJT {
 
 	init {arg argpresetNN, argparent, argbounds;
 		var widthB1, widthB2;
-		"init gui PresetNN".postln;
 		flag=false;
 		//font=Font(Font.defaultMonoFace, bounds.y*0.6);
 		presetNN=argpresetNN;
@@ -70,10 +69,11 @@ PresetNNGUI : GUIJT {
 		}.font_(font);
 		views[\initTraining]=Button(parent, widthB1@bounds.y)
 		.states_([ ["init training"] ]).action_{|b|
-			presetNN.initTrainingEvent
+			presetNN.initTrainingEvent;
+			{views[\trainingEvent].items_([])}.defer;
 		}.font_(font);
-		views[\initNN]=Button(parent, widthB1@bounds.y).states_([ ["initNN"] ]).action_{|b|
-			presetNN.initNN(true)
+		views[\initNN]=Button(parent, widthB1@bounds.y).states_([ ["init NN"] ]).action_{|b|
+			presetNN.initNN(true);
 		}.font_(font);
 
 		views[\input]=presetNN.input.collect{|in,i|

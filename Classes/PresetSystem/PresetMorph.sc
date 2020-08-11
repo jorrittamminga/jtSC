@@ -83,6 +83,7 @@ PresetMorph {
 		functions=();
 		preset=argpreset;
 		preset.hasMorph=true;
+		preset.presetMorph=this;
 
 		this.getSettings;
 
