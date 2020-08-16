@@ -153,9 +153,23 @@ MIDItoGUI : MapToGUI {
 	mapToMIDI {arg type=\cc, num, chan, srcID, argTemplate, dispatcher, controlSpec
 		, mode=\continuous, glitch, timeThreshold, midiOutChan, midiOutPort
 		, guiRun=true, show=false, method=\dynamic, midiThru=false;
-		^MIDItoGUI.new(this, type, num, chan, srcID, argTemplate, dispatcher, controlSpec
-			, mode, glitch, timeThreshold, midiOutChan, midiOutPort, guiRun
-			, show, method, midiThru)
+		var midiMap=this.midiMap, index;
+		if (midiMap!=nil, {
+			if (midiMap.class==MIDItoGUI, {midiMap=[midiMap]});
+			midiMap.do{|mm,i|
+				if ([if (type==\cc, {\control},{type}), num, chan, srcID]==[mm.type, mm.num, mm.chan, mm.srcID], {
+					index=i;
+				})
+			};
+		});
+		^if (index!=nil, {
+			"EZGui is already mapped to MIDI with the same settings".postln;
+			midiMap[index]
+		},{
+			MIDItoGUI.new(this, type, num, chan, srcID, argTemplate, dispatcher, controlSpec
+				, mode, glitch, timeThreshold, midiOutChan, midiOutPort, guiRun
+				, show, method, midiThru)
+		})
 	}
 	midiMap {arg id;
 		var ids;
@@ -197,9 +211,23 @@ MIDItoGUI : MapToGUI {
 	mapToMIDI {arg type=\noteOn, num, chan, srcID, argTemplate, dispatcher, controlSpec
 		, mode=\toggle, glitch, timeThreshold, midiOutChan, midiOutPort
 		, guiRun=true, show=false, method=\dynamic, midiThru=false;
-		^MIDItoGUI.new(this, type, num, chan, srcID, argTemplate, dispatcher, controlSpec
-			, mode, glitch, timeThreshold, midiOutChan, midiOutPort, guiRun
-			, show, method, midiThru)
+		var midiMap=this.midiMap, index;
+		if (midiMap!=nil, {
+			if (midiMap.class==MIDItoGUI, {midiMap=[midiMap]});
+			midiMap.do{|mm,i|
+				if ([if (type==\cc, {\control},{type}), num, chan, srcID]==[mm.type, mm.num, mm.chan, mm.srcID], {
+					index=i;
+				})
+			};
+		});
+		^if (index!=nil, {
+			"EZGui is already mapped to MIDI with the same settings".postln;
+			midiMap[index]
+		},{
+			MIDItoGUI.new(this, type, num, chan, srcID, argTemplate, dispatcher, controlSpec
+				, mode, glitch, timeThreshold, midiOutChan, midiOutPort, guiRun
+				, show, method, midiThru)
+		})
 	}
 	unmapToMIDI {arg id;
 		if (id==nil, { this.midiMap.do(_.free); },{ this.midiMap(id).do(_.free); })

@@ -1,11 +1,11 @@
 /*
-- optimize restore routine (is verreweg het belangrijkste!)
+- index_ nog eens goed bekijken
+- optimize restore routine (is verreweg het belangrijkste! nu nog teveel 'if' enzo)
 -
 - deleten bij subfolder gaat nog een beetje onhandig...
 - maak een veel genester subfolders systeem (dus ipv die soort uitzonderingspositie van 'subfolder')
 - index_ gebeurt wel wat vaak...
-
-- maak een dynamic variant (waarbij de views/controlspecs/etc kunnen veranderen per preset), is nu voornamelijk static (omdat bij de initialisatie alles al wordt vastgelegd)
+-
 - wat is het verschil (of het nut) van canInterpolate en interpolate?
 -
 - make UNDO function!!!! priority number one!
@@ -14,20 +14,13 @@
 - misschien entries van de slave ook vullen met nil, zoals de presets????
 - check of er nieuwe gui objecten zijn toegevoegd die nog niet in de opgeslagen presets zitten
 - PresetScript doet veel dingen dubbel, zoals index_ en getValues. fork(AppClock) is niet het meest efficient maar anders gaat het mis met view.value
-
-- KDTree achtige dingen inbouwen, addKDTree b.v. PresetSysteem.kdtree.blabla(preset)
-
-- zo clean mogelijk houden!
-- doe veel {10000.do{}}.bench testen om te kijken welke procedure het snelst is
+-
 - ws zijn alle functions[iets] gui functions, ff checken en zo ja rename naar guiFunctions en in een {}.defer zetten.
 - this.update is een beetje brute force....
-- uitzoeken wat sneller is: preset=fullPath.load of file(); preset=blabla; file.close;
-- preLoad / restore / restoreI / restoreS / etc ==>
-- vooral restore/restoreI/restoreS moet zo snel mogelijk reageren
+-
 - maak een variable presetKeys, met de keys die door de preset worden aangepaast
 - soms dubbelopperdepop met slaves.dingen / update / path / etc
-- update {} is iets teveel brute force, in sommige gevallen
-- ik denk bij store en storeI this.stopAll (voor de sicherheitsdienst)
+- ik denk bij store en storeI this.stopAll (voor de zekerheid)
 - maak ook een EZPresetSlider(parent, bounds)
 - disableSlaves, enableSlaves
 */
@@ -42,6 +35,7 @@ PresetSystem {
 	var <index, <indices;
 	var <>type, <slaves, <allSlaves, <disabledSlaves, <enabledSlaves, <masters, <>masterPresetSystem;
 	var <>restoreAction, <>nextAction, <>prevAction, <restoreActionType;
+	var <>ready;
 	//interpolation variables
 	var <>timeKey, <>curveKey, <>extraKey, <routines, <routineFunctions, <time, steps, stepSize, <>resolution, waitTime, <extra, <>interpolate, <canInterpolate
 	, <interpolationCurve, <interpolationCurves;
@@ -220,7 +214,6 @@ PresetSystem {
 		masters.do{|p|
 			p.path_(path, loadAll);
 		};
-
 		if (type==\master, {
 			this.update;
 			functions[\path].value;
@@ -350,7 +343,7 @@ PresetSystem {
 			//index=i.clip(0, size-1);
 			index=i;
 			if (action, {
-				if ((type==\master)||(type==\subfolder), {
+				switch(type, \master, {
 					if (preLoad, {
 						fullPath=entries[index];
 					},{
@@ -362,25 +355,45 @@ PresetSystem {
 					/*
 					if (fileNameWithoutExtension.split($_)[0].interpret.asInteger!=index, {this.newFileName});
 					*/
-					if (type==\master, {this.slaveIndex});
+					this.slaveIndex;
 					functions[\index].value;
+				}, \subfolder, {
+					if (preLoad, {
+						fullPath=entries[index];
+					},{
+						fullPath=PathName(localpath).entries[index];
+					});
+					fileName=fullPath.fileName;
+					fileNameWithoutExtension=fullPath.fileNameWithoutExtension;
+					fullPath=fullPath.fullPath;
+					functions[\index].value;
+				}, {});
+				/*
+				if ((type==\master)||(type==\subfolder), {
+
 				},{
 
 				});
+				*/
 			});
 			masters.do{|ps| ps.index_(i, action)};
 		});
 	}
 	slaveIndex{
 		var tmpPath;
+		var tmpSubfolderName, tmpLocalPath, tmpFullPath;
 		slaves.do{|ps|
 			if ((ps.hasSubFolder==true)||(type==\subfolder), {
-				ps.subfolderName=fileNameWithoutExtension;
-				ps.localpath=ps.path++ps.folderName++"/"++ps.subfolderName++"/";//maak hier een aparte functie van als deze vaker voorkomt!
-				ps.fullPath=(ps.localpath++ps.fileName);
-				if (File.exists(ps.localpath), {
-					ps.index_(0);
+
+				tmpSubfolderName=fileNameWithoutExtension;
+				tmpLocalPath=ps.path++ps.folderName++"/"++tmpSubfolderName++"/";//maak hier een aparte functie van als deze vaker voorkomt!
+
+				if (File.exists(tmpLocalPath), {
+					ps.localpath=tmpLocalPath;
+					ps.subfolderName=tmpSubfolderName;
 					ps.update;
+					ps.index_(0);
+					ps.fullPath=ps.entries[0].fullPath;
 				});
 			},{
 				ps.index_(index);
@@ -404,9 +417,9 @@ PresetSystem {
 	}
 	doRestore {arg restoreActionFlag=true;
 		//zonde qua efficientie dat hier een restoreActionFlag zit.... heeft te maken met type=\subfolder
-		if (restoreActionFlag, {
+		//if (restoreActionFlag, {
 			restoreAction.value(this);
-		});
+		//,});
 		//----------------------------------------------- end of restore
 		slaves.do{|presetsystem|
 			if (presetsystem.type==\subfolder, {
@@ -415,9 +428,9 @@ PresetSystem {
 				});
 			},{
 				if (presetsystem.canInterpolate, {
-					presetsystem.restoreI(index)
+					presetsystem.restoreI(index, fromMaster:true)
 				},{
-					presetsystem.restore//(index) beter???
+					presetsystem.restore(fromMaster:true)//(index) beter???
 				})
 			})
 		};
@@ -440,7 +453,9 @@ PresetSystem {
 	}
 	restore {arg i, fromMaster=false;
 		var file, extra;
-		this.index_(i);//alleen doen als i en index verschillend zijn? of alleen doen als i!=nil && (i!=index)
+		if (fromMaster.not, {
+			this.index_(i);//alleen doen als i en index verschillend zijn? of alleen doen als i!=nil && (i!=index)
+		});
 		if (preLoad, {
 			if (presets[index]!=nil, {
 				newValues=presets[index];
@@ -449,7 +464,8 @@ PresetSystem {
 				extra.do{|key| newValues[key]=views[key].value};//is al gebeurd
 				*/
 				//this.checkValues;
-				this.doRestore(fromMaster.not);
+				//this.doRestore(fromMaster.not);
+				this.doRestore
 			});
 		},{
 			this.load;
@@ -777,107 +793,121 @@ PresetSystem {
 	);
 	}
 	*/
-	addPresetSystem {arg presetsystem, argtype=\subfolder;
-		{
-			var makeSubFolderFlag=false;
-			var presets, cv;
-			var cond=Condition.new;
-			presetsystem.type=argtype;
-			presetsystem.masterPresetSystem=this;
-			if ((presetsystem.hasMorph==true)||(presetsystem.hasNN==true), {
-				argtype=\subfolder
-			});
-			//---------------------------------------------------------------------- change path
-			makeSubFolderFlag=PathName(path++presetsystem.folderName).entries[0].isFile;
-			if ((argtype==\subfolder)&&(makeSubFolderFlag), {
-				var newDir, subfoldername=fileNameWithoutExtension;
-				presets=PathName(presetsystem.localpath).entries;
-				newDir=presetsystem.localpath++subfoldername++"/";
-				presetsystem.subfolderName=subfoldername;
-				File.mkdir(newDir);
-				presets.do{|preset|
-					var newPath=newDir++preset.fileName;
-					("cp "++ preset.fullPath ++ " " ++ newPath).unixCmd({cond.unhang});
+	prAddPresetSystem {arg presetsystem, argtype=\subfolder;
+		var makeSubFolderFlag=false;
+		var presets, cv;
+		var cond=Condition.new;
+		presetsystem.type=argtype;
+		presetsystem.masterPresetSystem=this;
+		if ((presetsystem.hasMorph==true)||(presetsystem.hasNN==true), {
+			argtype=\subfolder
+		});
+		//---------------------------------------------------------------------- change path
+		makeSubFolderFlag=PathName(path++presetsystem.folderName).entries[0].isFile;
+		if ((argtype==\subfolder)&&(makeSubFolderFlag), {
+			var newDir, subfoldername=fileNameWithoutExtension;
+			presets=PathName(presetsystem.localpath).entries;
+			newDir=presetsystem.localpath++subfoldername++"/";
+			presetsystem.subfolderName=subfoldername;
+			File.mkdir(newDir);
+			presets.do{|preset|
+				var newPath=newDir++preset.fileName;
+				("cp "++ preset.fullPath ++ " " ++ newPath).unixCmd({cond.unhang});
+				cond.hang;
+			};
+			presetsystem.localpath=presetsystem.localpath++fileNameWithoutExtension++"/";
+			presets.do{|p| File.delete(p.fullPath)};
+			presetsystem.path_();
+			presetsystem.hasSubFolder=true;
+			presetsystem.index=0;
+			presetsystem.update;
+			presetsystem.fullPath=presetsystem.entries[0].fullPath;
+		});
+
+		if (presetsystem.hasNN==true, {
+			var prevpath, newpath;
+			prevpath=presetsystem.presetNN.path;
+			newpath=path++"neuralnets/"++presetsystem.folderName++"/"++presetsystem.subfolderName++"/";
+			if (File.exists(newpath).not, { File.makeDir(newpath) });
+			if (newpath!=presetsystem.presetNN.path, {
+				if (File.exists(newpath).not, {
+					("mv " ++ presetsystem.presetNN.path ++"*" ++ " " ++ newpath).unixCmd({cond.unhang});
 					cond.hang;
-				};
-				presetsystem.localpath=presetsystem.localpath++fileNameWithoutExtension++"/";
-				presets.do{|p| File.delete(p.fullPath)};
-				presetsystem.hasSubFolder=true;
-				presetsystem.index=0;
-				presetsystem.update;
-			});
-			if (presetsystem.hasNN==true, {
-				var prevpath, newpath;
-				prevpath=presetsystem.presetNN.path;
-				newpath=path++"neuralnets/"++presetsystem.folderName++"/"++presetsystem.subfolderName++"/";
-				if (File.exists(newpath).not, { File.makeDir(newpath) });
-				if (newpath!=presetsystem.presetNN.path, {
-					if (File.exists(newpath).not, {
-						("mv " ++ presetsystem.presetNN.path ++"*" ++ " " ++ newpath).unixCmd({cond.unhang});
-						cond.hang;
-					});
-					presetsystem.presetNN.path_(newpath);
-					("rm -r "++prevpath).unixCmd;
 				});
-				presetsystem.functions[\addSubFolder]=presetsystem.functions[\addSubFolder].addFunc({
-					var newpath;
-					newpath=path++"neuralnets/"++presetsystem.folderName++"/"++presetsystem.subfolderName++"/";
-					presetsystem.presetNN.path_(newpath);
-					//if (File.exists(newpath).not, { File.makeDir(newpath) });
-				});
-				presetsystem.functions[\removeSubFolder]=presetsystem.functions[\removeSubFolder].addFunc({
-					var newpath;
-					newpath=path++"neuralnets/"++presetsystem.folderName++"/"++presetsystem.subfolderName++"/";
-					presetsystem.presetNN.path_(newpath);
-				});
-				presetsystem.functions[\renumber]=presetsystem.functions[\renumber].addFunc({
-					var newpath, oldpath=presetsystem.presetNN.path;
-					newpath=path++"neuralnets/"++presetsystem.folderName++"/"++presetsystem.subfolderName++"/";
-					("mv " ++ oldpath ++ "*" ++ " " ++ newpath).unixCmd;
-					presetsystem.presetNN.path_(newpath);
-				});
-				/*
-				presetsystem.functions[\restore]=presetsystem.functions[\restore].addFunc({
-				var newpath=path++"neuralnets/"++presetsystem.folderName++"/"++presetsystem.subfolderName++"/";
 				presetsystem.presetNN.path_(newpath);
-				});
-				*/
-				presetsystem.functions[\update]=presetsystem.functions[\update].addFunc({
-					var newpath;
-					newpath=path++"neuralnets/"++presetsystem.folderName++"/"++presetsystem.subfolderName++"/";
-					presetsystem.presetNN.path_(newpath);
-				});
-				//this.functions[\path]=this.functions[\path].addFunc({ presetsystem.presetNN.path_() });
+				("rm -r "++prevpath).unixCmd;
 			});
-
-			//---------------------------------------------------------------------- add GUI
-			if (presetsystem.hasGUI==true, {
-				cv=CompositeView(presetsystem.parent, (presetsystem.parent.bounds.width-8)@20);
-				cv.addFlowLayout(0@0, 0@0);
-				cv.background_(Color.grey(0.8));
-				presetsystem.guis[\fileName]=StaticText(cv, 100@20)
-				.string_(fileNamesWithoutNumbers[index])
-				.stringColor_(Color.black).font_(Font("Monaco",10));//font
-				Button(cv, 20@20).states_([ ["+"] ]).action_{ presetsystem.addSubFolder };
-				Button(cv, 20@20).states_([ ["-"] ]).action_{ presetsystem.removeSubFolder };
-
-				functions[\index]=functions[\index].addFunc({
-					var tmppath=(presetsystem.path++presetsystem.folderName++"/"++fileNameWithoutExtension++"/");
-					{
-						//presetsystem.guis[\subFolderName].string_(fileNameWithoutExtension);
-						presetsystem.guis[\fileName].stringColor_(
-							if (File.exists(tmppath), {Color.black},{Color.grey})
-						)
-					}.defer
-				})
-
+			presetsystem.functions[\addSubFolder]=presetsystem.functions[\addSubFolder].addFunc({
+				var newpath;
+				newpath=path++"neuralnets/"++presetsystem.folderName++"/"++presetsystem.subfolderName++"/";
+				presetsystem.presetNN.path_(newpath);
+				//if (File.exists(newpath).not, { File.makeDir(newpath) });
 			});
-			//----------------------------------------------------------------------
-			if ((argtype==\slave)||(argtype==\subfolder), {
-				presetsystem.type=argtype;
-				slaves=slaves.add(presetsystem);
-				allSlaves=allSlaves.add(presetsystem);
+			presetsystem.functions[\removeSubFolder]=presetsystem.functions[\removeSubFolder].addFunc({
+				var newpath;
+				newpath=path++"neuralnets/"++presetsystem.folderName++"/"++presetsystem.subfolderName++"/";
+				presetsystem.presetNN.path_(newpath);
 			});
+			presetsystem.functions[\renumber]=presetsystem.functions[\renumber].addFunc({
+				var newpath, oldpath=presetsystem.presetNN.path;
+				newpath=path++"neuralnets/"++presetsystem.folderName++"/"++presetsystem.subfolderName++"/";
+				("mv " ++ oldpath ++ "*" ++ " " ++ newpath).unixCmd;
+				presetsystem.presetNN.path_(newpath);
+			});
+			/*
+			presetsystem.functions[\restore]=presetsystem.functions[\restore].addFunc({
+			var newpath=path++"neuralnets/"++presetsystem.folderName++"/"++presetsystem.subfolderName++"/";
+			presetsystem.presetNN.path_(newpath);
+			});
+			*/
+			presetsystem.functions[\update]=presetsystem.functions[\update].addFunc({
+				var newpath;
+				newpath=path++"neuralnets/"++presetsystem.folderName++"/"++presetsystem.subfolderName++"/";
+				presetsystem.presetNN.path_(newpath);
+			});
+			//this.functions[\path]=this.functions[\path].addFunc({ presetsystem.presetNN.path_() });
+		});
+
+		//---------------------------------------------------------------------- add GUI
+		if (presetsystem.hasGUI==true, {
+			cv=CompositeView(presetsystem.parent, (presetsystem.parent.bounds.width-8)@20);
+			cv.addFlowLayout(0@0, 0@0);
+			cv.background_(Color.grey(0.8));
+			presetsystem.guis[\fileName]=StaticText(cv, 100@20)
+			.string_(fileNamesWithoutNumbers[index])
+			.stringColor_(Color.black).font_(Font("Monaco",10));//font
+			Button(cv, 20@20).states_([ ["+"] ]).action_{ presetsystem.addSubFolder };
+			Button(cv, 20@20).states_([ ["-"] ]).action_{ presetsystem.removeSubFolder };
+			//presetsystem.parent.decorator.nextLine;
+			functions[\index]=functions[\index].addFunc({
+				var tmppath=(presetsystem.path++presetsystem.folderName++"/"++fileNameWithoutExtension++"/");
+				{
+					//presetsystem.guis[\subFolderName].string_(fileNameWithoutExtension);
+					presetsystem.guis[\fileName].stringColor_(
+						if (File.exists(tmppath), {Color.black},{Color.grey})
+					)
+				}.defer
+			})
+
+		});
+		//----------------------------------------------------------------------
+		if ((argtype==\slave)||(argtype==\subfolder), {
+			presetsystem.type=argtype;
+			slaves=slaves.add(presetsystem);
+			allSlaves=allSlaves.add(presetsystem);
+		});
+		presetsystem.ready=true;
+	}
+
+	addPresetSystem {arg presetsystem, argtype=\subfolder, clock=AppClock;
+		presetsystem.ready=false;
+		if ((thisProcess.mainThread.state>3), {
+			this.prAddPresetSystem(presetsystem, argtype)
+		},{
+			{this.prAddPresetSystem(presetsystem, argtype)}.fork(clock)
+		});
+		{
+
 		}.fork(AppClock)
 	}
 	addSlave {arg views, folderName, type=\slave, preload;

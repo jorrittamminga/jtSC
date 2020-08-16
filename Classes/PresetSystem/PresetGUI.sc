@@ -1,18 +1,12 @@
 /*
 TODO:
+- meerdere guiTypes
+- de initialisatie is wel erg lomp en nodeloos ingewikkeld
 - gui button moet kleiner, en passen op één regel (houd hier dus rekening mee!)
 - verbeter guiStore en guiRestore (nu veeeeel teveel if's)
-- maak een PresetSystemGUI class en roep deze aan met .gui (of .makeGUI)
+- maak een PresetSystemGUI class (als subclass van GUIJT) en roep deze aan met .gui (of .makeGUI)
 - overrule tijdelijk canFocus_(false) naar true als je dubbelklikt op filename interface én time
 - zet alle gui-dingen in een defer (zijn het minst belangrijk), zoals functions[\index]
-- verschillende soorten gui's
-ook met een popupmenu ipv ListView, scheelt weer ruimte
-guiType 0: basic
-guiType 1: interpolate
-guiType 2: morph
-guiType 3: interpolate + script
-- maak ook een GUI zonder ListView maar alleen maar met een EZNumber met presetnummer
-- houd rekening met preLoad (load of restore)
 */
 + PresetSystem {
 	initgui {

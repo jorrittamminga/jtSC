@@ -134,10 +134,9 @@ TODO:
 			{views[key].value_(value)}.defer;
 		});
 	}
-	//=doInterpolateMain oid
+	//=doInterpolateMain of prInterpolate (private)
 	doInterpolate {arg t, curve, getValues=true;
 		var keys, routineKeys;
-
 		//----------------------------------------------- stop all routines
 		//if (routines!=nil, {
 		routineKeys=routines.keys;
@@ -157,6 +156,7 @@ TODO:
 		interpolationCurve=curve??{newValues[curveKey]??{0}};
 		//-------------------------------------------------- INTERPOLATION
 		if (time>0, {
+			//temporaraly turn off morph if there is any
 			this.time_(time);
 			if (getValues, {this.getValues});
 			//------------------------------------------------- NO INTERPOLATION
@@ -192,18 +192,65 @@ TODO:
 					})
 				});
 			};
+			//---------------------------------------------------- stop morphing
 			this.interpolateForks(steps, \main, interpolationCurve);
+
+			if (hasMorph==true, {
+				routines[\PresetMorphBypass]={
+					//routines[\PresetMorphBypass].stop;
+					presetMorph.stop;
+					time.wait;
+					presetMorph.start;
+				}.fork;
+			});
+
 			//slaves.do{|presetsystem| presetsystem.restoreI(index, getValues:getValues) };
 		},{
 			restoreAction.value(this);
 			//slaves.do{|presetsystem| presetsystem.restore(index) };
 		});
-
+		/*
 		slaves.do{|presetsystem|
-			if (presetsystem.canInterpolate, {
-				presetsystem.restoreI(index, getValues:getValues)
+		if (presetsystem.canInterpolate, {
+		presetsystem.restoreI(index, getValues:getValues)
+		},{
+		presetsystem.restore(index)
+		})
+		};
+		*/
+		/*
+		slaves.do{|presetsystem|
+		if (presetsystem.type==\subfolder, {
+		if (File.exists(presetsystem.localpath), {
+		presetsystem.restore(fromMaster:true)
+		});
+		},{
+		if (presetsystem.canInterpolate, {
+		presetsystem.restoreI(index, getValues:getValues, fromMaster:true)
+		},{
+		presetsystem.restore(fromMaster:true)//(index) beter???
+		})
+		})
+		};
+		*/
+		slaves.do{|presetsystem|
+			if (presetsystem.type==\subfolder, {
+				if (File.exists(presetsystem.localpath), {
+
+					//hier even op de interpolationtime van preset index 0 checken!
+
+					if (presetsystem.canInterpolate, {
+						presetsystem.restoreI(getValues:getValues, fromMaster:true)
+					},{
+						presetsystem.restore(fromMaster:true)//(index) beter???
+					})
+				});
 			},{
-				presetsystem.restore(index)
+				if (presetsystem.canInterpolate, {
+					presetsystem.restoreI(index, getValues:getValues, fromMaster:true)
+				},{
+					presetsystem.restore(fromMaster:true)//(index) beter???
+				})
 			})
 		};
 
@@ -224,13 +271,14 @@ TODO:
 			this.doInterpolate(t, curve, getValues);
 		});
 	}
-	restoreI {arg i, t, curve, getValues=true;
+	restoreI {arg i, t, curve, getValues=true, fromMaster=false;
 		var file, extra;
-		//this.setCurrent;
 		if (interpolate==0, {
-			this.restore(i)
+			this.restore(i, fromMaster)
 		},{
-			this.index_(i);
+			if (fromMaster.not, {
+				this.index_(i);
+			});
 			if (presets[index]!=nil, {
 				newValues=presets[index];
 				/*
@@ -243,13 +291,17 @@ TODO:
 				this.doInterpolate(t, curve, getValues);
 			});
 			masters.do{|ps| ps.restoreI(i,t,curve,getValues)};
-		})
+		});
 	}
 
 	stop {
 		//doe hier iets met excludeOnceParameter
 		routines.do(_.stop);
 		masters.do{|ps| ps.stop};
+		//---------------------------------------------------- stop morphing
+		if (hasMorph==true, {
+			presetMorph.start;
+		});
 	}
 
 	stopAll {
@@ -260,7 +312,6 @@ TODO:
 	interpolateForks {arg steps, key=\main, curve;
 		var env;
 		routines[key].stop;//routines.do(_.stop);
-
 		routines[key]=if (
 			//(curve!=nil)||(curve!=0.0), {
 			(curve!=nil)&&(curve!=0.0), {

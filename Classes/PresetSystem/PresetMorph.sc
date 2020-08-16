@@ -23,10 +23,11 @@ indices of the indices of the filelist in PresetSystem
 PresetMorph {
 	var x, y, z, point, <array, <means, <controlSpecs, <guis, preset, <indices, <entries;
 	var <azimuth, <rho, <elevation, <dimensions, <size, <actions, <offset;
-	var calculateFunction, <parent, bounds, method, <views, <viewKeys;
+	var calculateFunction, <parent, bounds, method, <views, <viewKeys, <>keysThatCanMorph;
 	var <keysNoCS, <presets, <initIndices, <keysNoMorph;
 	var <>guiType, type, <hasGUI, <presetNr, <functions, <guiFlag;
 	var <defaultControlSpecs, <defaultKeysNoCS;
+	var <>isMorphing;
 
 	*line1D{arg preset, indices, method='clipAt', views, guiType='presets';
 		//var indices=(0..(preset.fileNamesWithoutExtensions.size-1));
@@ -63,11 +64,11 @@ PresetMorph {
 	^super.new.init(preset, indices, method, views, guiType, 'twoD');
 	}
 	*/
-	*new {arg preset, indices, method='wrapAt', views, guiType='azimuth', type='oneD';
-		^super.new.init(preset, indices, method, views, guiType, type)
+	*new {arg preset, indices, method='wrapAt', keysThatCanMorph, guiType='azimuth', type='oneD';
+		^super.new.init(preset, indices, method, keysThatCanMorph, guiType, type)
 	}
 
-	init {arg argpreset, argindices, argmethod, argviews, argguiType, argtype;
+	init {arg argpreset, argindices, argmethod, argkeysThatCanMorph, argguiType, argtype;
 		azimuth= -1.0;
 		rho=1.0;
 		elevation=0.0;
@@ -85,6 +86,8 @@ PresetMorph {
 		preset.hasMorph=true;
 		preset.presetMorph=this;
 
+		keysThatCanMorph=argkeysThatCanMorph;//??{preset.views.keys.asArray};
+		//================================================= getSettings and controlspecs
 		this.getSettings;
 
 		//================================================= getControlSpecs
@@ -127,6 +130,7 @@ PresetMorph {
 			{}
 		});
 		//this.gui;
+		isMorphing=true;
 	}
 	/*
 	extraControlSpecs {
@@ -142,7 +146,14 @@ PresetMorph {
 	getSettings {
 		var noMorph=[];
 		controlSpecs=();
-		preset.views.keysValuesDo{|key,view| var controlSpec;
+		//--------------------------------------------- vervangen!
+		if (keysThatCanMorph==nil, {views=preset.views},{
+			views=();
+			keysThatCanMorph.asArray.do{|key| views[key]=preset.views[key]};
+		});
+		//--------------------------------------------- vervangen!
+		//preset.views.keysValuesDo{|key,view| var controlSpec;
+		views.keysValuesDo{|key,view| var controlSpec;
 			if (view.isKindOf(EZGui), {
 				controlSpec=view.controlSpec;
 				if (controlSpec.step<0.000001, {controlSpec=controlSpec.warp});
@@ -151,8 +162,13 @@ PresetMorph {
 		controlSpecs=[controlSpecs];
 		//controlSpecs=[preset.controlSpecs];
 		//actions=[preset.actions];
-		actions=[preset.views.collect(_.action)];
-		views=[preset.views];
+
+		//--------------------------------------------- vervangen!
+		//actions=[preset.views.collect(_.action)];
+		actions=[views.collect(_.action)];
+		//--------------------------------------------- vervangen!
+		//views=[preset.views];
+		views=[views];
 
 		//this.extraControlSpecs;
 		if (preset.slaves.size>0, {
@@ -537,6 +553,16 @@ PresetMorph {
 				}
 			}
 		});
+	}
+
+	start {
+		isMorphing=true;
+		guis[\azimuth].action={|ez| this.azimuth_(ez.value)};
+
+	}
+	stop {
+		isMorphing=false;
+		guis[\azimuth].action=nil
 	}
 
 	gui {arg argparent, argbounds;
