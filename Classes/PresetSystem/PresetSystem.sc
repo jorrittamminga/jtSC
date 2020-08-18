@@ -34,7 +34,7 @@ PresetSystem {
 	var <allActions, <allViews, <enabledViews, <disabledViews;
 	var <index, <indices;
 	var <>type, <slaves, <allSlaves, <disabledSlaves, <enabledSlaves, <masters, <>masterPresetSystem;
-	var <>restoreAction, <>nextAction, <>prevAction, <restoreActionType;
+	var <>restoreAction, <>nextAction, <>prevAction, <restoreActionType, <>finishedAction;
 	var <>ready;
 	//interpolation variables
 	var <>timeKey, <>curveKey, <>extraKey, <routines, <routineFunctions, <time, steps, stepSize, <>resolution, waitTime, <extra, <>interpolate, <canInterpolate
@@ -176,6 +176,8 @@ PresetSystem {
 			localpath=localpath++subfolderName++"/";
 		});
 		if (File.exists(localpath).not, {
+			forceInit=true;
+			fileName=nil;
 			File.mkdir(localpath);
 		});
 		index=0;
@@ -188,6 +190,11 @@ PresetSystem {
 				localpath=PathName(localpath).entries[0].fullPath;
 			},{
 				//hasSubFolder=false;
+			});
+		});
+		if ((type==\master) || (type==\subfolder), {
+			if (PathName(localpath).entries[0]==nil, {
+				fileName=nil;
 			});
 		});
 		fullPath=PathName(localpath).entries[0]??{
@@ -218,6 +225,7 @@ PresetSystem {
 			this.update;
 			functions[\path].value;
 		});
+
 		/*
 		if (type==\master, {
 		"path_ update if type==master";
@@ -294,21 +302,27 @@ PresetSystem {
 		indices=fileNamesWithoutExtensions.collect{|name|
 			name.split($_)[0].interpret
 		};
+
+		if (type==\master, {
+			//check hier of indices gelijk is aan (0..entries.size-1). zo niet ga dan over tot omnummeren van de presets
+		});
+
 		if (preLoad, {
 			presets=Array.newClear(size);
 			entries.do{|pathName, i|
 				var tmpPreset, extra;
 				tmpPreset=pathName.fullPath.load;
-
 				extra=views.keys.difference(tmpPreset.keys);
-				extra.do{|key| tmpPreset[key]=views[key].value};
+				extra.do{|key|
+					tmpPreset[key]=views[key].value
+				};
 
 				tmpPreset.keysValuesDo{|key,val|
 					if (views[key].value.class==String, {
-
 					}, {
 						//repair!
 						//if (repairFlag, {
+
 						if (views[key].value.size!=val.size, {
 							tmpPreset[key]=values[key];
 						});
@@ -326,14 +340,15 @@ PresetSystem {
 						tmpPreset[key]=view.value
 					});
 				};
-
 				presets[indices[i]]=tmpPreset;
 				//presets[indices[i]]=pathName.fullPath.load;
 			};
 		});
 
 		slaves.do{|ps|
-			if (File.exists(ps.localpath), {ps.update});
+			if (File.exists(ps.localpath), {
+				ps.update
+			});
 		};//brute force....
 		masters.do{|ps| ps.update};//brute force....
 		functions[\update].value;
@@ -418,7 +433,7 @@ PresetSystem {
 	doRestore {arg restoreActionFlag=true;
 		//zonde qua efficientie dat hier een restoreActionFlag zit.... heeft te maken met type=\subfolder
 		//if (restoreActionFlag, {
-			restoreAction.value(this);
+		restoreAction.value(this);
 		//,});
 		//----------------------------------------------- end of restore
 		slaves.do{|presetsystem|
@@ -738,12 +753,14 @@ PresetSystem {
 		};
 		masters.do{|ps| ps.shiftfiles(i, shift)};
 	}
-	next {arg incr=1;
+	next {arg incr=1, action;
 		if (index+incr<fileNamesWithoutExtensions.size, {
 			//index=index+1;
 			this.index_(index+incr);
 			this.nextAction.value;
 			//if (guis[\presetList]!=nil, {guis[\presetList].value_(index)});
+		},{
+			action.value;
 		});
 	}
 	prev {arg incr= -1;
