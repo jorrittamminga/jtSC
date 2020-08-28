@@ -1,7 +1,10 @@
 /*
 - index_ nog eens goed bekijken
 - optimize restore routine (is verreweg het belangrijkste! nu nog teveel 'if' enzo)
--
+- bouw een copy/paste functie in (als je trouwens copy doet voordat je 'store' drukt heb je meteen een undo!)
+- check 'store All' nog eens goed.... (zeker met die \subfolder types)
+- maak PresetSystem een subclass van FileJT oid waarbij je dat hele 0000 gedoe al inbouwt
+- houd een lijstje bij van alle gebruikte presets van een bepaald effect zodat je deze ook kunt oproepen en kunt storen (stop deze in een popupmenu)
 - deleten bij subfolder gaat nog een beetje onhandig...
 - maak een veel genester subfolders systeem (dus ipv die soort uitzonderingspositie van 'subfolder')
 - index_ gebeurt wel wat vaak...
@@ -46,7 +49,7 @@ PresetSystem {
 	var <guis, <>parent, <parents, <presetName, <windows, <>guiFlag, <hasGUI;
 	var <>hasMorph, <>hasNN, <>presetMorph, <>presetNN;
 	var <functions, <>sortedKeys, <>repairFlag;
-	var <current;
+	var <current;//is current voor copy-paste en undo????
 
 	//for NeuralNet presets
 	var <presetsNormalized, <factors, <controlSpecsList, <keys, <reshapeFlag;
@@ -99,11 +102,11 @@ PresetSystem {
 		//restoreAction=if (sortedKeys, {{}},{restore
 		this.restoreActionType_(0);
 		functions[\path]={this.restore(0)};
-		nextAction={
-			this.restore;
+		nextAction={arg i;
+			this.restore(i);
 		};
-		prevAction={
-			this.restore;
+		prevAction={arg i;
+			this.restore(i);
 		};
 		//--------------------------------------------- INTERPOLATION
 		canInterpolate=false;//default no interpolation
@@ -124,6 +127,7 @@ PresetSystem {
 		views.keys.do{|key|
 			values[key]=views[key].value;
 		};
+		//^values
 	}
 	getActions {//arg views;
 		//actions=actions??{()};
@@ -154,8 +158,9 @@ PresetSystem {
 		parents=parents.asSet.asArray;
 	}
 	//--------------------------------------------------- FILE HANDELING
-	path_ {arg argpath, loadAll=false;
+	path_ {arg argpath, setIndex=0;//
 		var forceInit=false;
+		var pathEntries, pathName;
 		path=argpath ?? {
 			var p=thisProcess.nowExecutingPath;
 			if (p==nil, {
@@ -180,7 +185,9 @@ PresetSystem {
 			fileName=nil;
 			File.mkdir(localpath);
 		});
-		index=0;
+		pathEntries=PathName(localpath).entries;
+		index=0;//setIndex.clip(0, pathEntries.size-1);
+		pathName=pathEntries[index];// is dus PathName(localpath).entries[0]
 		if (PathName(localpath).entries[0]!=nil, {
 			if (PathName(localpath).entries[0].isFolder, {
 				hasSubFolder=true;
@@ -197,11 +204,12 @@ PresetSystem {
 				fileName=nil;
 			});
 		});
+		//entries[index]
 		fullPath=PathName(localpath).entries[0]??{
 			//this.makeFile
 			var file;
 			//this.newFileName;
-			fileName=fileName??{"0000.scd"};
+			fileName=fileName??{"0000.scd"};//index.asDigits(10,4).join
 			file=File(localpath++fileName, "w");
 			file.write(values.asCompileString);
 			file.close;
@@ -212,15 +220,12 @@ PresetSystem {
 		fileName=fullPath.fileName;
 		fullPath=fullPath.fullPath;
 		slaves.do{|p|
-			if (forceInit==true, {
-				p.fileName=fileName;
-				p.subfolderName=fileNameWithoutExtension;
-			});
+
+			if (forceInit==true, {p.fileName=fileName;});
+			p.subfolderName=fileNameWithoutExtension;
 			p.path_(path);
 		};
-		masters.do{|p|
-			p.path_(path, loadAll);
-		};
+		masters.do{|p| p.path_(path); };
 		if (type==\master, {
 			this.update;
 			functions[\path].value;
@@ -235,10 +240,12 @@ PresetSystem {
 		*/
 	}
 	//makeFolder {}
-	makeFile {arg getValues=true;
+	makeFile {arg getValues=true;//arg action (en dan action=this.getValues b.v.)
 		var file, path;
+		//var values;
 		//this.newFileName;
 		if (getValues, {this.getValues});
+		//values=action.value;
 		fileName=fileName??{"0000.scd"};
 		path=localpath++fileName;
 		file=File(path, "w");
@@ -256,13 +263,17 @@ PresetSystem {
 	renumberFunc{arg name, i, fromMaster=false, cond;
 		var file, tmpfullPath=fullPath;
 		if ((type==\subfolder)&&(fromMaster==true), {
-			tmpfullPath=localpath;
-			subfolderName=subfolderName.split($_)[0]++"_"++name;
-			localpath=(path++folderName++"/"++subfolderName++"/");//localpath_()
-			fullPath=(localpath++fileName);
-			if (File.exists(tmpfullPath), {
-				("mv "++tmpfullPath ++ " " ++ localpath).unixCmd({cond.unhang;});
-				cond.hang;
+			if ((subfolderName.split($_)[0])==(masterPresetSystem.fileName.split($_)[0]), {
+				tmpfullPath=localpath;
+				subfolderName=subfolderName.split($_)[0]++"_"++name;
+				localpath=(path++folderName++"/"++subfolderName++"/");//localpath_()
+				fullPath=(localpath++fileName);
+				if (File.exists(tmpfullPath), {
+					("mv "++tmpfullPath ++ " " ++ localpath).unixCmd({cond.unhang;});
+					cond.hang;
+				}
+				//,{}
+				);
 			});
 		},{
 			this.index_(i);
@@ -270,8 +281,10 @@ PresetSystem {
 			fileName=fileNameWithoutExtension++".scd";
 			fullPath=(localpath++fileName);
 			if (File.exists(tmpfullPath), {
-				File.copy(tmpfullPath, fullPath);
-				File.delete(tmpfullPath);
+				//File.copy(tmpfullPath, fullPath);
+				//File.delete(tmpfullPath);
+				("mv "++tmpfullPath ++ " " ++ fullPath).unixCmd({cond.unhang;});
+				cond.hang;
 				slaves.do{|ps|
 					ps.renumberFunc(name, i, true, cond)
 				};//dit kan een boosdoener zijn!!!
@@ -371,7 +384,9 @@ PresetSystem {
 					if (fileNameWithoutExtension.split($_)[0].interpret.asInteger!=index, {this.newFileName});
 					*/
 					this.slaveIndex;
+					//{
 					functions[\index].value;
+					//}.defer
 				}, \subfolder, {
 					if (preLoad, {
 						fullPath=entries[index];
@@ -381,7 +396,9 @@ PresetSystem {
 					fileName=fullPath.fileName;
 					fileNameWithoutExtension=fullPath.fileNameWithoutExtension;
 					fullPath=fullPath.fullPath;
+					//{
 					functions[\index].value;
+					//}.defer
 				}, {});
 				/*
 				if ((type==\master)||(type==\subfolder), {
@@ -399,17 +416,17 @@ PresetSystem {
 		var tmpSubfolderName, tmpLocalPath, tmpFullPath;
 		slaves.do{|ps|
 			if ((ps.hasSubFolder==true)||(type==\subfolder), {
-
 				tmpSubfolderName=fileNameWithoutExtension;
 				tmpLocalPath=ps.path++ps.folderName++"/"++tmpSubfolderName++"/";//maak hier een aparte functie van als deze vaker voorkomt!
-
 				if (File.exists(tmpLocalPath), {
 					ps.localpath=tmpLocalPath;
 					ps.subfolderName=tmpSubfolderName;
 					ps.update;
 					ps.index_(0);
 					ps.fullPath=ps.entries[0].fullPath;
-				});
+				}
+				//,{}//deze mag weg!
+				);
 			},{
 				ps.index_(index);
 				ps.fileName=fileName;
@@ -455,7 +472,9 @@ PresetSystem {
 	load {arg i;
 		var file, extra;
 		//this.setCurrent;
-		this.index_(i);
+		if (i!=index, {
+			this.index_(i);
+		});
 		if (File.exists(fullPath), {
 			file=File(fullPath, "r");
 			newValues=file.readAllString.interpret;
@@ -469,7 +488,9 @@ PresetSystem {
 	restore {arg i, fromMaster=false;
 		var file, extra;
 		if (fromMaster.not, {
-			this.index_(i);//alleen doen als i en index verschillend zijn? of alleen doen als i!=nil && (i!=index)
+			if (i!=index, {
+				this.index_(i);//alleen doen als i en index verschillend zijn? of alleen doen als i!=nil && (i!=index)
+			});
 		});
 		if (preLoad, {
 			if (presets[index]!=nil, {
@@ -517,7 +538,10 @@ PresetSystem {
 	addSubFolder{
 		var tmppath;
 		//if (type==\subfolder, {//dit zou toch overbodig moeten zijn? maak sws deze method 'private'
+		//ik denk: path=masterPresetSystem.path
 		tmppath=(path++folderName++"/"++masterPresetSystem.fileNameWithoutExtension++"/");
+		subfolderName=masterPresetSystem.fileNameWithoutExtension;
+
 		if (File.exists(tmppath).not, {
 			localpath=tmppath;
 			File.mkdir(localpath);
@@ -605,7 +629,7 @@ PresetSystem {
 			tmpfullPath=entries[source];
 			if (tmpfullPath!=nil, {
 				tmpfileName=tmpfullPath.fileNameWithoutExtension
-				.split($_).copyToEnd(1).join;
+				.split($_).copyToEnd(1).join($_);
 				tmpfullPath=tmpfullPath.fullPath.dirname++"/"++
 				"9999"++"_"++
 				tmpfileName
@@ -626,7 +650,7 @@ PresetSystem {
 				);
 			},{
 				fileName2=source.asDigits(10,4).asDigit++"_"
-				++(fileName1.split($_).copyToEnd(1).join);
+				++(fileName1.split($_).copyToEnd(1).join($_));
 				fileName1=fileName1++".scd";
 				fileName2=fileName2++".scd";
 				this.rename(fileName1, fileName2);
@@ -757,7 +781,7 @@ PresetSystem {
 		if (index+incr<fileNamesWithoutExtensions.size, {
 			//index=index+1;
 			this.index_(index+incr);
-			this.nextAction.value;
+			this.nextAction.value(index);//(index)
 			//if (guis[\presetList]!=nil, {guis[\presetList].value_(index)});
 		},{
 			action.value;
@@ -767,7 +791,7 @@ PresetSystem {
 		if (index+incr>=0, {
 			//index=index+1;
 			this.index_(index+incr);
-			this.nextAction.value;
+			this.nextAction.value(index);
 			//if (guis[\presetList]!=nil, {guis[\presetList].value_(index)});
 		});
 	}
@@ -834,7 +858,7 @@ PresetSystem {
 			};
 			presetsystem.localpath=presetsystem.localpath++fileNameWithoutExtension++"/";
 			presets.do{|p| File.delete(p.fullPath)};
-			presetsystem.path_();
+			//presetsystem.path_();//is dit echt nodig?
 			presetsystem.hasSubFolder=true;
 			presetsystem.index=0;
 			presetsystem.update;
@@ -890,11 +914,11 @@ PresetSystem {
 			cv=CompositeView(presetsystem.parent, (presetsystem.parent.bounds.width-8)@20);
 			cv.addFlowLayout(0@0, 0@0);
 			cv.background_(Color.grey(0.8));
-			presetsystem.guis[\fileName]=StaticText(cv, 100@20)
-			.string_(fileNamesWithoutNumbers[index])
-			.stringColor_(Color.black).font_(Font("Monaco",10));//font
 			Button(cv, 20@20).states_([ ["+"] ]).action_{ presetsystem.addSubFolder };
 			Button(cv, 20@20).states_([ ["-"] ]).action_{ presetsystem.removeSubFolder };
+			presetsystem.guis[\fileName]=StaticText(cv, (cv.bounds.width-40)@20)
+			.string_(fileNamesWithoutNumbers[index])
+			.stringColor_(Color.black).font_(Font("Monaco",10));//font
 			//presetsystem.parent.decorator.nextLine;
 			functions[\index]=functions[\index].addFunc({
 				var tmppath=(presetsystem.path++presetsystem.folderName++"/"++fileNameWithoutExtension++"/");
@@ -903,7 +927,7 @@ PresetSystem {
 					presetsystem.guis[\fileName].stringColor_(
 						if (File.exists(tmppath), {Color.black},{Color.grey})
 					)
-				}.defer
+				}.defer;
 			})
 
 		});

@@ -39,86 +39,74 @@ TODO:
 				{guis[timeKey].value_(newValues[timeKey])}.defer;
 			});
 			if (newValues[curveKey]!=nil, {
-				{guis[curveKey].value_(
-					interpolationCurves.indexOfEqual(newValues[curveKey])
-				)}.defer;
+				{guis[curveKey].value_(interpolationCurves.indexOfEqual(newValues[curveKey]))}.defer;
 			});
 		});
 		functions[\delete]=functions[\delete].addFunc({|ps|
-			if (guis[\fileName]!=nil, {
-				{guis[\fileName].stringColor_(Color.grey)}.defer
-			})
+			{if (guis[\fileName]!=nil, {
+				guis[\fileName].stringColor_(Color.grey)
+			})}.defer
 		});
 		functions[\store]=functions[\store].addFunc({|ps|
-			if (guis[\fileName]!=nil, {
-				{guis[\fileName].stringColor_(Color.black)}.defer
-			})
+			{if (guis[\fileName]!=nil, {
+				guis[\fileName].stringColor_(Color.black)
+			})}.defer
 		});
 		functions[\removeSubFolder]=functions[\removeSubFolder].addFunc({|ps|
-			if (guis[\fileName]!=nil, {
-				{guis[\fileName].stringColor_(Color.grey)}.defer
-			})
+			{if (guis[\fileName]!=nil, {
+				guis[\fileName].stringColor_(Color.grey)
+			})}.defer
 		});
 		functions[\addSubFolder]=functions[\addSubFolder].addFunc({|ps|
-			if (guis[\fileName]!=nil, {
-				{guis[\fileName].stringColor_(Color.black)}.defer
-			})
+			{if (guis[\fileName]!=nil, {
+				guis[\fileName].stringColor_(Color.black)
+			})}.defer
 		});
 
-
-
 		functions[\update]=functions[\update].addFunc({|ps|
-
-			if (guis[\presetList]!=nil, {
-				{
+			{
+				if (guis[\presetList]!=nil, {
 					this.removePresetNumbers;
 					//guis[\presetList].items_(fileNamesWithoutExtensions);
 					guis[\presetList].items_(fileNamesWithoutNumbers);
 					guis[\presetList].value_(index);
-					if (guis[\name]!=nil, {guis[\name].string_(fileNamesWithoutNumbers[index])})
-				}.defer
-			});
-
-			functions[\index].value;
+					if (guis[\name]!=nil, {
+						guis[\name].string_(fileNamesWithoutNumbers[index])
+					})
+				});
+			}.defer;
+			functions[\index].value;//is dit niet een beetje dubbelopperdepop???
 		});
+
 		functions[\index]=functions[\index].addFunc({|ps|
-
-			if (guis[\presetList]!=nil, {
-
-				if (guis[\presetList].value!=index, {{
-					guis[\presetList].value_(index)
-				}.defer
-				})
-
-			});
-
-			/*
-			if (windows[\scriptEditorGUI]!=nil, {
-			guis[\ScriptEditor].string_
-			});
-			*/
+			{
+				if (guis[\presetList]!=nil, {
+					if (guis[\presetList].value!=index, {
+						guis[\presetList].value_(index)
+					})
+				});
+			}.defer
 
 		});
 		functions[\interpolate]=functions[\interpolate].addFunc({|ps|
-			if (guis[\interpolate]!=nil, {
-				{
+			{
+				if (guis[\interpolate]!=nil, {
 					guis[\interpolate].value_(interpolate)
-				}.defer
-			})
+				})
+			}.defer
 		});
 		if (guiType>0, {
 			if ((type==\master)||(type==\subfolder), {
 				functions[\index]=functions[\index].addFunc({
-					guis.name.string_(
-						fileNameWithoutExtension.split($_).copyToEnd(1).join);
-					slaves.do{|ps|
-						{
+					{
+						guis[\name].string_(fileNameWithoutExtension.split($_).copyToEnd(1).join($_));
+						slaves.do{|ps|
 							ps.guis[\fileName].string_(fileNameWithoutExtension);
 							ps.guis[\fileName].stringColor_(
 								if (File.exists(ps.fullPath), {Color.black},{Color.grey})
 							)
-						}.defer
-					};
+						};
+					}.defer
 				})
 			})
 		});
@@ -277,10 +265,12 @@ TODO:
 		}.canFocus_(false).font_(font);
 		guis[\restore]=Button(cvs[1], knobBounds).states_([ ["r"] ]).action_{
 			this.guiRestore;
-			if (guis[\name]!=nil, {
-				guis[\name].string_(
-					fileNamesWithoutExtensions[index].split($_).copyToEnd(1).join);
-			})
+			{
+				if (guis[\name]!=nil, {
+					guis[\name].string_(
+						fileNamesWithoutExtensions[index].split($_).copyToEnd(1).join($_));
+				})
+			}.defer
 		}.canFocus_(false).font_(font);
 		/*
 		guis[\current]=Button(cvs[1], knobBounds).states_([ ["c"] ]).action_{
@@ -293,9 +283,11 @@ TODO:
 			.action_{|b|
 				this.interpolate_(b.value);
 				slaves.do{|ps|
-					if (ps.guis[\interpolate]!=nil, {
-						{ps.guis[\interpolate].value_(b.value)}.defer
-					});
+					{
+						if (ps.guis[\interpolate]!=nil, {
+							ps.guis[\interpolate].value_(b.value)
+						});
+					}.defer
 				};
 			}.canFocus_(false).font_(font);
 			guis[timeKey]=NumberBox(cvs[1], (knobBounds.x*2)@knobBounds.y)
@@ -368,7 +360,7 @@ TODO:
 						t.canFocus_(false);
 						t.enabled_(true);
 					})
-				}.string_(fileNameWithoutExtension.split($_).copyToEnd(1).join)
+				}.string_(fileNameWithoutExtension.split($_).copyToEnd(1).join($_))
 				.canFocus_(false).font_(font);
 				guis[\name].mouseDownAction={arg b;
 					b.enabled_(true);

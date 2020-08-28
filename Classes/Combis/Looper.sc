@@ -39,7 +39,7 @@ Looper {
 		, wsDev: ControlSpec(0.0, 1.0), overlap: ControlSpec(0.1, 8, \exp)
 		, rate: ControlSpec(0.1, 10.0, \exp), freqScale: ControlSpec(0.125, 8.0, \exp), amp: \amp.asSpec
 		, az: \bipolar.asSpec);
-		^super.new.init(inBus, target, addAction, outBus, voices, sync, mode, maxRecTime, parameters, parent, bounds, controlSpecs)
+	^super.new.init(inBus, target, addAction, outBus, voices, sync, mode, maxRecTime, parameters, parent, bounds, controlSpecs)
 	}
 
 	init {arg arginBus, argtarget, argaddAction, argoutBus, argvoices, argsync, argmode, argmaxRecTime, argparameters, argparent, argbounds, argcontrolSpecs;
@@ -54,7 +54,7 @@ Looper {
 		sync=argsync;
 		maxRecTime=if (voices>1, {
 			argmaxRecTime.asArray.resamp0(voices);//argMaxRecTime
-			},{
+		},{
 			argmaxRecTime.asArray
 		});
 		parent=argparent;
@@ -68,12 +68,12 @@ Looper {
 
 		if (target==nil, {
 			server=Server.default;
+		},{
+			if (target.class==Server, {
+				server=target
 			},{
-				if (target.class==Server, {
-					server=target
-					},{
 				server=target.server;
-				})
+			})
 		});
 
 
@@ -115,8 +115,8 @@ Looper {
 			server.sync;
 			azs=if (voices>1, {
 				[(1.0-(voices.reciprocal)).neg, (1.0-(voices.reciprocal))].resamp1(voices)
-				},{
-					[0]
+			},{
+				[0]
 			});
 			info[\mix]={|voice| (amp: voices.reciprocal.sqrt, az: azs[voice])}!voices;
 			if (makeMixer, {
@@ -181,7 +181,7 @@ Looper {
 	play {arg gate=1, voice=0, sync, mode;//mode 0=classic, 1=timewarp
 		var synthDef=\PlayBufFree, deltaTime, flag=true;
 
-//		info[\playback][voice][\gate]=gate;
+		//		info[\playback][voice][\gate]=gate;
 		sync=sync??{info[\playback][voice][\sync]};
 		mode=mode??{info[\playback][voice][\mode]};
 		info[\playback][voice][\sync]=sync;
@@ -193,11 +193,11 @@ Looper {
 			//	});
 
 			if (info[\playback][voice][\gate]==1, {
-			//if (synth[\playback][voice].isPlaying, {//according to Looper, NOT synth.isPlaying
+				//if (synth[\playback][voice].isPlaying, {//according to Looper, NOT synth.isPlaying
 				synth[\playback][voice].get(\gate, {|val|
 					if (val==1, {
 						synth[\playback][voice].set(\gate, -0.001);
-						},{
+					},{
 					});
 				});
 			});
@@ -205,23 +205,25 @@ Looper {
 			synthDef=[\PlayBufFree, \TimeWarpFree][mode];
 			info[\playback][voice][\gate]=gate;
 			timesPlay[voice]=Main.elapsedTime;
-			synth[\playback][voice]=Synth.head(group, synthDef, ([\preDelay, preDelay, \tempo, tempo]++info[\playback][voice].asKeyValuePairs)).register;
+			synth[\playback][voice]=Synth.head(
+				group, synthDef, ([\preDelay, preDelay, \tempo, tempo]++info[\playback][voice].asKeyValuePairs)
+			).register;
 
-			},{
-				synth[\playback][voice].set(\gate, -0.001);
-				server.sendMsg(\n_set, synth[\playback][voice].nodeID, \gate, 0);
-				if (synth[\playback][voice].isRunning, {
-					//	synth[\playback][voice].free
-				});
-				/*
-				if (synth[\playback][voice].isPlaying, {
-				synth[\playback][voice].get(\gate, {|val|
-				if (val==1, {
-				synth[\playback][voice].set(\gate, 0)
-				})
-				})
-				});
-				*/
+		},{
+			synth[\playback][voice].set(\gate, -0.001);
+			server.sendMsg(\n_set, synth[\playback][voice].nodeID, \gate, 0);
+			if (synth[\playback][voice].isRunning, {
+				//	synth[\playback][voice].free
+			});
+			/*
+			if (synth[\playback][voice].isPlaying, {
+			synth[\playback][voice].get(\gate, {|val|
+			if (val==1, {
+			synth[\playback][voice].set(\gate, 0)
+			})
+			})
+			});
+			*/
 		});
 		info[\playback][voice][\gate]=gate;
 	}
@@ -242,7 +244,7 @@ Looper {
 			info[\playback][v][\bufnum]=info[\buf][voice][\bufnumPlayback];
 
 			if (info[\playback][voice][\gate]==1, {
-			//if (syn.isPlaying, {//if the synth is playing acoording to Looper, not syn.isPlaying
+				//if (syn.isPlaying, {//if the synth is playing acoording to Looper, not syn.isPlaying
 				//"synth was playing, restart the synth".postln;
 				syn.set(\gate, -0.001);//this.play(0,v)
 				this.play(1, v);
@@ -265,27 +267,31 @@ Looper {
 				synth[\record][voice]=Synth.after(synth[\in][voice], \RecordBufFree, ([
 					\tempo, tempo, \preDelay, preDelay
 					//, \overDub, 1, \eraseFirst, 1
-				]++info[\record][voice].asKeyValuePairs)).register;
+				]++info[\record][voice].asKeyValuePairs)
+				).register;
 				info[\buf][voice][\start]=Main.elapsedTime;
-				},{
-					nil//OSCFunc
-			});
 			},{
-				tmpBuf=info[\buf][voice][\bufnumRecord].copy;
-				info[\buf][voice][\bufnumRecord]=info[\buf][voice][\bufnumPlayback].copy;
-				info[\buf][voice][\bufnumPlayback]=tmpBuf.copy;
-				info[\record][voice][\bufnum]=info[\buf][voice][\bufnumRecord];
+				nil//OSCFunc
+			});
+		},{
+			tmpBuf=info[\buf][voice][\bufnumRecord].copy;
+			info[\buf][voice][\bufnumRecord]=info[\buf][voice][\bufnumPlayback].copy;
+			info[\buf][voice][\bufnumPlayback]=tmpBuf.copy;
+			info[\record][voice][\bufnum]=info[\buf][voice][\bufnumRecord];
 
-				synth[\record][voice].set(\gate, -0.001);
+			synth[\record][voice].set(\gate, -0.001);
 
-				if (sync==0, {
-					info[\buf][voice][\end]=(
-						Main.elapsedTime-info[\buf][voice][\start]+(2*preDelay)).clip(0, maxRecTime[voice]);
-					info[\buf][voice][\start]=0;
-					this.replay(voice);
-					},{
-						nil//OSCFunc
-				});
+			if (sync==0, {
+				info[\buf][voice][\end]=(
+					Main.elapsedTime-info[\buf][voice][\start]+(2*preDelay)).clip(0, maxRecTime[voice]);
+				info[\buf][voice][\start]=0;
+
+
+
+				this.replay(voice);
+			},{
+				nil//OSCFunc
+			});
 		})
 	}
 
@@ -399,11 +405,11 @@ Looper {
 				u=Window(voice.asString, Rect(100,100,(17*h+8),n*(h+4)+8)).front;
 				u.addFlowLayout; u.onClose_{windows.removeAt(voice)};
 				windows[voice]=u;
-				},{
-					u=CompositeView(parent, (17*h)@(h*(n+1))); u.addFlowLayout(0@0,0@0);
-					//u=parent;
-					windows[voice]=u;
-					StaticText(u, (17*h)@h).string_("expert voice " ++ voice)
+			},{
+				u=CompositeView(parent, (17*h)@(h*(n+1))); u.addFlowLayout(0@0,0@0);
+				//u=parent;
+				windows[voice]=u;
+				StaticText(u, (17*h)@h).string_("expert voice " ++ voice)
 				.font_(font).stringColor_(Color.white);//.background_(Color.black);
 			});
 			info[\playback][voice].keysValuesDo{|key,val|
@@ -417,8 +423,8 @@ Looper {
 					guis[voice][key]=e;
 				})
 			};
-			},{
-				windows[voice].front
+		},{
+			windows[voice].front
 
 		});
 		ready=true;
@@ -432,9 +438,9 @@ Looper {
 			w=Window("Looper", Rect(100,400,(37*h+20+(makeMixer.binaryValue*h*16+20)),((h+8)*voices+16 ))).front; w.addFlowLayout(4@4, 0@0); w.alwaysOnTop_(true);
 			w.onClose_{ windows.do{|w| w.close}; this.free};
 			parent=w;
-			},{
-				w=parent;
-				parent.onClose=(parent.onClose.addFunc({ windows.do{|w| w.close}; this.free}));
+		},{
+			w=parent;
+			parent.onClose=(parent.onClose.addFunc({ windows.do{|w| w.close}; this.free}));
 		});
 
 		controls=CompositeView(w, ((37*(h))+20)@((h+8)*voices+8)); controls.addFlowLayout(4@4, 0@0);
@@ -462,8 +468,8 @@ Looper {
 			[\start, \end].do{arg par; guis[voice][par]=EZSlider(v, (9*h)@h, par, ControlSpec(0, 1), {|ez|
 				info[\playback][voice][par]=ez.value;
 				if (synth[\playback][voice].isPlaying, {synth[\playback][voice].set(par, ez.value)});
-				}, info[\playback][voice][par], false, h*1.5, gap:0@0, margin: 0@0).round2_(0.001)//.setColors(Color.black,Color.white, Color.black,Color.black,Color.white, Color.white, Color.yellow)
-				.font_(font);
+			}, info[\playback][voice][par], false, h*1.5, gap:0@0, margin: 0@0).round2_(0.001)//.setColors(Color.black,Color.white, Color.black,Color.black,Color.white, Color.white, Color.yellow)
+			.font_(font);
 			};
 
 			guis[voice][\rate]=EZNumber(v, (h*3.5)@h, \rate, controlSpecs[\rate], {|ez|

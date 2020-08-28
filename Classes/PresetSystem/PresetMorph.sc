@@ -275,9 +275,7 @@ PresetMorph {
 	}
 	index {
 		if (hasGUI, {
-			//if (guiType=='presets', {
 			{guis[\azimuth].value_(preset.index)}.defer
-			//})
 		});
 	}
 	/*
@@ -429,7 +427,7 @@ PresetMorph {
 					};
 					/*
 					keysNoMorph[index].do{|key|
-					{views[index][key].postln}.defer;
+					{views[index][key]}.defer;
 					}
 					*/
 				}
@@ -492,7 +490,7 @@ PresetMorph {
 					};
 					/*
 					keysNoMorph[index].do{|key|
-					{views[index][key].postln}.defer;
+					{views[index][key]}.defer;
 					}
 					*/
 				};
@@ -558,7 +556,6 @@ PresetMorph {
 	start {
 		isMorphing=true;
 		guis[\azimuth].action={|ez| this.azimuth_(ez.value)};
-
 	}
 	stop {
 		isMorphing=false;

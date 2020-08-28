@@ -163,7 +163,7 @@ MIDItoGUI : MapToGUI {
 			};
 		});
 		^if (index!=nil, {
-			"EZGui is already mapped to MIDI with the same settings".postln;
+			//"EZGui is already mapped to MIDI with the same settings".postln;
 			midiMap[index]
 		},{
 			MIDItoGUI.new(this, type, num, chan, srcID, argTemplate, dispatcher, controlSpec
@@ -221,7 +221,7 @@ MIDItoGUI : MapToGUI {
 			};
 		});
 		^if (index!=nil, {
-			"EZGui is already mapped to MIDI with the same settings".postln;
+			//"EZGui is already mapped to MIDI with the same settings".postln;
 			midiMap[index]
 		},{
 			MIDItoGUI.new(this, type, num, chan, srcID, argTemplate, dispatcher, controlSpec

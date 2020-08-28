@@ -1,5 +1,33 @@
 +Array {
 
+
+	indexOfNextNotNil {arg i=0;
+		var tmpI=i.copy;
+		i=i+1;
+		while({ (this[i]==nil) && (i>0) && (i<this.size) },{
+			i=i+1
+		});
+		^if (this[i]!=nil, { i},{tmpI})
+	}
+	indexOfPrevNotNil {arg i=1;
+		var tmpI=i.copy;
+		i=i-1;
+		while({ (this[i]==nil) && (i>0) && (i<this.size) },{
+			i=i-1
+		});
+		^if (this[i]!=nil, { i},{tmpI})
+	}
+	nextNotNil {arg i=0;
+		var tmpI=i.copy;
+		i=this.indexOfNextNotNil(i);
+		^if (i!=tmpI, {this[i]},{nil});
+	}
+	prevNotNil {arg i=1;
+		var tmpI=i.copy;
+		i=this.indexOfPrevNotNil(i);
+		^if (i!=tmpI, {this[i]},{nil});
+	}
+
 	indispensability {
 		var d=(1: [0], 2: [1,0], 3:[2,0,1], 4: [3,0,2,1], 5: [4,0,2,1,3], 7: [6,1,2,3,5,0,4]);
 		var l=[];

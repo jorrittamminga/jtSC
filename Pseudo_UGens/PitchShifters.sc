@@ -67,7 +67,8 @@ PitchShifter {
 			, dur, buf, rate, pos, interp, az
 			, envbufnum
 			, maxGrains
-			,overLap.max(1).reciprocal.sqrt*mul, add);
+			, overLap.max(1).reciprocal.sqrt*mul
+			, add);
 	}
 }
 

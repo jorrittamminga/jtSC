@@ -37,11 +37,11 @@ TODO:
 		extra=(\removeFromInterpolation:[]
 			, \removeOnceFromInterpolation:[]
 		);
-		nextAction={
-			this.restoreI;
+		nextAction={arg i;
+			this.restoreI(i);
 		};
-		prevAction={
-			this.restoreI;
+		prevAction={arg i;
+			this.restoreI(i);
 		};
 		views.keysValuesDo{|key,view|
 			if([Button, TextField].includes(view.class), {
@@ -152,7 +152,6 @@ TODO:
 			},{
 				newValues[timeKey]
 		})}, {t});
-
 		interpolationCurve=curve??{newValues[curveKey]??{0}};
 		//-------------------------------------------------- INTERPOLATION
 		if (time>0, {
@@ -273,11 +272,16 @@ TODO:
 	}
 	restoreI {arg i, t, curve, getValues=true, fromMaster=false;
 		var file, extra;
+
+		if (hasMorph==true, {if (presetMorph.isMorphing==false, {presetMorph.start})});//lelijk, noodoplossing....
+
 		if (interpolate==0, {
 			this.restore(i, fromMaster)
 		},{
 			if (fromMaster.not, {
-				this.index_(i);
+				if (i!=index, {
+					this.index_(i);
+				});
 			});
 			if (presets[index]!=nil, {
 				newValues=presets[index];
