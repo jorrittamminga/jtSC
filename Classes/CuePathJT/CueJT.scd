@@ -1,12 +1,17 @@
 /*
-PathJT=Node
-FolderJT=Group = folder
-FilJT=Synth = file
-RootFolderJT=RootNodeJT=Server...
-rootpath=server (=RootFolderJT)
-pathID=nodeID
+The idea is to put an unique increasing pathID in front of the folder/file name in order to have a sorted list in any file system (osx/windows/linux).
+so a filename will be 0000_foldername, where 0000 is the pathID (the amount of digits is also controlable, 4 digits by default)
+
+CuePathJT = Node
+CueFolderJT = Group = folder
+CueFileJT = Synth = file
+RootCueFolderJT = RootNodeJT = Server...
+rootpath = server (=RootCueFolderJT)
+pathID=nodeID (dat hele 0000-0001 gedoe)
+
+of kijk naar Array/Collection, welke methods dit gebruikt om dingen toe te voegen
 */
-PathJT {
+CuePathJT {
 	var pathID, <>rootpath, <>folder;
 	var <>isActive;
 	classvar <addActions;
@@ -25,33 +30,40 @@ PathJT {
 		);
 	}
 	*basicNew { arg rootpath, pathID;
-		rootpath = rootpath ? RootFolderJT.default;//
+		rootpath = rootpath ? RootCueFolderJT.default;//
 		^super.newCopyArgs(pathID ?? { rootpath.nextpathID}, rootpath)
 	}
 	free {}
 	onFree {}
 	asTargetPath { ^this }
 	set {}
-	//trace
+	trace {}
 	query {}
 	moveBefore {arg aPath;}
 	moveAfter {arg aPath;}
 	moveToHead {arg aFolder;}
 	moveToTail {arg aFolder;}
 	run {arg flag; isActive=flag;}
+
+	//renumber {}
+	//path actions:
+	//delete {}
+	//rename {}
+	//copy {}
 }
 
-FolderJT : PathJT {
-	var <entries;
+CueFolderJT : CuePathJT {
+	var <entries;//array of pathnames (or paths) within this folder
 
 	*new {arg target, addAction=\addToHead;
 		var folder, rootpath, addActionID;
 		target = target.asTargetPath;
 		rootpath = target.rootpath;
-		folder = this.basicNew(server);
+		folder = this.basicNew(rootpath);
 		addActionID = addActions[addAction];
 		folder.folder = if(addActionID < 2) { target } { target.folder };
-		server.sendMsg(this.creationCmd, folder.nodeID, addActionID, target.nodeID);
+		[rootpath, folder.nodeID, addActionID, target.nodID];
+		//rootpath.sendMsg(this.creationCmd, folder.nodeID, addActionID, target.nodeID);
 		^folder
 	}
 	dumpTree {}
@@ -60,11 +72,11 @@ FolderJT : PathJT {
 
 }
 
-FileJT : PathJT {
+CueFileJT : CuePathJT {
 	*new { arg defName, args, target, addAction=\addToHead;
 		var file, rootpath, addActionID;
 		target = target.asTargetPath;
-		server = target.rootpath;
+		rootpath = target.rootpath;
 		addActionID = addActions[addAction];
 		file = this.basicNew(defName, rootpath);
 		file.folder = if(addActionID < 2) { target } { target.folder };
@@ -78,14 +90,17 @@ FileJT : PathJT {
 	get {}
 }
 
-RootFolderJT : FolderJT {
+RootCueFolderJT : CueFolderJT {
 	classvar <roots, <>default;
 
 	*new { arg rootpath;
-		rootpath = rootpath ? RootPathJT.default;
+		rootpath = rootpath ? RootCuePathJT.default;
 		^(roots.at(rootpath.name) ?? {
 			^super.basicNew(rootpath, 0).rninit
 		})
+	}
+	*default {
+		^this.new
 	}
 	rninit {
 		roots.put(rootpath.name, this);
@@ -109,12 +124,13 @@ RootFolderJT : FolderJT {
 		roots.do({ arg rn; rn.freeAll })
 	}
 }
+RootCuePathJT : RootCueFolderJT
 
 +Nil {
-	asTargetPath { ^Server.default.asTarget }
+	asTargetPath { ^RootCuePathJT.default.asTarget }
 }
 
 +Integer {
-	asTargetPath { ^FolderJT.basicNew(RootFolderJT.default, this) }
+	asTargetPath { ^CueFolderJT.basicNew(RootCueFolderJT.default, this) }
 	asNodeID { ^this }
 }

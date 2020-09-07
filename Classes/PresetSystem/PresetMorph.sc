@@ -559,7 +559,8 @@ PresetMorph {
 	}
 	stop {
 		isMorphing=false;
-		guis[\azimuth].action=nil
+		guis[\azimuth].action={|ez| };
+		//guis[\azimuth].action=nil
 	}
 
 	gui {arg argparent, argbounds;

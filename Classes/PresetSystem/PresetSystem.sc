@@ -703,7 +703,8 @@ PresetSystem {
 						});
 					},{
 						if (File.exists(presetsystem.fullPath), {
-							File.delete(presetsystem.fullPath)
+							File.delete(presetsystem.fullPath);
+							presetsystem.functions[\delete].value(fileName);
 						})
 					})
 				};
