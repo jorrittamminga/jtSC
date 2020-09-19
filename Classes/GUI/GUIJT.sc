@@ -44,7 +44,6 @@ GUIJT {
 		var tmpBounds;
 		//hieronder is van een andere orde (kan in een {}.defer b.v.)
 
-
 		if (parent==nil, {
 			hasWindow=true;
 			this.makeWindow(400, 400, windowMargin??{4@0}, windowGap??{4@2}, 4);

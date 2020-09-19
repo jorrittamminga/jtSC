@@ -1,5 +1,39 @@
 +Array {
+	deepCollectWithoutEvents { | depth = 1, function, index = 0, rank = 0 |
+		if(depth.isNil) {
+			rank = rank + 1;
+			^this.collect { |item, i|
+				item.deepCollectWithoutEvents(depth, function, i, rank) }
+		};
+		if (depth <= 0) {
+			^function.value(this, index, rank)
+		};
+		depth = depth - 1;
+		rank = rank + 1;
+		^this.collect { |item, i|
+			if (item.class==Event, {
+				item=item.keys.asArray.sort.collect{|key| item[key]}
+			},{
+				item.deepCollectWithoutEvents(depth, function, i, rank)
+			})
+		}
+	}
 
+
+	/*
+	deepCollect { | depth = 1, function, index = 0, rank = 0 |
+	if(depth.isNil) {
+	rank = rank + 1;
+	^this.collect { |item, i| item.deepCollect(depth, function, i, rank) }
+	};
+	if (depth <= 0) {
+	^function.value(this, index, rank)
+	};
+	depth = depth - 1;
+	rank = rank + 1;
+	^this.collect { |item, i| item.deepCollect(depth, function, i, rank) }
+	}
+	*/
 
 	indexOfNextNotNil {arg i=0;
 		var tmpI=i.copy;

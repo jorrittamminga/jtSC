@@ -11,5 +11,5 @@
 		string=string++")";
 		^string
 	}
-
+	deepCollectKeys { arg depth, function, index = 0, rank = 0, keys; ^function.value(this, index, rank) }
 }
