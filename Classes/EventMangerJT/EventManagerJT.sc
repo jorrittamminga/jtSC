@@ -1,5 +1,6 @@
 /*
 events_ must be more efficient!
+EventManagerJT : Collection of ArrayedCollection ????
 */
 EventManagerJT { //: EventManagerJT
 	var <keys, <array, <specs, <actions, <event;

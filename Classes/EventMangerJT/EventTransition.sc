@@ -194,7 +194,7 @@ EventTransition : EventManagerJT {
 
 + Event {
 	transitionTo_ { arg newEvent, durations, curves, delayTimes, specs, actions;
-		^if (this.know.class==EventTransition, {
+		^if (this.know.class==EventTransition, {//beter: this.parent.class!
 			this.know.transitionTo_(newEvent, durations, curves, delayTimes);
 		},{
 			EventTransition(this, specs, actions).transitionTo_(newEvent, durations, curves, delayTimes);
