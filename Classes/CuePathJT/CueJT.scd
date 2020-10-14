@@ -2,6 +2,16 @@
 The idea is to put an unique increasing pathID in front of the folder/file name in order to have a sorted list in any file system (osx/windows/linux).
 so a filename will be 0000_foldername, where 0000 is the pathID (the amount of digits is also controlable, 4 digits by default)
 
+The CueFileJT contains an Event with (method: restore, args: [0, 1.0, \sin], functionPre: {}, functionPost: {}) or (path: "/xyz/", etc) or a Function {...args; }
+The CueFileJT is connected to an PresetJT, PresetJTCollection, Function, etc
+A CueList (from Main CueSystem) is a 'compiled' list [{},{},{}...] of all the interpreted CueFileJT instructions
+
+e=(freq: EZSlider, amp: EZSlider);
+e=e.asEventJT;
+p=PresetJT(e, path);
+pc=PresetJTCollection(p);
+cf=CueFileJT(c, args, masterCuePathJT)
+
 CuePathJT = Node
 CueFolderJT = Group = folder
 CueFileJT = Synth = file

@@ -1,7 +1,3 @@
-/*
-indices of the PresetJT are stored in values
-preload an array of presets? or calculate the 'presets' on restore and restoreAction?
-*/
 PresetJTCollection : PresetJT {
 	var <presetJT, <>presets;
 
@@ -13,6 +9,9 @@ PresetJTCollection : PresetJT {
 		objects=indices??{(0..preset.array.size-1)};
 		^this.basicNew(objects, dirname, preset)
 	}
+	indices_ {arg indices;
+		this.values_(indices);
+	}
 	prMakePresetArray {
 		presets=values.deepCollect(0x7FFFFFFF, {|i| presetJT.array.clipAt(i)??{presetJT.array[0]} });
 	}
@@ -22,8 +21,6 @@ PresetJTCollection : PresetJT {
 			this.prMakePresetArray;
 			func[\restoreAction].value;
 		};
-		specs=presetJT.specs;
-		actions=presetJT.actions;
 		objects=presetJT.objects;
 		presetJT.func[\store]=presetJT.func[\store].addFunc({
 			if (values.includes(presetJT.index), {

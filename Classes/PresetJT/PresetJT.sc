@@ -1,10 +1,13 @@
 /*
-array is an array with all the presets which exists in the dirname (path)
-collection is a array with indices of the array
+PresetJT is only for writing/storing and loading/restoring presets values (mostly Events (freq:100, amp:0.1)) in a File
+for morphing between presets use CueFileJT or PresetBlender or etc
+
+array is an array with all the presets which exists in the dirname (path) => [(freq: 1000), (freq:440)]
+collection is a array with indices of the array: [0,1]
 */
-PresetJT {
+MetaPresetJT {
 	var <>index=0;
-	var <actions, <specs, <values;
+	var <values;//<actions, <specs
 	var <>extension=".scd", <>dirname, <name="0";
 	var <>array, <names;
 	var <>func, <>restoreAction;
@@ -35,13 +38,12 @@ PresetJT {
 			});//loadAll
 		});
 	}
-	prInit {arg extra;}
 	getValues {
 		values=objects.collect{|o| o.value};
 	}
 	values_ {arg vals;
 		values=vals;
-		restoreAction.value;
+		restoreAction.value(this);
 	}
 	restore {arg i;
 		var out;
@@ -50,13 +52,13 @@ PresetJT {
 			name=names[index];
 		});
 		values=array[index];
-		out=restoreAction.value;
+		out=restoreAction.value(this);
 		func[\restore].value(index, this);
 		^out
 	}
 	load {
 		values=(dirname++name++extension).load;
-		restoreAction.value;
+		restoreAction.value(this);
 	}
 	loadAll {
 		var restoreFlag=false;
@@ -140,6 +142,65 @@ PresetJT {
 			index=names.indexOf(name);
 		});
 	}
+	prInit {arg extra;}
+}
+
+PresetJT : MetaPresetJT {
+	*new { arg objects, dirname, extra;//objects
+		^this.basicNew(objects, dirname, extra)
+	}
+	prInit {arg extra;
+		switch(objects.class, EventJT, {
+			restoreAction={
+				values.keysValuesDo{|key,value|
+					objects.actions[key].value(value);
+					{objects.objects[key].value=value}.defer;
+				};
+				values
+			};
+		}, Event, {
+			objects=objects.asEventJT;
+			restoreAction=if (objects.objects.size>0, {
+				if (objects.actions.size>0, {
+					{
+						values.keysValuesDo{|key,value|
+							objects.actions[key].value(value);
+							{objects.objects[key].value=value}.defer;
+						};
+						values
+					}
+				},{
+					{
+						values.keysValuesDo{|key,value|
+							//actions[key].value(value);
+							{objects.objects[key].value=value}.defer;
+						};
+						values
+					}
+				})
+			},{
+				if (objects.actions.size>0, {
+					{
+						values.keysValuesDo{|key,value|
+							objects.actions[key].value(value);
+							//{objects[key].value=value}.defer;
+						};
+						values
+					}
+				},{
+					{
+						//values.keysValuesDo{|key,value|
+							//actions[key].value(value);
+							//{objects[key].value=value}.defer;
+						//};
+						values
+					}
+				})
+			})
+		}, {
+
+		})
+	}
 	makeGui {arg parent, bounds;
 		{gui=PresetJTGUI(this, parent, bounds)}.defer
 	}
@@ -167,7 +228,7 @@ PresetJTGUI {
 	}
 	makeFileGUI {
 		var width;
-		width=(bounds.x-(6*bounds.y)*0.5);
+		width=(bounds.x-(7*bounds.y)*0.5);
 		views[\restore]=Button(compositeView, bounds.y@bounds.y).states_([[\R]]).action_{presetJT.restore}.canFocus_(false).font_(font);
 		views[\store]=Button(compositeView, bounds.y@bounds.y).states_([[\S]]).action_{presetJT.store}.canFocus_(false).font_(font);
 		views[\add]=Button(compositeView, bounds.y@bounds.y).states_([["+"]]).action_{
@@ -187,37 +248,43 @@ PresetJTGUI {
 			b.canFocus_(true);
 		};
 		views[\list]=PopUpMenu(compositeView, width@bounds.y).items_(presetJT.names).action_{arg i;
-			{views[\name].string_(presetJT.names[i.value])}.defer;
+			{
+				views[\name].string_(presetJT.names[i.value]);
+				views[\index].string_(i.value);
+			}.defer;
 			presetJT.restore(i.value)
 		}.canFocus_(false).font_(font);
-		views[\prev]=Button(compositeView, bounds.y@bounds.y).states_([["<"]]).action_{
+		views[\index]=StaticText(compositeView, bounds.y@bounds.y).string_("0").align_(\right).font_(font).stringColor_(Color.white).background_(Color.black);
+		views[\prev]=Button(compositeView, bounds.y@bounds.y).states_([["<"]]).canFocus_(false).action_{
 			var i=presetJT.index-1;
 			if (i>=0, {
 				presetJT.restore(i);
 				{
+					views[\index].string_(i);
 					views[\list].value_(presetJT.index);
 					views[\name].string_(presetJT.name);
 				}.defer
 			})
 		};
-		views[\next]=Button(compositeView, bounds.y@bounds.y).states_([[">"]]).action_{
+		views[\next]=Button(compositeView, bounds.y@bounds.y).states_([[">"]]).canFocus_(false).action_{
 			var i;
 			i=presetJT.index+1;
 			if (i<presetJT.array.size, {
 				presetJT.restore(i);
 				{
+					views[\index].string_(i);
 					views[\list].value_(presetJT.index);
 					views[\name].string_(presetJT.name);
 				}.defer
 			});
 		};
-
 	}
 	update {
 		{
 			views[\list].items_(presetJT.names);
 			views[\list].value_(presetJT.index);
 			views[\name].string_(presetJT.name);
+			views[\index].string_(presetJT.index);
 		}.defer
 	}
 }

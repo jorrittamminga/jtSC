@@ -1,6 +1,6 @@
 /*
 events is an Array of events [(),()] or [[(),()],[(),()]] or etc
-*/
+
 ViewsPresetJTBlender : EventManagerJT {
 	var <viewsPresetJT, <objects;
 	var <>updateFunc;
@@ -66,3 +66,4 @@ ViewsPresetJTBlender : EventManagerJT {
 		};
 	}
 }
+*/
