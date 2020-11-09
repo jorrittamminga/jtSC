@@ -11,7 +11,7 @@ MetaPresetJT {
 	var <>extension=".scd", <>dirname, <name="0";
 	var <>array, <names;
 	var <>func, <>restoreAction;
-	var <gui, <>objects;
+	var <gui, <>objects, <objectsChanged;
 
 	*basicNew { arg objects, dirname, extra;//objects
 		^super.new.init(objects, dirname, extra)
@@ -23,9 +23,10 @@ MetaPresetJT {
 		names=names??{[]};
 		array=array??{[]};
 		func=func??{()};
-		[\restoreAction, \restore, \store, \save, \add, \removeAt, \name].do{|key| func[key]=func[key]};
+		[\restoreAction, \restore, \restoreI, \store, \save, \add, \removeAt, \name, \swap].do{|key| func[key]=func[key]};
 		this.getValues;
 		this.prInit(extra);
+		objectsChanged=false;
 		if (dirname!=nil, {
 			if (File.exists(dirname).not, {
 				dirname.mkdir;
@@ -47,7 +48,9 @@ MetaPresetJT {
 	}
 	restore {arg i;
 		var out;
+		objects.routines.do{|r| r.stop};
 		if (i!=nil, {
+			if (i.class==String, {i=names.indexOf(i)??{0}});
 			index=i;
 			name=names[index];
 		});
@@ -55,6 +58,16 @@ MetaPresetJT {
 		out=restoreAction.value(this);
 		func[\restore].value(index, this);
 		^out
+	}
+	restoreI {arg i, durations=1.0, curves, delayTimes, update=true;
+		if (i!=nil, {
+			if (i.class==String, {i=names.indexOf(i)??{0}});
+			index=i;
+			name=names[index];
+		});
+		values=array[index];
+		this.objects.valuesActionsTransition(values, durations, curves, delayTimes, update);
+		func[\restoreI].value(index, this, durations, curves, delayTimes, update);
 	}
 	load {
 		values=(dirname++name++extension).load;
@@ -72,6 +85,9 @@ MetaPresetJT {
 			}
 		});
 		index=0;
+		if (array.size==0, {
+			this.store;
+		});
 		if (restoreFlag, {
 			name=names[index];
 			this.restore;
@@ -88,6 +104,8 @@ MetaPresetJT {
 	}
 	save {
 		var file=File(dirname++name++extension, "w");
+		"save".postln;
+		"values ".post; values.postln;
 		file.write(values.asCompileString);
 		file.close;
 	}
@@ -95,7 +113,13 @@ MetaPresetJT {
 	store {
 		this.getValues;
 		//if (array.size>index, {array[index]=values},{this.add});
-		array[index]=values;
+		if (index>=array.size, {
+			array=array.add(values);
+			names=names.add(name);
+			index=array.size-1;
+		},{
+			array[index]=values;
+		});
 		func[\store].value(index, this);
 		this.save;
 	}
@@ -104,12 +128,19 @@ MetaPresetJT {
 		this.restore;
 	}
 	add {
+		"add".postln;
 		index=index+1;
+		"index ".post; index.postln;
 		name=name++"1";
+		"name ".postln; name.postln;
 		array=array.insert(index, values);
+		"array".post; array.postln;
 		names=names.insert(index, name);
-		func[\add].value(index, this);
+		"names ".post; names.postln;
+		"this.save".postln;
 		this.save;
+		"func[add].value".post; [index, this].postln;
+		func[\add].value(index, this);
 	}
 	removeAt {arg i;
 		var y, z;
@@ -132,16 +163,21 @@ MetaPresetJT {
 		});
 	}
 	name_ {arg fileName;
+		var order, prevIndex, prevName=name.copy, newName=fileName.copy;
 		if (name!=fileName, {
 			("mv "++(dirname++name++extension)++" " ++ (dirname++fileName++extension)).unixCmd;
 			name=fileName;
 			names[index]=name;
 			array=names.order.collect{|i| array[i]};
-			func[\name].value(names.order, this);
+			order=names.order.copy;
 			names=names.sort;//ook een eventuele collections herschikken!
+			prevIndex=index.copy;
 			index=names.indexOf(name);
+			func[\name].value(index, this, order, prevIndex, prevName, newName);
+			//func[\swap].value(prevIndex, index, this);
 		});
 	}
+	//swap {arg fromIndex, toIndex; array.swap(fromIndex, toIndex);}
 	prInit {arg extra;}
 }
 
@@ -190,8 +226,8 @@ PresetJT : MetaPresetJT {
 				},{
 					{
 						//values.keysValuesDo{|key,value|
-							//actions[key].value(value);
-							//{objects[key].value=value}.defer;
+						//actions[key].value(value);
+						//{objects[key].value=value}.defer;
 						//};
 						values
 					}
@@ -229,10 +265,12 @@ PresetJTGUI {
 	makeFileGUI {
 		var width;
 		width=(bounds.x-(7*bounds.y)*0.5);
-		views[\restore]=Button(compositeView, bounds.y@bounds.y).states_([[\R]]).action_{presetJT.restore}.canFocus_(false).font_(font);
-		views[\store]=Button(compositeView, bounds.y@bounds.y).states_([[\S]]).action_{presetJT.store}.canFocus_(false).font_(font);
+		views[\store]=Button(compositeView, bounds.y@bounds.y).states_([[\s]]).action_{presetJT.store}.canFocus_(false).font_(font);
+		views[\restore]=Button(compositeView, bounds.y@bounds.y).states_([[\r]]).action_{presetJT.restore}.canFocus_(false).font_(font);
 		views[\add]=Button(compositeView, bounds.y@bounds.y).states_([["+"]]).action_{
+			"presetJT.add".postln;
 			presetJT.add;
+			"this.update".postln;
 			this.update;
 		}.canFocus_(false).font_(font);
 		views[\remove]=Button(compositeView, bounds.y@bounds.y).states_([["-"]]).action_{
@@ -247,14 +285,19 @@ PresetJTGUI {
 			b.enabled_(true);
 			b.canFocus_(true);
 		};
-		views[\list]=PopUpMenu(compositeView, width@bounds.y).items_(presetJT.names).action_{arg i;
+		views[\list]=PopUpMenu(compositeView, width@bounds.y).items_(
+			if (presetJT.names.size==0, {["0"]},{
+				presetJT.names
+			})
+		).action_{arg i;
 			{
 				views[\name].string_(presetJT.names[i.value]);
 				views[\index].string_(i.value);
 			}.defer;
 			presetJT.restore(i.value)
 		}.canFocus_(false).font_(font);
-		views[\index]=StaticText(compositeView, bounds.y@bounds.y).string_("0").align_(\right).font_(font).stringColor_(Color.white).background_(Color.black);
+		views[\index]=StaticText(compositeView, bounds.y@bounds.y).string_("0").align_(\right).font_(font)
+		.stringColor_(Color.white).background_(Color.black);
 		views[\prev]=Button(compositeView, bounds.y@bounds.y).states_([["<"]]).canFocus_(false).action_{
 			var i=presetJT.index-1;
 			if (i>=0, {
@@ -277,6 +320,16 @@ PresetJTGUI {
 					views[\name].string_(presetJT.name);
 				}.defer
 			});
+		};
+
+		[\restore, \restoreI].do{|key|
+			presetJT.func[key]=presetJT.func[key].addFunc({arg index, preset;
+				{
+					views[\index].string_(index);
+					views[\list].value_(index);
+					views[\name].string_(presetJT.names[index])
+				}.defer
+			})
 		};
 	}
 	update {

@@ -1,0 +1,3 @@
+just in case SCMIR disappears....
+https://composerprogrammer.com/code.html
+https://composerprogrammer.com/code/SCMIR.zip

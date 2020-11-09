@@ -43,58 +43,67 @@ EventsArrayJT {
 			event.values[key]=val
 		};
 	}
+	doMapValue {arg array;
+		array.do{|val,index|
+			var key=keys[index];
+			val=specsArray[index].map(val);
+			event.values[key]=val
+		};
+	}
 	method_ {arg methode;
 		method=methode??{method};
 	}
-	at {arg index;
-		^if (index.size==0, {this.atIndex(index)},{this.atIndices(index)});
+	//with Action
+	at {arg index, methode=\doMapAction;
+		^if (index.size==0, {this.atIndex(index, methode)},{this.atIndices(index, methode)});
 	}
-	atIndex {arg index;
-		this.doMapAction(array[index]);
+	atIndex {arg index, methode=\doMapAction;
+		this.performMsg([methode, array[index]]);
 		^event
 	}
-	atIndices {arg indices;
+	atIndices {arg indices, methode=\doMapAction;
 		var out=array.deepCopy;
 		indices.asArray.do{arg i; out=out[i]};
-		this.doMapAction(out);
+		this.performMsg([methode,out]);
 		^event
 	}
-	blendAt {arg index;
-		^if (index.size==0, {this.blendAtIndex(index, method)},{this.blendAtIndices(index, method)});
+	blendAt {arg index, methode=\doMapAction;
+		^if (index.size==0, {this.blendAtIndex(index, method, methode)},{this.blendAtIndices(index, method, methode)});
 	}
-	blendAtIndex {arg index;
+	blendAtIndex {arg index, methode=\doMapAction;
 		var out;
 		out=array.blendAt(index, method);
-		this.doMapAction(out);
-		^event
+		this.performMsg([methode,out]);
+		^event.values
 	}
-	blendAtIndices {arg indices;
+	blendAtIndices {arg indices, methode=\doMapAction;
 		var out;
 		out=array.blendAtIndices(indices, method);
-		this.doMapAction(out);
-		^event
+		this.performMsg([methode,out]);
+		^event.values
 	}
-	blendAtDepth {arg index, depth=1.0;
+	blendAtDepth {arg index, depth=1.0, methode=\doMapAction;
 		^if (index.size==0, {
-			this.blendAtIndexDepth(index, method, depth)
+			this.blendAtIndexDepth(index, depth, methode)
 		},{
-			this.blendAtIndicesDepth(index, method, depth)
+			this.blendAtIndicesDepth(index, depth, methode)
 		});
 	}
-	blendAtIndexDepth {arg index, depth=1.0;
+	blendAtIndexDepth {arg index, depth=1.0, methode=\doMapAction;
 		var out;
 		out=array.blendAt(index, method);
 		out=[meanArray, out].blendAt(depth);
-		this.doMapAction(out);
-		^event
+		this.performMsg([methode,out]);
+		^event.values
 	}
-	blendAtIndicesDepth {arg indices, depth=1.0;
+	blendAtIndicesDepth {arg indices, depth=1.0, methode=\doMapAction;
 		var out;
 		out=array.deepCopy.blendAtIndices(indices, method);
 		out=[meanArray, out].blendAt(depth);
-		this.doMapAction(out);
-		^event
+		this.performMsg([methode,out]);
+		^event.values
 	}
+	//without Action
 	findKeys {
 		keys=[];
 		array.flat.do{arg event;

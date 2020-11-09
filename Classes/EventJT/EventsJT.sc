@@ -41,9 +41,9 @@ putAll
 */
 EventJT : Event {
 	var <specs, <actions, <objects, <values;
-	var specsArray, actionsArray, objectsArray, valuesArray;
+	var specsArray, actionsArray, objectsArray, valuesArray, <clumps, clumpsArray;
 	var <valuesActionsFunc;
-	var <sectKeys, <sortedKeys, <sortedSpecs;
+	var <sectKeys, <sortedKeys, <sortedSpecs, <sortedClumps, mapMethod;
 	var <arrayUnmappedSorted;
 	var <hasObjects, <hasActions, <hasSpecs;
 	var <presetJT;
@@ -68,12 +68,14 @@ EventJT : Event {
 		stepSizes=();
 		durations=();
 		delayTimes=();
+		clumps=();
+		mapMethod='mapNoClumps';
 		this.resolution_(10);
 		hasObjects=false;
 		hasActions=false;
 		hasSpecs=false;
 		this.getObjects;
-		sortedSpecs=sortedKeys.collect{|key| specs[key]};
+		this.sortAll;
 		this.unmapValues;
 	}
 	update {
@@ -85,13 +87,22 @@ EventJT : Event {
 		waitTime=resolution.reciprocal;
 	}
 	//override
+	sortAll {
+		sortedSpecs=sortedKeys.collect{|key| specs[key]};
+		sortedClumps=sortedKeys.collect{|key| clumps[key]};
+		if (sortedClumps.sum>sortedClumps.size, {
+			mapMethod='mapClumps'
+		},{
+			mapMethod='mapNoClumps'
+		});
+	}
 	put {arg key, obj;//value = object
 		_IdentDict_Put
 		obj ?? { this.removeAt(key); ^this };
 		sortedKeys=sortedKeys.add(key).asSet.asArray.sort;//check of er een nieuwe key is toegevoegd
 		this.getObject(key, obj);
 		this.unmapValues;//brute force, can be more efficient by inserting new value to the list....
-		sortedSpecs=sortedKeys.collect{|key| specs[key]};
+		this.sortAll;
 		^this.primitiveFailed
 	}
 	//putAll {arg event; this.valuesActions(event);}
@@ -128,6 +139,7 @@ EventJT : Event {
 			actions[key]={arg val; obj.action.value(val); {obj.value_(val)}.defer};
 			values[key]=obj.value;
 			specs[key]=ControlSpec(0.0, 1.0).warp;
+			clumps[key]=obj.value.size.max(1);
 			if (obj.class.superclass==ItemViewBase, {specs[key]=ControlSpec(0, obj.items.size-1, 0, 1)});
 			if ((obj.class==Button) || (obj.class==RoundButton), {specs[key]=ControlSpec(0, obj.states.size-1, 0, 1)});
 		}, EZGui, {
@@ -136,10 +148,13 @@ EventJT : Event {
 			actions[key]={arg val; obj.action.value(val); {obj.value_(val)}.defer};
 			values[key]=obj.value;
 			specs[key]=this.getSpec(obj);
+			clumps[key]=obj.value.size.max(1);
 		}, Function, {
 			actions[key]=obj;
+			clumps[key]=1;
 		}, FunctionList, {
 			actions[key]=obj;
+			clumps[key]=1;
 		}, {
 			"no idea what to do with ".post; key.post; " ".post; obj.post; " ".post;
 			[obj.class, obj.class.topclass].postln;
@@ -197,6 +212,33 @@ EventJT : Event {
 		objects.keysValuesDo{|key,obj|
 			this.getAction(obj, key)
 		}
+	}
+	unmap {arg event;
+		^sortedKeys.collect{|key|
+			if (specs[key]!=nil, {
+				specs[key].unmap(event[key])
+			},{
+				event[key]
+			})
+		}.flat
+	}
+	map {arg array;
+		^this.performMsg([mapMethod, array]);
+	}
+	mapNoClumps {arg array;
+		var event=();
+		array.collect{|val,i|
+			event[sortedKeys[i]]=sortedSpecs[i].map(val);
+		};
+		^event
+	}
+	mapClumps {arg array;
+		var event=();
+		array=array.clumps(sortedClumps).collect(_.unbubble);
+		array.collect{|val,i|
+			event[sortedKeys[i]]=sortedSpecs[i].map(val);
+		};
+		^event
 	}
 	unmapValues {
 		arrayUnmappedSorted=sortedKeys.collect{|key|

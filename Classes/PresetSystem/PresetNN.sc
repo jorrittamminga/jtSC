@@ -62,7 +62,7 @@ PresetNN {
 	}
 
 	initNN {arg delete=false;
-		neuralNet=NeuralNet(nin.asInteger
+		neuralNet=NeuralNetJT(nin.asInteger
 			, nhidden=sizes.sum.max(nin).asInteger
 			, nout=sizes.sum.asInteger
 			, learningrate??{0.05}, initweight??{0.05}

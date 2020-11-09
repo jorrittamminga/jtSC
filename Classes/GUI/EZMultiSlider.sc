@@ -135,7 +135,7 @@ EZMultiSlider : EZGui {
 
 	value_ { arg val;
 		value = controlSpec.constrain(val);
-		numberView.value = value.asArray[sliderView.index].round(round);
+		numberView.value = value.asArray.clipAt(sliderView.index).round(round);
 		sliderView.value = controlSpec.unmap(value);
 	}
 

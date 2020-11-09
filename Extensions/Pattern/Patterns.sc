@@ -1,6 +1,61 @@
 /*
 w=noise color. 0.0=whitenoise, 1=pinknoise, 2=brownnoise
 */
+Pxrandd : ListPattern {
+	var <>distance;
+	*new { arg list, distance=0, repeats=1;
+		^super.new(list, repeats).distance_(distance)
+	}
+	embedInStream { arg inval;
+		var item, size, prev=list[0], newList;
+		var index = list.size.rand;
+		var dStr = distance.asStream;
+		var maxAttempts=list.size*4;
+		repeats.value(inval).do({ arg i;
+			var flag=true, attempts=0;
+			while({flag && (attempts<maxAttempts)},{
+				newList=[prev]++list.copy.scramble;
+				attempts=attempts+1;
+				flag=newList.differentiate.copyToEnd(1).abs.collect{|i| (i>dStr)}.includesEqual(false)
+			});
+			if (attempts>=(maxAttempts-1), {"Warning! Maxattempts is reached. Consider to lower the distance".postln});
+			prev=newList.last;
+			newList=newList.copyToEnd(1);
+			newList.do{arg item, j;
+				inval = item.embedInStream(inval);
+			}
+		});
+		^inval;
+	}
+}
+
+Pwxrand : ListPattern {
+	var <>weights, <>minDistance;
+	*new { arg list, weights, minDistance=0, repeats=1;
+		^super.new(list, repeats).weights_(weights).minDistance_(minDistance)
+	}
+	embedInStream {  arg inval;
+		var item, wVal, dVal, prevItem=list[0], index, prevIndex;
+		var wStr = weights.asStream;
+		var dStr = minDistance.asStream;
+		repeats.value(inval).do({ arg i;
+			var flag=true;
+			wVal = wStr.next(inval);
+			dVal = dStr.next(inval);
+			if(wVal.isNil) { ^inval };
+			while({flag},{
+				index=wVal.windex;
+				item = list.at(index);
+				flag=((item-prevItem).abs<=minDistance)
+			});
+			prevItem=item;
+			inval = item.embedInStream(inval);
+		});
+		^inval
+	}
+	storeArgs { ^[ list, weights, repeats ] }
+}
+
 Pnoise : Pattern {
 	var <>lo, <>hi, <>w, <>bits, <>length;
 	*new { arg lo=0.0, hi=1.0, w=0.0, bits=6, length=inf;
