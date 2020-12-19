@@ -27,13 +27,22 @@ CueJTMaster {
 	}
 	init {arg argpath, argcueJTs, argname, argenviroment;
 		rootPath=argpath;
+		fileName=argname??{"0000_master"};
+		if (File.exists(rootPath).not, {
+			File.mkdir(rootPath);
+		});
+		if (PathName(rootPath).entries.size==0, {
+			var file, initFolderName="0000_Init/";
+			File.mkdir(rootPath++initFolderName);
+			file=File(rootPath++initFolderName++fileName++"."++extension, "w");
+			file.write( ().asCompileString );
+			file.close;
+		});
 		pathSystem=PathSystemJT(rootPath);
 		pathSystem.slaveAction=pathSystem.slaveAction.addFunc({arg index; this.cueID_(index)});
 		paths=pathSystem.paths;
 		pathsRelative=pathSystem.pathsRelative;
-
 		cueJTs=argcueJTs??{()};
-		fileName=argname??{"0000_master"};
 		value=();
 		enviroment=argenviroment??{()};
 		//------------------------------------ cueJTs, most of the time CueJTSlaves
@@ -48,8 +57,9 @@ CueJTMaster {
 		};
 		//-------------------------------------
 		this.initCueJTs;
+		/*
 		this.cueID_(0);
-		//this.analyzeStructure;
+		*/
 	}
 	initCueJT {arg cueJT;
 		cueJT.rootPath=rootPath;
@@ -122,6 +132,7 @@ CueJTMaster {
 	}
 	initCueJTs {
 		//moet het eigenlijk collect zijn? is .do niet voldoende?
+
 		pathSystem.paths.collect{|path, i|
 			PathName(path).entries.do{arg pathname;
 				var fileName=pathname.fileNameWithoutExtension.asSymbol;
@@ -133,10 +144,14 @@ CueJTMaster {
 			};
 			if (i==0, {
 				cueJTs.keysValuesDo{|key,cueJT|
+					var pathcueJT=path++key++".scd";
 					if (cueJT.paths[0]==nil, {
-						cueJT.paths[0]=path;
+						var file=File(pathcueJT, "w");
+						file.write(0.asCompileString);//init value, misschien een initFunc oid inbouwen in de CueJT class
+						file.close;
+						cueJT.paths[0]=pathcueJT;//path
 						cueJT.pathsRelative[0]=pathSystem.pathsRelative[0];
-						cueJT.funcList[0]=cueJT.makeFunc(path.fullPath.load);
+						cueJT.funcList[0]=cueJT.makeFunc(pathcueJT.load);//path.fullpath.load
 						cueJT.cueID_(0);
 						cueJT.store;
 					});

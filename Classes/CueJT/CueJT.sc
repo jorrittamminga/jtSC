@@ -43,7 +43,7 @@ MetaCueJT {
 }
 
 CueJT : MetaCueJT {
-	*new {arg object, name, enviroment;
+	*new {arg object, name, enviroment, dirname;
 		obj=object.class;
 
 		^if (obj.asClass.superclasses.includesEqual(MetaPresetJT)//(obj==PresetJT) || (obj==PresetJTCollection) || (obj==PresetJTCollectionBlender) //|| (obj==PresetJTNeuralNet)
@@ -54,7 +54,11 @@ CueJT : MetaCueJT {
 					//CueJTCollection(object, name, enviroment)
 					CueJTCollection(object.collect{|obj| CueJT(obj, name, enviroment)});
 				}, {
-					super.basicNew(object, name, enviroment)
+					if ((obj==Event) || (obj==Event), {
+						CuePresetFromEventJT.new(PresetJT(object, dirname), name, enviroment)
+					},{
+						super.basicNew(object, name, enviroment)
+					})
 				})
 		})
 	}
@@ -65,20 +69,26 @@ CueJT : MetaCueJT {
 		value=values[cueID];
 		func[\cueID].value(this);
 	}
-	add {
+	prAdd {
 		paths[cueMaster.cueID]=cueMaster.path;
 		pathsRelative[cueMaster.cueID]=cueMaster.pathRelative;
 		values[cueMaster.cueID]=this.getValue;
 		this.cueID_(cueMaster.cueID);
 		this.store;
 	}
-	delete {
+	add {
+		this.prAdd
+	}
+	prDelete {
 		if (cueMaster.cueID>0, {
 			paths[cueMaster.cueID]=nil;
 			pathsRelative[cueMaster.cueID]=nil;
 			values[cueMaster.cueID]=nil;
 			this.restorePrevious;
 		});
+	}
+	delete {
+		this.preDelete
 	}
 	previousCue {arg index;
 		index=index??{cueID};
@@ -95,7 +105,7 @@ CueJT : MetaCueJT {
 		funcList[cueID].value(enviroment);
 	}
 	getValue {
-		value
+		^value
 	}
 	value_ {arg v;
 		value=v;

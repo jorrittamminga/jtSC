@@ -105,7 +105,6 @@ CuePresetJTGUI : CueJTGUI {
 		action=action.addFunc({arg val;
 			cueJT.object.restore(val)
 		});
-
 		views[\value]=PopUpMenu(c[\methode], x@20).items_(
 			cueJT.object.names
 		).action_{arg p;

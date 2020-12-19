@@ -24,7 +24,6 @@
 		^fs
 	}
 
-
 	meter { |numIns, numOuts, alwaysOnTop=true|
 		var meterr;
 		var window, newWindow=true;

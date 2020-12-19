@@ -1,5 +1,13 @@
 + Collection {
 
+	deepRemove {arg item;
+		var array, string;
+		array=this.deepCollect(0x7FFFFFFF, {arg x; if(x==item, {nil},{x})});
+		string=array.asCompileString;
+		string=string.replace("nil, ", "").replace(", nil", "").replace("[ nil ]", "");
+		^string.interpret
+	}
+
 	deepCollectKeys { | depth = 1, function, index = 0, rank = 0, keys |
 		if(depth.isNil) {
 			rank = rank + 1;

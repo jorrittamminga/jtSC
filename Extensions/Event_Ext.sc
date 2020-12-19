@@ -4,4 +4,26 @@
 
 		^EventGUIJT(this, parent, bounds, name, controlSpecs, onCloseFunc, canFocus, labelWidth, gap, margin, actions)
 	}
+	asViewEvent {
+		var event=this.copy;
+		^(objects: event, controlSpecs: event.collect(_.controlSpec), routines: (), actions: event.collect(_.action))
+	}
 }
+/*
+EventJT
+
+clumps[key]=obj.value.size.max(1);
+
+e[\objects]=v;
+e[\controlSpecs]=e.objects.collect(_.controlSpec);
+e[\actions]=e.objects.collect(_.action);
+e[\valuez]=e.objects.collect(_.value);
+e[\keyz]=e.objects.keys;
+e[\sortedKeyz]=e.objects.sortedKeys;
+e[\sortedControlSpecs]=e[\sortedKeyz].collect{|key| e[\controlSpecs][key]};
+e[\sortedActions]=e[\sortedKeyz].collect{|key| e[\actions][key]};
+e[\sortedValues]=e[\sortedKeyz].collect{|key| e[\valuez][key]};
+e.clumps;
+e.type=\Views;// \Views, \Values
+e.objectsType = \Views, \Values;
+*/

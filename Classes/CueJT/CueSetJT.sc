@@ -31,4 +31,4 @@ CueFunctionJT : CueJT {
 		{gui=CueFunctionJTGUI(this, parent, bounds)}.defer
 	}
 }
-CueEventJT : CueJT {}
+//CueEventJT : CueJT {}

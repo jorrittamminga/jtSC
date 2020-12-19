@@ -1,4 +1,6 @@
 /*
+subclass of NumberedFile?
+
 PresetJT is only for writing/storing and loading/restoring presets values (mostly Events (freq:100, amp:0.1)) in a File
 for morphing between presets use CueFileJT or PresetBlender or etc
 
@@ -6,12 +8,13 @@ array is an array with all the presets which exists in the dirname (path) => [(f
 collection is a array with indices of the array: [0,1]
 */
 MetaPresetJT {
-	var <>index=0;
+	var <index=0;
 	var <values;//<actions, <specs
 	var <>extension=".scd", <>dirname, <name="0";
-	var <>array, <names;
+	var <>array, <names, <entries, <entry;
 	var <>func, <>restoreAction;
 	var <gui, <>objects, <objectsChanged;
+	var numDigits=4;
 
 	*basicNew { arg objects, dirname, extra;//objects
 		^super.new.init(objects, dirname, extra)
@@ -21,6 +24,7 @@ MetaPresetJT {
 		dirname=argdirname;
 		//==============================================
 		names=names??{[]};
+		entries=entries??{[]};
 		array=array??{[]};
 		func=func??{()};
 		[\restoreAction, \restore, \restoreI, \store, \save, \add, \removeAt, \name, \swap].do{|key| func[key]=func[key]};
@@ -46,39 +50,43 @@ MetaPresetJT {
 		values=vals;
 		restoreAction.value(this);
 	}
+	index_ {arg i;
+		if (i.class==String, {i=names.indexOf(i)});
+		if (i!=nil, {
+			//if (i.class==String, {i=names.indexOf(i)??{0}});
+			index=i;
+			name=names[index];
+			entry=entries[index];
+		});
+	}
 	restore {arg i;
 		var out;
 		objects.routines.do{|r| r.stop};
-		if (i!=nil, {
-			if (i.class==String, {i=names.indexOf(i)??{0}});
-			index=i;
-			name=names[index];
-		});
+		this.index_(i);
 		values=array[index];
 		out=restoreAction.value(this);
 		func[\restore].value(index, this);
 		^out
 	}
 	restoreI {arg i, durations=1.0, curves, delayTimes, update=true;
-		if (i!=nil, {
-			if (i.class==String, {i=names.indexOf(i)??{0}});
-			index=i;
-			name=names[index];
-		});
+		this.index_(i);
 		values=array[index];
 		this.objects.valuesActionsTransition(values, durations, curves, delayTimes, update);
 		func[\restoreI].value(index, this, durations, curves, delayTimes, update);
 	}
 	load {
-		values=(dirname++name++extension).load;
+		//values=(dirname++name++extension).load;
+		values=entry.load;
 		restoreAction.value(this);
 	}
 	loadAll {
 		var restoreFlag=false;
 		if (File.exists(dirname), {
+			//PathName(dirname).entriesFilesOnly.do{|p|}
 			PathName(dirname).entries.do{|p|
 				if (p.isFile, {
-					names=names.add(p.fileNameWithoutExtension);
+					entries=entries.add(p.fullPath);
+					names=names.add(p.fileNameWithoutExtension.split($_).copyToEnd(1).join($_));
 					array=array.add(p.fullPath.load);
 					restoreFlag=true;
 				});
@@ -90,30 +98,49 @@ MetaPresetJT {
 		});
 		if (restoreFlag, {
 			name=names[index];
+			entry=entries[index];
 			this.restore;
 		});
 	}
 	saveAll {
 		array.do{var values,i;
 			if (values!=nil, {
-				var file=File(dirname++names[i]++extension, "w");
+				var file;
+				//file=File(dirname++names[i]++extension, "w");
+				file=File(entries[index], "w");
 				file.write(values.asCompileString);
 				file.close;
 			})
 		}
 	}
-	save {
-		var file=File(dirname++name++extension, "w");
-		"save".postln;
-		"values ".post; values.postln;
-		file.write(values.asCompileString);
-		file.close;
+	save {arg target, addAction;
+		var file;
+		if (target!=nil, {
+			{
+				NumberedFile.write(values, name, target, addAction, numDigits);
+				entries=PathName(dirname).entriesFilesOnly.collect(_.fullPath);
+				entry=entries[index];
+			}.fork
+		},{
+			//file=File(dirname++name++extension, "w");
+			file=File(entry, "w");
+			file.write(values.asCompileString);
+			file.close;
+		})
 	}
 	storeAll {}
 	store {
+		var target, addAction;
 		this.getValues;
 		//if (array.size>index, {array[index]=values},{this.add});
 		if (index>=array.size, {
+			target=entries[index];
+			if (target==nil, {
+				addAction=\addToTail;
+				target=dirname;
+			},{
+				addAction=\addAfter;
+			});
 			array=array.add(values);
 			names=names.add(name);
 			index=array.size-1;
@@ -121,60 +148,76 @@ MetaPresetJT {
 			array[index]=values;
 		});
 		func[\store].value(index, this);
-		this.save;
+		this.save(target, addAction);
 	}
 	at {arg i;
-		index=i.clip(0, array.size-1);
-		this.restore;
+		//index=i.clip(0, array.size-1);
+		this.restore(i);
 	}
-	add {
-		"add".postln;
-		index=index+1;
-		"index ".post; index.postln;
-		name=name++"1";
-		"name ".postln; name.postln;
+	put { arg i, val;
+		this.index_(i);
+		values=val;
+		this.store;
+	}
+	add {arg fileName, addAction=\addAfter;
+		var target;
+		"addje".postln;
+		if (addAction==\addToTail, {
+			index=entries.size-1;
+			addAction=\addAfter;
+		},{
+			if (addAction==\addToHead, {
+				index=0;
+				addAction=\addBefore;
+			})
+		});
+		target=entries[index];
+		"index".post; index.postln;
+		"target".post; target.postln;
+		"addAction ".post; addAction.postln;
+		index=index+(addAfter:1, addBefore: 0)[addAction];
+		"index".post; index.postln;
+		name=fileName??{name++Date.localtime.stamp};
 		array=array.insert(index, values);
-		"array".post; array.postln;
 		names=names.insert(index, name);
-		"names ".post; names.postln;
-		"this.save".postln;
-		this.save;
-		"func[add].value".post; [index, this].postln;
+		this.save(target, addAction);
 		func[\add].value(index, this);
 	}
+	addBefore {arg fileName; this.add(fileName, \addBefore)}
+	addAfter {arg fileName; this.add(fileName, \addAfter)}
+	addToTail {arg fileName; index=entries.size-1; this.add(fileName, \addAfter)}
+	addToHead {arg fileName; index=0; this.add(fileName, \addBefore)}
 	removeAt {arg i;
 		var y, z;
 		i=i??{index};
 		if (i<array.size, {
-			File.delete(dirname++names[i]++extension);
+			NumberedFile.delete(PathName(dirname).entriesFilesOnly[i]);
+			entries.removeAt(i);
+			entries=PathName(dirname).entriesFilesOnly.collect(_.fullPath);
 			array.removeAt(i);
 			names.removeAt(i);
 			index=i.clip(0, array.size-1);
 			name=names[index];
 			func[\removeAt].value(i, this);//or index instead of i??
-		});
-	}
-	put { arg i, val;
-		if (i<array.size, {
-			index=i;
-			name=names[index];
-			values=val;
-			this.store;
+
 		});
 	}
 	name_ {arg fileName;
 		var order, prevIndex, prevName=name.copy, newName=fileName.copy;
+		var newEntry;
 		if (name!=fileName, {
-			("mv "++(dirname++name++extension)++" " ++ (dirname++fileName++extension)).unixCmd;
+			newEntry=(dirname++index.asDigits(10, numDigits).join++"_"++fileName++extension);
+			("mv "++entry++" " ++ newEntry).unixCmd;
+			entry=newEntry;
 			name=fileName;
 			names[index]=name;
-			array=names.order.collect{|i| array[i]};
-			order=names.order.copy;
-			names=names.sort;//ook een eventuele collections herschikken!
-			prevIndex=index.copy;
-			index=names.indexOf(name);
+			entries[index]=entry;
+			//array=names.order.collect{|i| array[i]};
+			//order=names.order.copy;
+			//names=names.sort;//ook een eventuele collections herschikken!
+			//prevIndex=index.copy;
+			//index=names.indexOf(name);
 			func[\name].value(index, this, order, prevIndex, prevName, newName);
-			//func[\swap].value(prevIndex, index, this);
 		});
 	}
 	//swap {arg fromIndex, toIndex; array.swap(fromIndex, toIndex);}
@@ -264,13 +307,15 @@ PresetJTGUI {
 	}
 	makeFileGUI {
 		var width;
-		width=(bounds.x-(7*bounds.y)*0.5);
+		width=(bounds.x-(8*bounds.y)*0.5);
 		views[\store]=Button(compositeView, bounds.y@bounds.y).states_([[\s]]).action_{presetJT.store}.canFocus_(false).font_(font);
 		views[\restore]=Button(compositeView, bounds.y@bounds.y).states_([[\r]]).action_{presetJT.restore}.canFocus_(false).font_(font);
-		views[\add]=Button(compositeView, bounds.y@bounds.y).states_([["+"]]).action_{
-			"presetJT.add".postln;
-			presetJT.add;
-			"this.update".postln;
+		views[\addBefore]=Button(compositeView, bounds.y@bounds.y).states_([["±"]]).action_{
+			presetJT.addBefore;
+			this.update;
+		}.canFocus_(false).font_(font);
+		views[\addAfter]=Button(compositeView, bounds.y@bounds.y).states_([["+"]]).action_{
+			presetJT.addAfter;
 			this.update;
 		}.canFocus_(false).font_(font);
 		views[\remove]=Button(compositeView, bounds.y@bounds.y).states_([["-"]]).action_{

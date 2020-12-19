@@ -1,6 +1,11 @@
 /*
 EventJT = Event waarvan de content een object (b.v. View) is waarbij er een value, object, action is per key
-
+//kijk ook of het gewoon met een Event kan, b.v.
+(values: (freq:110, amp:0.1), objects: (freq: EZSlider, amp: EZSlider), specs: (), actions: ()
+, specsArray, actionsArray, objectsArray, valuesArray
+, clumps, clumpsArray, valuesActionsFuncs, sectKeys, sortedKeys, sortedSpecs, sortedClumps, mapMethod, arrayUnmappedSorted
+, hasObjects, hasActions, hasSpecs, presetJT
+, transitionFlag, noTransitionKeys, routines, routinesArray, resolution, waitTime, curves, steps, stepSizes, durations, delayTimes)
 o=(freq: EZSlider, amp: EZSlider)//de views
 d=(
 specs: (freq: \freq.asSpec, amp: \amp.asSpec),

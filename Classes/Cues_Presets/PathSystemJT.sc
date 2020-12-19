@@ -1,16 +1,19 @@
+/*
+maak een onderscheid (hahaha, onder schijt) tussen Files (deepFiles) en Folders (deepFolders)
+betere naam verzinnen (PathNavigator? PathOrganizer? )
+*/
 PathSystemJT {
 	var <>path, pathRelative, <>rootPath, fileName, extension="scd", numDigits=4;
 	var <paths, <pathsRelative;
 	var <pathStructure, <pathID=0, <gui;
 	var <>slaveAction;
-	//var <>funcs;
+	var <>funcs;
 
 	*new {arg pathName;
 		^super.new.init(pathName)
 	}
 	init {arg argPath;
 		rootPath=argPath;
-		//funcs=();
 		this.updatePaths;
 	}
 	updatePaths {

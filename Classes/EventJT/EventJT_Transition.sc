@@ -1,4 +1,5 @@
 /*
+zou dit ook met een normale Event kunnen?
 for a specific parameter it can be durations[\test]=0, delayTimes[\test]=10;
 */
 + EventJT {
@@ -136,9 +137,10 @@ for a specific parameter it can be durations[\test]=0, delayTimes[\test]=10;
 		})
 	}
 }
-
+/*
 + Event {//newEvent, argdurations, argcurves, argdelayTimes, update=true;
 	valuesActionsTransition { arg newEvent, durations, curves, delayTimes, specs, actions;
 		this.asEventJT(specs, actions).valuesActionsTransition(newEvent, durations, curves, delayTimes, false);
 	}
 }
+*/

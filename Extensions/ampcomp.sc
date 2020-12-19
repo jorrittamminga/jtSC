@@ -18,7 +18,7 @@
 		var fb=0.001.pow(this/decayTime);
 		^((((1+fb.squared)-(2*fb)).pow(power))*(power*2))
 	}
-
+	//delayTime.combamp(decayTime, 0.2155, 0.5)
 	comblpamp {arg decayTime=3.0, power=0.2155, coef=0.0;//power=0.2155 for sustained input such as WhiteNoise.ar
 		var fb=0.001.pow(this/decayTime);
 		^((((1+fb.squared)-(2*fb)).pow(power))*(power*2)*((1-coef).reciprocal))

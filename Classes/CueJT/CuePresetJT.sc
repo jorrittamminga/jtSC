@@ -1,23 +1,23 @@
 CuePresetJT : CueJT {
 	var <transitionFlag;
-	/*
-		*initClass {
-		classesMethods = (
-			PresetJT: [\restore, \restoreI],
-			PresetJTCollection: [\restore, \restoreI],
-			PresetJTCollectionBlender: [\restore, \restoreI]
-		);
-	}
-	*/
 	*new {arg object, name, enviroment;
 		^super.basicNew(object, name, enviroment)
 	}
 	prInit {
 		transitionFlag=true;
 		methode=classMethods[object.class.asSymbol][0];
-		this.addToObjectFuncs;
 		func[\store]=func[\store].addFunc({
 			this.object.store;
+		});
+		"object ".post; object.postln;
+	}
+	transitionFlag_ {arg flag=true;
+		var tmpFuncList;
+		if (flag!=transitionFlag, {
+			transitionFlag=flag;
+			if (flag==false, {
+				object.restore(object.index)
+			});
 		});
 	}
 	makeFunc {arg val;
@@ -161,15 +161,6 @@ CuePresetJT : CueJT {
 				}.defer;
 			});
 		};
-	}
-	transitionFlag_ {arg flag=true;
-		var tmpFuncList;
-		if (flag!=transitionFlag, {
-			transitionFlag=flag;
-			if (flag==false, {
-				object.restore(object.index)
-			});
-		});
 	}
 	makeGui {arg parent, bounds=350@20;
 		{gui=CuePresetJTGUI(this, parent, bounds)}.defer

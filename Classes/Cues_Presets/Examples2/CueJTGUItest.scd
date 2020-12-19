@@ -24,28 +24,4 @@ m=CueJTMaster(cuePath, c).makeGui(w);
 
 )
 
-
-restore PresetCollection
-initNN /Users/jorrit/Dropbox/GitHub/jtSC/Classes/CueJT/Examples/presets/NeuralNets/0.scmirZ
-load pathNN
-views[listNN] action 0
-presetJT.presetJT.restore 0`
-in views[mode] 1
-
-restore PresetCollection
-initNN /Users/jorrit/Dropbox/GitHub/jtSC/Classes/CueJT/Examples/presets/NeuralNets/0.scmirZ
-load pathNN
-presetJT.func restore
-presetJT.func[restore]
-views[listNN] action 0
-presetJT.presetJT.restore 0
-
-
-
-restore PresetCollection
-initNN /Users/jorrit/Dropbox/GitHub/jtSC/Classes/CueJT/Examples/presets/NeuralNets/0.scmirZ
-load pathNN
-presetJT.func restore
-presetJT.func[restore]
-views[listNN] action 0
-presetJT.presetJT.restore 0
+c[\testSlave].values
