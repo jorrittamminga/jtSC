@@ -1,7 +1,7 @@
 PresetsJT : PresetsFileJT {
 	*new {arg object, pathName;
 		var flag=false;
-		if (pathName.class==String, {if (pathName.contains($/), {flag=true})}, {
+		if (pathName.class==String, {if (pathName.contains($/), {flag=false},{flag=true})}, {
 			if (pathName.class==Symbol, {flag=true});
 		});
 		^if (flag, {

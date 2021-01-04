@@ -2,6 +2,7 @@ CueListJT {
 	var <root, <cues, <>enviroment;
 	var <pathNameNumberedManager, <gui;
 	var array, entries;
+	var indices, prevIndex= -1;
 
 	*new {arg path, cues=(), enviroment=();
 		^super.new.init(path, cues, enviroment)
@@ -11,7 +12,8 @@ CueListJT {
 		cues=argcues??{()};
 		enviroment=argenviroment??{()};
 		pathNameNumberedManager=PathNameNumberedManager(root);
-		this.initCues ;
+		indices=();
+		this.initCues;
 		pathNameNumberedManager.updateAction={arg pm, key;
 			if (key==nil, {
 				this.updateCues;
@@ -20,9 +22,10 @@ CueListJT {
 			})
 		};
 		pathNameNumberedManager.action=pathNameNumberedManager.action.addFunc({arg index, pm, restoreFlag=true;
-			var deepFoldersRelative, entries, entriesFullPath, keys;
+			var deepFoldersRelative, entries, entriesFullPath, keys, allKeys=cues.keys.asArray.copy, jump=false;
 			restoreFlag=restoreFlag??{true};
 			#deepFoldersRelative, entries, entriesFullPath, keys=this.getCurrent(pm);
+			jump=(index-prevIndex)!=1;
 			/*
 			cues.keysValuesDo{|key,cue|
 			cue.directory_(pm.currentPathName);
@@ -39,8 +42,29 @@ CueListJT {
 					if ((index!=nil) && (restoreFlag), {
 						cue.restore(index);
 					});
+					indices[key]=index;
+					allKeys.remove(key);
 				});
 			};
+			if (jump, {
+				allKeys.do{|key|
+					var i=index.copy, flag=true;
+					var cue=cues[key];
+					var folders=cue.entries.collect{|p| p.pathOnly};
+					while({flag&&(i>0)},{
+						i=i-1;
+						flag=folders.includesEqual(pm.deepFolders[i]).not;
+					});
+					i=folders.indexOfEqual(pm.deepFolders[i]);
+					if (i!=indices[key], {
+						indices[key]=i;
+						if (restoreFlag, {
+							cue.restore(i);
+						})
+					});
+				}
+			});
+			prevIndex=index;
 		});
 	}
 	getCurrent {arg pm;
@@ -60,14 +84,12 @@ CueListJT {
 		cue.funcs[\directory].value(deepFoldersRelative, keys.includesEqual(key) );
 	}
 	updateCues {
-		"update Cues ".postln;
 		cues.keysValuesDo{arg key, cue;
 			this.updateCue(cue,key);
 		}
 	}
 	getCueEntries {arg cue, key;
 		var entries=[];
-		"getCueEntries for ".post; key.postln;
 		pathNameNumberedManager.deepKeys.do{arg keys, index;
 			keys.do{|k,i|
 				if (k==key, {
@@ -75,12 +97,11 @@ CueListJT {
 				})
 			}
 		};
-		entries.do{|entry| entry.fullPath.postln};
+		//entries.do{|entry| entry.fullPath};
 		^entries
 	}
 	updateCue {arg cue, key;
 		var entries=this.getCueEntries(cue,key);
-		"update Cue ".post; key.postln;
 		if (entries.size>0, {
 			cue.update(entries);
 		});

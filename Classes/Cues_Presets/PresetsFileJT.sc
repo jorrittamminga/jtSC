@@ -13,6 +13,7 @@ PresetsFileJT : Numbered {
 	var <keys, <>enviroment, <defaultMethod;
 	var <fileNames, <fileNamesWithoutNumbers;//paths, pathsWithoutNumbers
 	var <methodsArray, <removeKeyWhenSave;
+	var history;
 	//var <setAction, <getAction;
 	*initClass {
 		allMethods=(
@@ -147,9 +148,7 @@ PresetsFileJT : Numbered {
 		this.action.value(this.value);
 	}
 	getValue {
-		"getValue ".post;
 		value=this.getAction.value(this);
-		value.postln;
 		^value
 	}
 	//----------------------------------------------------------------------------- ACCESSING ARRAY/presets
@@ -172,11 +171,8 @@ PresetsFileJT : Numbered {
 	}
 	restore {arg i;//is at and valueAction
 		var preset;
-		"restore in ".post;
 		this.index_(i);
-		"index ".post; index.postln;
 		this.valueAction_(preset=array[index]);
-		"preset ".post; preset.postcs;
 		^preset
 	}
 	//of is dit meer iets voor CuesJT? JA!
@@ -190,16 +186,13 @@ PresetsFileJT : Numbered {
 		this.prSave;
 	}
 	store {arg i;
-		"store in ".post;
 		this.index_(i);
-		"index ".post; index.postln;
 		this.getValue;
 		//value=value++extra;
 		if (array.size==0, {
 			this.add(basename, '\addToHead', directory);
 		},{
 			//array[index]={ };//makeFunction
-			"value/preset is ".post; value.postcs;
 			array[index]=value;
 			this.prSave;
 		});
@@ -209,8 +202,6 @@ PresetsFileJT : Numbered {
 		var file, val;
 		val=value.deepCopy;
 		removeKeyWhenSave.do{|key| val.removeAt(key)};
-		"save in ".post; entries[index].fullPath.postln;
-		"this preset: ".post; val.postcs;
 		file=File(entries[index].fullPath, "w");
 		file.write(val.asCompileString);
 		file.close
@@ -221,9 +212,7 @@ PresetsFileJT : Numbered {
 	load {}
 	update {arg paths;
 		//this.entries_(paths);
-		"update 1 entriesAction".postln;
 		entries=this.entriesAction.value(paths);
-		"update 2 after entriesAction".postln;
 		entries=entries.collect{|path| path.asPathName};
 		entriesFullPath=entries.collect(_.fullPath);
 		entries.removeAllSuchThat({arg entry; entry.isFolder});
@@ -245,15 +234,8 @@ PresetsFileJT : Numbered {
 				, target??directory//{entries[index]??{directory}}
 				, addAction, numDigits, val);
 			funcs[\add].value(index, this);
-			"update from add".postln;
 			this.update;
-			"added in ".post; file.pathName.fullPath.postln;
-			"this preset: ".post; val.postln;
-
-			"new entries: ".postln; entries.do{|entry| entry.fullPath.postln};
-
 			this.index_(entries.collect(_.fullPath).indexOfEqual(file.pathName.fullPath));
-			"and the new index is ".post; index.postln;
 			//funcs[\add].value(index, this);
 		}.fork(AppClock)
 	}

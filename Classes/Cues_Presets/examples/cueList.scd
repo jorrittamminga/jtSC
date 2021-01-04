@@ -16,15 +16,3 @@ v[\bang2]=Button(w, 350@20).states_([ [\BANG2],[\BANG2,Color.black,Color.green] 
 
 p=PresetsJT(v, \test).makeGui(w, 350@20).addToCueList(c);
 )
-
-(
-x=( 'ms': [ 0.56910568475723, 0.3414634168148, 0.27743899822235, 0.18292683362961 ], 'slider': 0.0, 'bang': 0, 'bang2': 1,
-	'rq': 0.062571196936032, 'method': 1, 'durations': 2.4, 'freq': 1389.6020968787, 'extras': ( 'curves': 'sin' ),
-	'amp': 0.0 );
-
-v.collect(_.value).valuesActionsTransition(x, x.durations, x[\extras][\curves], specs: v.collect(_.controlSpec), actions: v.collect(_.action), nrt:true)[\routinesJT].keysValuesDo{
-	arg key, func;
-	//[key, 0, func, func.value(0)].postln;
-}
-)
-.valuesActionsTransition
