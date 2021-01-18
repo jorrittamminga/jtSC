@@ -270,7 +270,7 @@ GUIJT {
 		^type.new(parent, boundz, label, controlSpec, action
 			, value, false, labelWidth, numberWidth
 			, layout: layout
-			, margin: argmargin, gap: arggap).font_(font).round2_(round);
+			, margin: argmargin, gap: arggap).font_(font).round2_(round, value);
 	}
 
 	reboundsAll {

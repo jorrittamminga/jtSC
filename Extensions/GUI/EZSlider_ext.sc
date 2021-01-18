@@ -28,6 +28,7 @@
 		this.round=r;
 		if (this.numberView.class==NumberBox, {//QNumberBox
 			this.numberView.decimals_(r.decimals);//SCNumberBox
+			this.numberView.value_(value);
 		});
 	}
 
@@ -40,6 +41,7 @@
 		this.round=r;
 		if (this.numberView.class==NumberBox, {//QNumberBox
 			this.numberView.decimals_(r.decimals);//SCNumberBox
+			this.numberView.value_(value);
 		});
 	}
 
@@ -80,6 +82,8 @@
 		if (this.loBox.class==NumberBox, {
 			this.loBox.decimals_(r.decimals);//SCNumberBox
 			this.hiBox.decimals_(r.decimals);//SCNumberBox
+			value=this.value;
+			this.value_(value);
 		});
 	}
 }
@@ -90,6 +94,7 @@
 		this.round=r;
 		if (this.numberView.class==NumberBox, {
 			this.numberView.decimals_(r.decimals);//SCNumberBox
+			this.numberView.value_(value);
 		});
 	}
 
