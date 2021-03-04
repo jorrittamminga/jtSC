@@ -1,0 +1,1 @@
+( 'extras': ( 'preAction': {"poep".postln} ), 'durations': 6.0, 'method': 1, 'basename': "ding3b" )

@@ -1,67 +1,108 @@
 CuesJT : PresetsFileJT {
+	var <objectDefault;
+
 	*new {arg object, cueName;
+		/*
+		^if (object.class==PresetsJT, {
+		CuesPresetsJT(object, cueName)
+		},{
+		*/
 		^super.basicNew(object, cueName)
+		//})
 	}
 	//--------------------------------------------------------------------------------- INITS
 	initPathName {
 		basename=pathName;
 	}
 	initSetAction {
-		if (object.class==Event, {action={object[\routinesJT].do(_.stop)}});
-		action=action.addFunc({arg value;//default setAction
-			var val, method, durations, performArray, class=value.class, defaults, defaultsKeys, extras;
-			switch(class, Event, {
-				defaults=(extras: 0, durations: 0, method:0);//dit zijn die extra dingen
-				defaultsKeys=defaults.keys.copy;
-				defaults.removeAt(\extras);
-				if (value[\method]==nil, {
-					object.performMsg([defaultMethod, defaults]);
-					object.performMsg([defaultMethod, value]);
-				},{
-					//---------------------------------- DIT HIERONDER KAN ECHT EFFICIENTER
-					val=value.deepCopy;
-					defaultsKeys.do{arg key; defaults[key]=val[key]??{defaults[key]}};
-					if (val[\event]==nil, {
-						var keys=object.keys.sect(val.keys);
-						keys=keys.difference(defaults.keys);
-						val[\event]=();
-						keys.do{|key|
-							val[\event][key]=val[key];
-							val.removeAt(key)
-						}
-					});
-					if (val[\method].class!=Symbol, {
-						val[\method]=methodsArray[val[\method]]??{defaultMethod} });
-					if (val[\extras]!=nil, {
-						if (val[\extras][\durations]!=nil, {
-							val[\extras][\durations][\common]=(val[\durations]??{0});
-						});
-						val=val++val[\extras];
-						val.removeAt(\extras);
-					});
-					performArray=class.findRespondingMethodFor(val[\method]).argNames.copyToEnd(1).collect{|key|
-						val[key]
-					};
-					object.performMsg([defaultMethod, defaults]);
-					if (defaults[\extras]==nil, {object[\extras].valueAction_(nil)});
-					{
-						val[\preAction].value(val, enviroment);
-						object.performMsg([val[\method]]++performArray);
-						val[\postAction].value(val, enviroment);
-					}.fork(AppClock)
-				})
-			}, Array, {
-				object.performMsg(value)
-			}, Function, {
-				value.value(this)
-			}, FunctionList, {
-				value.value(this)
-			},
-			{
-				object.performMsg([defaultMethod, value]);
-			})
-		});
+		var actionFunc;
+		actionFunc={arg val;
+			var valObject=(), valPreset=(), index;//oid
+			var actionObject, actionPreset, extras=val[\extras].deepCopy??{()};
+			var presetsObject;
 
+			if (presetsJT.class==PresetsJT, {
+				presetsObject=presetsJT.object;
+				if (val[\basename]!=nil, {
+					index=presetsJT.keys.indexOfEqual(val[\basename]);
+					if (index!=nil, {
+						valPreset=presetsJT.array[index];
+						valPreset=presetsObject.removeAllWithoutActions(valPreset);
+					})
+				});
+				valObject=object.removeAllWithoutActions(val);
+				actionObject={
+					presetsObject[\routinesJT].do(_.stop);
+					presetsJT.index=index;
+					presetsJT.funcs[\index].value(presetsJT.index, presetsJT);
+					valObject.keysValuesDo{|key,val|
+						object[key].action.value(val);
+						{object[key].value_(val)}.defer;
+					};
+				};
+				actionPreset={
+					valPreset.keysValuesDo{|key,val|
+						presetsObject[key].action.value(val);
+						{presetsObject[key].value_(val)}.defer;
+					}
+				};
+			}, {
+				presetsObject=object;
+				valPreset=val.deepCopy;
+				[\method, \durations, \extras].do{|key|
+					valObject[key]=val[key];
+					valPreset.removeAt(key)
+				};
+				actionObject={
+					presetsObject[\routinesJT].do(_.stop);
+					valObject.keysValuesDo{|key,val|
+						presetsObject[key].action.value(val);
+						{presetsObject[key].value_(val)}.defer;
+					};
+				};
+				actionPreset={
+					valPreset.keysValuesDo{|key,val|
+						object[key].action.value(val);
+						{object[key].value_(val)}.defer;
+					}
+				};
+			});
+			if (val[\method]!=nil, {
+				if (val[\method]>0, {
+					if (val[\durations]!=nil, {
+						if (val[\durations]>0.0, {
+							if (val[\extras]!=nil, {
+								if (extras[\durations]!=nil, {
+									extras[\durations][\common]=(val[\durations]??{0});
+								},{
+									extras[\durations]=val[\durations]
+								});
+							},{
+								extras=(durations: val[\durations]);
+							});
+							actionPreset={presetsObject.valuesActionsTransition(valPreset, extras[\durations], extras[\curves], extras[\delayTimes]
+								, extras[\specs], extras[\actions], extras[\resolution]??{10})}
+						})
+					})
+				})
+			});
+			if (val[\extras]==nil, {
+				{
+					actionObject.value;
+					actionPreset.value;
+				};
+			},{
+				{
+					actionObject.value;
+					{
+						extras[\preAction].value(val, enviroment);
+						actionPreset.value;
+						extras[\postAction].value(val, enviroment);
+					}.fork(AppClock)
+				}
+			})
+		};
+		action=action.addFunc(actionFunc);
 	}
 	addToCueList {arg cueList;
 		pathName=basename;
@@ -124,12 +165,14 @@ CuesGUIJT {
 		};
 		views[\next]=Button(c, boundsButton).states_([ [">"] ]).action_{ presets.next };
 		presets.object[\method]=PopUpMenu(c, (bounds.x*0.1).floor@bounds.y).items_(
-			presets.methodsArray
+			[\restore, \valuesActionsTransition]
 		).action_{|p|
+			/*
 			if (p.value==0, {
-				{presets.object[\durations].value_(0)}.defer;
+			{presets.object[\durations].value_(0)}.defer;
 			});
-			presets.methodsArray[p.value];
+			//presets.methodsArray[p.value];
+			*/
 		};
 		presets.object[\durations]=EZNumber(c, (bounds.x*0.1).floor@bounds.y, nil, ControlSpec(0.0, 60.0), {|ez|
 			if (ez.value<=0.0, {

@@ -55,6 +55,7 @@ MeterJTGUI {
 			if (serverID==(meter.servers.size-1), {
 				func1={arg i; {
 					var valuedB, peakdB;
+					//valuedB=valueSum[i].sqrt.sum.ampdb;
 					valuedB=valueSum[i].sum.ampdb;
 					peakdB=peakSum[i].sum.ampdb;
 					guis[0][i].value_( valuedB.linlin(dBLow, 0, 0, 1) );//.sum

@@ -95,6 +95,9 @@ InJT : IOJT {
 	makeGUI {arg parent, bounds=30@20, margin=2@2, gap=0@0, parentMargin=4@4, parentGap=4@2, meterHeight;
 		gui=InJTGUI(this, parent, bounds, margin, gap, parentMargin, parentGap, meterHeight);
 	}
+	makeGui {arg parent, bounds=30@20, margin=2@2, gap=0@0, parentMargin=4@4, parentGap=4@2, meterHeight;
+		gui=InJTGUI(this, parent, bounds, margin, gap, parentMargin, parentGap, meterHeight);
+	}
 }
 
 InJTGUI : IOJTGUI {}

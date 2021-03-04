@@ -16,8 +16,7 @@ PresetsJT : PresetsFileJT {
 		basename=filename;
 		if (entries[index]!=nil, {
 			pathNameFrom=entries[index];
-			pathNameTo=PathName(pathNameFrom.pathOnly++(pathNameFrom.fileNameWithoutExtension.split($_)[0]++"_"
-				++filename++"."++(pathNameFrom.extension)));
+			pathNameTo=PathName(pathNameFrom.pathOnly++(pathNameFrom.fileNameWithoutExtension.split($_)[0]++"_"++filename++"."++(pathNameFrom.extension)));
 			File.rename(pathNameFrom.fullPath, pathNameTo.fullPath);
 			entries[index]=pathNameTo;
 			fileNames[index]=entries[index].fileNameWithoutExtension;
@@ -25,21 +24,14 @@ PresetsJT : PresetsFileJT {
 			funcs[\basename].value(old, new);
 		});
 	}
-	addToCueList {arg cueList, cueName;
-		//var cueJT;
-		cueName=cueName??{(directory).allFolders.last.asSymbol};
-		cueJT=CuesJT(this, cueName);
-		if (gui!=nil, {
-			cueJT.makeGui(gui.parent)
-		});
-		cueJT.addToCueList(cueList);
+
+	addToCueList {arg cueList;
+		//pathName=basename;
+		//cueList.addCue(this);
 	}
+
 	makeGui {arg parent, bounds=350@20;
-		gui=1.0;
-		{
-			gui=PresetsGUIJT(this, parent, bounds);
-			if (cueJT!=nil, {cueJT.makeGui(gui.parent)});
-		}.defer;
+		{gui=PresetsGUIJT(this, parent, bounds)}.defer;
 	}
 }
 //----------------------------------------------------------------------------- GUIs
@@ -49,16 +41,11 @@ PresetsGUIJT {
 	*new {arg presets, parent, bounds;
 		^super.newCopyArgs(presets).init(parent, bounds)
 	}
-	preInit {}
-	postInit {}
 	init {arg argparent, argbounds;
 		var boundsName=(argbounds.x/3).floor@argbounds.y;
 		var boundsButton=(boundsName.x/7).floor@argbounds.y;
 		var c;
 		views=();
-		parent=argparent;
-		bounds=argbounds;
-		this.preInit;
 		c=CompositeView(argparent, argbounds);
 		c.addFlowLayout(0@0, 0@0);
 		views[\addBefore]=Button(c, boundsButton).states_([ ["±"] ])
@@ -75,11 +62,10 @@ PresetsGUIJT {
 		views[\presets]=PopUpMenu(c, boundsName)
 		.items_(if (presets.array.size>0, {presets.fileNamesWithoutNumbers},{["(empty)"]}))
 		.action_{|p|
-			presets.restoreAtIndex(p.value);
+			presets.restore(p.value);
 			{views[\basename].string_(presets.fileNamesWithoutNumbers[p.value])}.defer
 		};
 		views[\next]=Button(c, boundsButton).states_([ [">"] ]).action_{ presets.next };
-		this.postInit;
 		//------------------------------------------------------------------------------- FUNCTIONS
 		//combi update en index is dubbelopperdepop!
 		[\update, \basename, \index].do{|key|

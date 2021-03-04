@@ -32,7 +32,8 @@ EventGUIJT : GUIJT {
 		event.sortedKeysValuesDo{|key,val|
 			var cs, action;
 			cs=controlSpecs[key].asSpec??{ControlSpec(val*0.5, val*2)};
-			action=actions[key]??{{|ez| event[key]=ez.value}};
+			action=actions[key]??{{|ez|
+				event[key]=ez.value}};
 			views[key]=this.makeEZGUI(bounds, key
 				, cs
 				, action, val, false, labelWidth, equalLength:false)

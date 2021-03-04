@@ -1,0 +1,1 @@
+( 'indices': [ 'ding3b', 'ding1' ] )

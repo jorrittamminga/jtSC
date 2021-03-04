@@ -129,7 +129,7 @@ NumberedFile : Numbered {
 		path=(basename++"."++extension).numberedPath(directory, index, numDigits);
 		func={
 			var cond=Condition.new;
-			("mv "++pathName.fullPath++" " ++ path).unixCmd({cond.unhang});
+			("mv "++pathName.fullPath.unixPath++" " ++ path.unixPath).unixCmd({cond.unhang});
 			cond.hang;
 		};
 		if ((thisProcess.mainThread.state>3), {func.value},{{ func.value}.fork(AppClock)})
@@ -181,7 +181,7 @@ NumberedFolder : Numbered {
 					var from=p.asPathName, to, name;
 					name=if (from.isFile, {containsFiles=true; from.fileName},{containsFolders=true; from.folderName});
 					to=pathName++name;
-					("mv " ++ from.fullPath ++ " " ++ to).unixCmd({cond.unhang});
+					("mv " ++ from.fullPath.unixPath ++ " " ++ to.unixPath).unixCmd({cond.unhang});
 					cond.hang;
 				};
 				if (containsFiles, {directory=pathName.asPathName; this.renumberFiles(0,0)});
@@ -190,7 +190,7 @@ NumberedFolder : Numbered {
 				if (moveType==\allFiles, {
 					directory.entriesFilesOnly.do{|p|
 						var pathFrom=p.fullPath, pathTo=pathName++p.fileName;
-						("mv "++pathFrom++" "++pathTo).unixCmd({cond.unhang});
+						("mv "++pathFrom.unixPath++" "++pathTo.unixPath).unixCmd({cond.unhang});
 						cond.hang;
 					};
 					//this.renumberFiles(pathName, -1, 0, numDigits);
@@ -222,7 +222,7 @@ NumberedFolder : Numbered {
 				var number=i+start+add;
 				folderName=folderName.renumberNumbered(number, numDigits);
 				pathTo=directory.fullPath++folderName;
-				("mv "++pathFrom++" "++pathTo).unixCmd({cond.unhang});
+				("mv "++pathFrom.unixPath++" "++pathTo.unixPath).unixCmd({cond.unhang});
 				cond.hang;
 			};
 		};
@@ -242,7 +242,7 @@ NumberedFolder : Numbered {
 		path=folderName.numberedPath(directory, index, numDigits);
 		func={
 			var cond=Condition.new;
-			("mv "++pathName.fullPath++" " ++ path).unixCmd({cond.unhang});
+			("mv "++pathName.fullPath.unixPath++" " ++ path.unixPath).unixCmd({cond.unhang});
 			cond.hang;
 		};
 		if ((thisProcess.mainThread.state>3), {func.value},{{ func.value}.fork(AppClock)})
@@ -264,7 +264,7 @@ NumberedFolder : Numbered {
 	delete {
 		var func, cond=Condition.new;
 		func={
-			("rm -r "++pathName.fullPath).unixCmd({cond.unhang});
+			("rm -r "++pathName.fullPath.unixPath).unixCmd({cond.unhang});
 			cond.hang;
 			NumberedFolder.renumberFolders(directory, index, 0, numDigits);
 		};

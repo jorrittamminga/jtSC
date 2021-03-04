@@ -73,7 +73,7 @@
 	*rename {arg pathNameFrom, pathNameTo;
 		var func={
 			var cond=Condition.new;
-			("mv "++pathNameFrom++" " ++ pathNameTo).unixCmd({cond.unhang});
+			("mv "++pathNameFrom.unixPath++" " ++ pathNameTo.unixPath).unixCmd({cond.unhang});
 			cond.hang;
 		};
 		if ((thisProcess.mainThread.state>3), {func.value},{

@@ -22,7 +22,7 @@ InEZJT : IOJT {
 			in.addPlugin(\Recorder, [path]);
 			in.addPlugin(\Player, [path]);
 			in.plugins[\Player].addMonitor(0, 2);
-			in.makeGUI(argparent)
+			{in.makeGUI(argparent)}.defer
 		};
 
 		if (threaded, {func.value}, {{func.value}.fork})
@@ -53,7 +53,7 @@ OutEZJT : IOJT {
 				out.plugins[plugin].bypass_(true)
 			};
 
-			out.makeGUI(argparent)
+			{out.makeGUI(argparent)}.defer;
 		};
 
 		if (threaded, {func.value}, {{func.value}.fork})

@@ -51,6 +51,19 @@
 		};
 	}
 	doActions {arg event; this.valuesActions_(event)}
+	removeAllWithoutActions {arg event;
+		var out=();
+		event.keysValuesDo{arg key, val;
+			if (this[key]!=nil, {
+				if (this[key].respondsTo(\action), {
+					out[key]=val;
+				},{
+					//this[key]=val;
+				})
+			});
+		};
+		^out
+	}
 }
 
 + Array {

@@ -1,0 +1,1 @@
+( 'basename': "ding1", 'extras': ( 'postAction': {"klaar".postln} ), 'durations': 0.0, 'method': 1 )

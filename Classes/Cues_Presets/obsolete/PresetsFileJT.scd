@@ -1,17 +1,22 @@
+/*
+- stores the settings of Views and other value/action objects to an array with the settings
+preset (=value from File) interpretation is heel erg belangrijk. Dat is eigenlijk de (set)action.
+en misschien nog goed nadenken over een storeAction, hoe de output van een getAction wordt opgeslagen in array en in een file? Of zit dit al in getAction? misschien wel...
+er is een 'value' output van het object (output van getAction), een value output van de preset (array[index], file.load, etc)
+*/
 PresetsFileJT : Numbered {
 	classvar <allMethods;
 	classvar <>extension = "scd";
 
 	var <array, <value;//related to entries (paths of all the presets) and basename (filename without number and extension)
-	var <actionArray;//array with all the actions to be taken when new preset is selected
+	var <actionArray;
 	var <object, <>action, <>getAction, <>entriesAction;//action=setAction
-	var <objectDefault, <presetsJT;
+	var <objectDefault, <presetJT;
 	var <keys, <>enviroment, <defaultMethod;
 	var <fileNames, <fileNamesWithoutNumbers;//paths, pathsWithoutNumbers
 	var <methodsArray, <removeKeyWhenSave;
-	var <cueJT;
 	var history;
-	var <>folderID;
+	//var <setAction, <getAction;
 	*initClass {
 		allMethods=(
 			Event: [\doActions, \valuesActionsTransition]
@@ -29,16 +34,16 @@ PresetsFileJT : Numbered {
 		fileNames=[];
 		fileNamesWithoutNumbers=[];
 		keys=[];
-		funcs=(update:nil, basename:nil, index:nil, delete:nil, directory: nil, add: nil, store: nil);
+		funcs=(update:nil, basename:nil, index:nil, delete:nil, directory: nil, add: nil);
 		removeKeyWhenSave=[\routinesJT];
 		enviroment=();
 		//----------------------------------------------------------------------------- OBJECT inits
 		object=argobject;
 		pathName=argPath;
-		this.initObject;//analyze object
+		this.initObject;//analyze the content/class of the object
 		//----------------------------------------------------------------------------- ACTIONS inits
-		this.initGetAction;//get values from object
-		this.initSetAction;//set values to object
+		this.initGetAction;
+		this.initSetAction;
 		this.initEntriesAction;
 		//----------------------------------------------------------------------------- FILE SYSTEM inits
 		this.initPathName;//analyze the content/class of the pathname
@@ -48,23 +53,33 @@ PresetsFileJT : Numbered {
 		)
 	}
 	initObject {
+		methodsArray=allMethods[object.class.asSymbol];
+		defaultMethod=methodsArray[0]??{\value};
 		switch(object.class, PresetsJT, {
-			presetsJT=object;
-			//two funcs here under could be a func or so, to much space....
-			presetsJT.funcs[\basename]=presetsJT.funcs[\basename].addFunc({arg old,new;
+			presetJT=object;
+			funcs[\update]=funcs[\update].addFunc({
+				actionArray=array.collect{arg val,i;
+
+				}
+			});
+			presetJT.funcs[\basename]=presetJT.funcs[\basename].addFunc({arg old,new;
 				array.do{|preset,i|
+					//ws beter dat de preset (basename: presetString) oid is
 					var presetString=preset.asCompileString, file;
 					if (preset[\basename].asString==(old.asString), {
+						//presetString.replace(old.asString, new.asString);
+						//preset=presetString.interpret;
 						preset[\basename]=new;
+						//------------------------------------- dit zou een method kunnen zijn!
+						//this.storeValueAt(preset, i)
 						array[i]=preset;
-						actionArray[i]=action.value(preset);
 						file=File(entries[i].fullPath, "w");
 						file.write(preset.asCompileString);
 						file.close
 					});
 				};
 			});
-			presetsJT.funcs[\delete]=presetsJT.funcs[\delete].addFunc({arg name;
+			presetJT.funcs[\delete]=presetJT.funcs[\delete].addFunc({arg name;
 				var flag=false;
 				array.do{|preset,i|
 					var file;
@@ -74,7 +89,6 @@ PresetsFileJT : Numbered {
 					},{//cueJT
 						preset=preset.deepRemove(name);
 						array[i]=preset;
-						actionArray[i]=action.value(preset);
 					});
 				};
 				if (flag, {
@@ -82,15 +96,16 @@ PresetsFileJT : Numbered {
 				});
 			});
 		});
+		//CuesJT
 	}
 	initGetAction {
 		getAction=switch(object.class, Event, {
 			{ object.collect(_.value) };//default getAction
 		}, PresetsJT, {
-			object=();
-			{ //arg presetsJT;
+			object=(basename: 0);
+			{ arg presetsJT;
 				var val=object.collect(_.value);
-				val[\basename]=presetsJT.basename;
+				val[\basename]=object.basename;
 				val
 			}
 			//{ (basename: object.basename) }
@@ -98,50 +113,43 @@ PresetsFileJT : Numbered {
 			{ object.collect(_.value) };
 		});
 	}
-	//initSetAction is echt heel lelijk en groot...
 	initSetAction {
 		var actionFunc;
-		actionFunc=if (presetsJT.class==PresetsJT, {
-			{arg val;
-				var valObject=(), valPreset=(), index;//oid
-				if (val[\basename]!=nil, {
-					index=presetsJT.keys.indexOf(val[\basename]);
-					if (index!=nil, {
-						valPreset=presetsJT.array[index];
-						valPreset=presetsJT.object.removeAllWithoutActions(valPreset);
+		actionFunc=if (presetJT.class==PresetJT, {
+			//{arg val; actionArray[i]}
+		},{
+			/*
+			event.keysValuesDo{arg key, val;
+				if (this[key]!=nil, {
+					if (this[key].respondsTo(\action), {
+						this[key].action.value(val);
+						{this[key].value_(val)}.defer;
+					},{
+						//this[key]=val;
 					})
 				});
-				valObject=object.removeAllWithoutActions(val);
-				//defaults=(extras: 0, durations: 0, method:0);//dit zijn die extra dingen
-				//hier--------------------------------------------------------------------------------
-				{
-					valObject.keysValuesDo{|key,val|
-						object[key].action.value(val);
-						{object[key].value_(val)}.defer;
-					};
-					valPreset.keysValuesDo{|key,val|
-						presetsJT.object[key].action.value(val);
-						{presetsJT.object[key].value_(val)}.defer;
-					}
-				};
-			}
-		},{
-			if (object.class==Event, {
-				{arg val;
-					var valObject=();
-					valObject=object.removeAllWithoutActions(val);
-					{
-						valObject.keysValuesDo{|key,val|
-							object[key].action.value(val);
-							{object[key].value_(val)}.defer;
-						}
-					};
-				};
-			});
-		},{
-
+			};
+			*/
+			{arg val; object.doActions(val)}
 		});
 		action=action.addFunc(actionFunc)
+		/*
+		action=action.addFunc({arg value;//default setAction
+		var val, method, durations, performArray, class=value.class, defaults;
+		switch(class, Event, {
+		object.performMsg([defaultMethod, value]);
+		}, Array, {
+		object.performMsg(value)
+		}, Function, {
+		value.value(this)
+		}, FunctionList, {
+		value.value(this)
+		},
+		{
+		object.performMsg([defaultMethod, value]);
+		})
+		});
+		*/
 	}
 	initEntriesAction {
 		entriesAction={arg paths;
@@ -197,28 +205,27 @@ PresetsFileJT : Numbered {
 		this.index_(i);
 		^array[index]
 	}
-	restore {arg i;//is at and valueAction
-		this.index_(i);
-		this.prRestore;
-	}
 	restoreAtIndex {arg i;
+		var preset;
 		index=i;
-		basename=keys[index];
-		funcs[\index].value(index, this);
-		this.prRestore;
-	}
-	prRestore {
-		var preset=array[index];
-		actionArray[index].value;
+		this.valueAction_(preset=array[index]);
 		^preset
 	}
+	restore {arg i;//is at and valueAction
+		var preset;
+		this.index_(i);
+		this.valueAction_(preset=array[index]);
+		^preset
+	}
+	//of is dit meer iets voor CuesJT? JA!
+	restoreI {arg i, durations, curves, delayTimes, specs, actions, resolution=10, nrt=false;
+		this.index_(i);
+		object.valuesActionsTransition(array[index], durations, curves, delayTimes, specs, actions, resolution, nrt)
+	}
 	put {arg i, val;
-		//this.index_(i);
-		i=i??{index.copy};
-		val=val??{value.deepCopy};
-		array[i]=val;
-		actionArray[i]=action.value(val);
-		this.prSave(i, val);
+		this.index_(i);
+		array[index]=val??{value};
+		this.prSave;
 	}
 	store {arg i;
 		this.index_(i);
@@ -229,22 +236,20 @@ PresetsFileJT : Numbered {
 		},{
 			//array[index]={ };//makeFunction
 			array[index]=value;
-			actionArray[index]=action.value(value);
 			this.prSave;
 		});
-		funcs[\store].value(index)
 	}
 	//prStore {}
-	prSave {arg i, saveValue;
+	prSave {
 		var file, val;
-		val=saveValue??{value.deepCopy};
+		val=value.deepCopy;
 		removeKeyWhenSave.do{|key| val.removeAt(key)};
-		file=File(entries[i??{index}].fullPath, "w");
+		file=File(entries[index].fullPath, "w");
 		file.write(val.asCompileString);
 		file.close
 	}
-	prev { if (index>0, {this.restoreAtIndex(index-1)}) }
-	next { if (index<(array.size-1), {this.restoreAtIndex(index+1)}) }
+	prev { if (index>0, {this.restore(index-1)}) }
+	next { if (index<(array.size-1), {this.restore(index+1)}) }
 	//----------------------------------------------------------------------------- NUMBERED FILESYSTEM related
 	load {}
 	update {arg paths;
@@ -257,10 +262,9 @@ PresetsFileJT : Numbered {
 		fileNamesWithoutNumbers=fileNames.collect{|filename| filename.split($_).copyToEnd(1).join($_)};
 		keys=fileNamesWithoutNumbers;
 		array=entries.collect{|entry| entry.fullPath.load};
-		actionArray=array.collect{|val| action.value(val)};
 		funcs[\update].value
 	}
-	add {arg filename, addAction=\addAfter, target;
+	add {arg filename, addAction='\addAfter', target;
 		var file, entry, val;
 		basename=filename??{basename};
 		this.getValue;
@@ -270,8 +274,7 @@ PresetsFileJT : Numbered {
 			file=NumberedFile( basename++"."++extension
 				, target??directory//{entries[index]??{directory}}
 				, addAction, numDigits, val);
-			funcs[\add].value(switch(addAction, \addBefore, {index}, \addAfter, {index+1}, \addToTail, {array.size}
-				, \addToHead, {0}, {index}), this);
+			funcs[\add].value(index, this);
 			this.update;
 			this.index_(entries.collect(_.fullPath).indexOfEqual(file.pathName.fullPath));
 			//funcs[\add].value(index, this);
