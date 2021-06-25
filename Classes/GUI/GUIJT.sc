@@ -4,7 +4,7 @@ GUIJT {
 	var <views, <>classJT, <viewsPreset;
 	var <oscGUI, <>name;
 	var <margin, <gap, <background;
-	var pparent, <>freeOnClose, <presetSystem, <threaded;
+	var pparent, <>freeOnClose, <presetSystem, <presets, <threaded;
 	var <>path, <>folderName;
 	var <frontFlag, <userCanClose;
 	var <parentMargin, <parentGap, <windowMargin, <windowGap, <parentAtInit;
@@ -111,7 +111,12 @@ GUIJT {
 					classJT.presetIndex,
 					2,
 					false);
-			})
+			});
+			if (classJT.hasPresets==true, {
+				this.addPresets(
+					nil,
+					classJT.presetsPath);
+			});
 		})
 	}
 
@@ -156,6 +161,24 @@ GUIJT {
 	initFont {//arg name, bold = false, italic = false, usePointSize = false;
 		//name=name??{Font.defaultMonoFace};
 		font.size_(bounds.y*0.6);
+	}
+
+	addPresets {arg guiObjects, path, folderName, type, index, guiType=2
+		, argguiflag=false, rebounds=true, interpolationTime, parentPS, preLoad;
+		var ps, windowReboundsFlag=true;
+		var parentt=parentPS??{parent};
+		guiObjects=switch(guiObjects.class, Array, {
+			var tmp=();
+			guiObjects.do{|key| tmp[key]=views[key]}; tmp
+		},Event, {
+			guiObjects
+		},Nil, {
+			if (viewsPreset.size>0, {viewsPreset},{views})
+		});
+		presets=PresetsJT(guiObjects, path);
+		presets.makeGui(parentt, bounds.x@bounds.y);
+		parentt.rebounds;
+		^presets
 	}
 
 	addPresetSystem {arg guiObjects, path, folderName, type, index, guiType=2

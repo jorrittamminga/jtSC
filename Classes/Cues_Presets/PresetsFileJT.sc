@@ -10,8 +10,10 @@ PresetsFileJT : Numbered {
 	var <fileNames, <fileNamesWithoutNumbers;//paths, pathsWithoutNumbers
 	var <methodsArray, <removeKeyWhenSave;
 	var <cueJT;
-	var history;
+	var history, <controlSpecs;
 	var <>folderID;
+	var <blender, <neuralnet;
+
 	*initClass {
 		allMethods=(
 			Event: [\doActions, \valuesActionsTransition]
@@ -29,7 +31,7 @@ PresetsFileJT : Numbered {
 		fileNames=[];
 		fileNamesWithoutNumbers=[];
 		keys=[];
-		funcs=(update:nil, basename:nil, index:nil, delete:nil, directory: nil, add: nil, store: nil);
+		funcs=(update:nil, basename:nil, index:nil, delete:nil, directory: nil, add: nil, store: nil, restore: nil);
 		removeKeyWhenSave=[\routinesJT];
 		enviroment=();
 		//----------------------------------------------------------------------------- OBJECT inits
@@ -48,9 +50,10 @@ PresetsFileJT : Numbered {
 		)
 	}
 	initObject {
+		controlSpecs=();
 		switch(object.class, PresetsJT, {
 			presetsJT=object;
-			//two funcs here under could be a func or so, to much space....
+			//two funcs here under could be a func or so, too much space....
 			presetsJT.funcs[\basename]=presetsJT.funcs[\basename].addFunc({arg old,new;
 				array.do{|preset,i|
 					var presetString=preset.asCompileString, file;
@@ -81,6 +84,15 @@ PresetsFileJT : Numbered {
 					this.update
 				});
 			});
+		}, Event, {
+			value=();
+			object.sortedKeysValuesDo{|key,obj|
+				var cs=ControlSpec(0.0, 1.0);
+				cs=obj.controlSpec;
+				if (cs.step<0.01, {cs=cs.warp});
+				value[key]=obj.value;
+				controlSpecs[key]=cs;
+			}
 		});
 	}
 	initGetAction {
@@ -210,6 +222,8 @@ PresetsFileJT : Numbered {
 	prRestore {
 		var preset=array[index];
 		actionArray[index].value;
+		value=preset;//was not here before, is this usefull?
+		funcs[\restore].value(index);
 		^preset
 	}
 	put {arg i, val;

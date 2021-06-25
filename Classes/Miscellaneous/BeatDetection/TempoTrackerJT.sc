@@ -1,4 +1,5 @@
 /*
+t=TempoTrackerJT
 */
 TempoTrackerJT {
 	var <tempo, <bpm, <tempi;

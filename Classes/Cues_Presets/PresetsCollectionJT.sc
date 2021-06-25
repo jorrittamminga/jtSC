@@ -46,11 +46,12 @@ PresetsCollectionJT : PresetsJT {
 		presetsCollection=indices.deepCollect(0x7FFFFFFF, {|i| presetsJT.array.clipAt(i)??{presetsJT.array[0]} });
 	}
 	convertToIndices {arg in;
-		^in.deepCollect(0x7FFFFFFF, {|i| if ((i.class==Symbol) || (i.class==String), {
-			presetsJT.keys.indexOfEqual(i.asString)??{0}
-		},{
-			i.clip(0, presetsJT.array.size-1)
-		})
+		^in.deepCollect(0x7FFFFFFF, {|i|
+			if ((i.class==Symbol) || (i.class==String), {
+				presetsJT.keys.indexOfEqual(i.asString)??{0}
+			},{
+				i.clip(0, presetsJT.array.size-1)
+			})
 		});
 	}
 	initSetAction {
@@ -77,9 +78,7 @@ PresetsCollectionJT : PresetsJT {
 		if (File.exists(directory.fullPath).not, {File.mkdir(directory.fullPath)});
 		this.update;
 	}
-	addBlender {
-
-	}
+	addBlender {}
 	makeGui {arg parent, bounds=350@20;
 		if (gui==nil, {
 			{gui=PresetsCollectionGUIJT(this, parent, bounds);}.defer
@@ -93,7 +92,7 @@ PresetsCollectionGUIJT : PresetsGUIJT {
 		presets.object[\indices]=TextField(parent, bounds).value_(presets.indices).action_{arg textField;
 			presets.indices=presets.convertToIndices(textField.value);
 			presets.makePresetArray
-		};
+		}.font_(font);
 		[\add].do{|key|
 			presets.funcs[key]=presets.funcs[key].addFunc({
 				{

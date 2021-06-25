@@ -1,5 +1,6 @@
 + Collection {
 
+
 	deepRemove {arg item;
 		var array, string;
 		array=this.deepCollect(0x7FFFFFFF, {arg x; if(x==item, {nil},{x})});

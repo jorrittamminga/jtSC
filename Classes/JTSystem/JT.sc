@@ -11,7 +11,7 @@ JT {
 	var <synthPerFlatIndex;//<serverPerIndex
 	var <label;
 	var <>path, <>folderName, <>fileName;
-	var <presetSystem, <presetPath, <presetFolder, <hasPresetSystem, <preset, <presetType;
+	var <presetSystem, <presetPath, <presetsPath, <presetFolder, <hasPresetSystem, <preset, <presetType, <hasPresets, <presets;
 	var <presetIndex;
 	var <>settings;
 	var <threaded=false, <>gui, <>windowBounds;
@@ -24,6 +24,29 @@ JT {
 	isThreaded {
 		threaded=(thisProcess.mainThread.state>3);
 		^threaded
+	}
+
+	metaAddPresets {arg path, index=0, func;//setFlag=true
+		var tmpPath;
+		hasPresets=true;
+		presetsPath=path;
+		presetIndex=index;
+		if (File.exists(presetsPath), {
+			if (PathName(presetsPath).entries.size>0, {
+				tmpPath=PathName(presetsPath).entries.clipAt(index).fullPath;
+				preset=tmpPath.load;
+				if (settings==nil, {settings=()});
+				if (preset.class==Event, {
+					preset.keysValuesDo{|key,val|
+						if (settings[key]!=nil, {
+							settings[key]=val;
+							synth.asArray.do{|syn| syn.set(key,val)};
+						})
+					};
+					func.value(preset.deepCopy);
+				});
+			})
+		});
 	}
 
 	metaAddPresetSystem {arg path, folderName="master", index=0, func;//setFlag=true

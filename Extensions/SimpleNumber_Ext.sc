@@ -13,6 +13,34 @@
 	[(rand.sum).linlin(0, sum, 0.0, 1.0), rand]
 	}
 	*/
+	/*
+	asTimeString {
+
+
+	}
+	*/
+	asBeats {arg beats=4, division=4, subdivision=4, resolution=128, beatsOffset=0;
+		var bar=1, beat=1, sub=1, rest=1, frac;
+		bar=(this/beats).floor.asInteger+1;
+		beat=(this%beats).floor.asInteger+1;
+		frac=(this.frac*subdivision);
+		sub=(frac).asInteger+1;
+		rest=(((frac+1-sub))*resolution).asInteger+1;
+		^[bar, beat, sub, rest]
+		//^(bar.asString++" " ++ beat ++ " " ++ sub ++ " "++ rest)
+	}
+	asBeatsString {arg beats=4, division=4, subdivision=4, resolution=128, beatsOffset=0;
+		var b=this.asBeats(beats, division, subdivision, resolution, beatsOffset);
+		/*
+		var bar=1, beat=1, sub=1, rest=1, frac;
+		bar=(this/beats).floor.asInteger+1;
+		beat=(this%beats).floor.asInteger+1;
+		frac=(this.frac*subdivision);
+		sub=(frac).asInteger+1;
+		rest=(((frac+1-sub))*resolution).asInteger+1;
+		*/
+		^(b[0].asString++" " ++ b[1] ++ " " ++ b[2] ++ " "++ b[3])
+	}
 	subfactorial {
 		^(this.factorial/1.exp+0.5).floor.asInteger
 	}
@@ -60,7 +88,14 @@
 		});
 		^out
 	}
-
+	geomDurToSize {arg start=1.0, grow=0.9, max=1000, minValue=0.001;
+		var size=0, ar=[start];
+		while({(ar.sum<this)&&(size<max)&&(ar.minItem>minValue)},{
+			size=size+1;
+			ar=Array.geom(size, start, grow);
+		});
+		^(size-1)
+	}
 	geomEndToGrow {arg start=1.1, size=16, maxIterations=12000;
 		var deltaTime=this, factor;
 		var i=0, grow=1.0, dur=0.0, factor2;
@@ -161,7 +196,12 @@
 		var factor=(this+numChannels.reciprocal*(numChannels*0.5))%numChannels;
 		^[outBus+factor.asInteger, factor.frac.linlin(0.0, 1.0, -1.0, 1.0)]
 	}
-
+	azToBussesAndPan2 {arg numChannels=2, outBus=0;
+		var factor=(this+numChannels.reciprocal*(numChannels*0.5))%numChannels;
+		var out;
+		out=outBus+factor.asInteger;
+		^[out, (out+1).wrap(outBus, outBus+numChannels-1), factor.frac.linlin(0.0, 1.0, -1.0, 1.0)]
+	}
 	azToBussesAndAmps {arg numChannels=2, totalNumChannels=4, outBus=0, compensate=1.0, orientation;
 		var az= this;
 		var factor, amps, outBusses, az2;
@@ -252,21 +292,21 @@
 		x=x*ratio;
 
 		if (variant==1, {
-		(iterations-1).do{|depth|
-			var index=0;
-			var bins;
-			depth=depth+1;
-			bins=(depth%2).binaryIterations(depth);
-			x=x.deepCollect(depth+1, {|item,i,r|
-				var ratios=ratio.copy;
-				if (bins[index]==1, {
-					ratios=ratios.reverse
+			(iterations-1).do{|depth|
+				var index=0;
+				var bins;
+				depth=depth+1;
+				bins=(depth%2).binaryIterations(depth);
+				x=x.deepCollect(depth+1, {|item,i,r|
+					var ratios=ratio.copy;
+					if (bins[index]==1, {
+						ratios=ratios.reverse
+					});
+					index=index+1;
+					item*ratios
 				});
-				index=index+1;
-				item*ratios
-			});
-			//x.postln;
-		};
+				//x.postln;
+			};
 		},{
 
 
@@ -288,5 +328,14 @@
 	}
 
 
+	coefcps {arg server=Server.default;
+		var sr=server.sampleRate??{44100};
+		^( log(this)*sr/2pi.neg )
+	}
+
+	cpscoef {arg server=Server.default;
+		var sr=server.sampleRate??{44100};
+		^(exp(-2pi * (this / sr)))
+	}
 
 }

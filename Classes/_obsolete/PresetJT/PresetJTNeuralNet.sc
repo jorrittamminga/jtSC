@@ -1,6 +1,7 @@
 PresetJTNeuralNet : PresetJTCollection {
 	classvar <numberOfInputs;
-	var <nn, <trainingSet, trainingSetIndices, <nin, <path, <>learningrate=0.05, <>initweight=0.05, <>errortarget=0.00001, <>maxepochs=100000;
+	var <nn, <trainingSet, trainingSetIndices, <nin, <path, <>learningrate=0.05, <>initweight=0.05
+	, <>errortarget=0.00001, <>maxepochs=100000;
 	var <nout, <nhidden, <>input;
 	var <dirnameNN;
 	var <>valuesIndex=0;

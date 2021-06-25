@@ -17,9 +17,12 @@ PathNameNumberedManager : Numbered {
 		var pathName;
 		rootPathName=argPath.asPathName;
 		rootPath=rootPathName.fullPath;
+		if ((rootPathName.isFolder) && (rootPath.last!=$/), {rootPath=rootPath++"/"});
 		numDigits=argnumDigits??{4};
 		if (File.exists(rootPath).not, {File.mkdir(rootPath)});
-		if (rootPathName.entries.size==0, {File.mkdir( rootPath++(0.asDigits(10, numDigits).join++"_"++"Init/"))});
+		if (rootPathName.entries.size==0, {
+			File.mkdir( rootPath++(0.asDigits(10, numDigits).join++"_"++"Init/"))
+		});
 		numDigits=argPath.asPathName.getNumDigits.asArray.maxItem.unbubble;
 		updateAction=argupdateAction;
 		this.updatePaths;

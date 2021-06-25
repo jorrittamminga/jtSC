@@ -29,6 +29,20 @@ QuasiPsola {
 //make duration and rate ALWAYS audio rate (otherwise you can have artifacts (why?????))
 //check the rate of rate, dur, etc and change the rate of the Impulse accordingly
 
+GrainDelay {
+
+	*ar{ arg in, rate=1.0, dur=0.2, overlap=4.0, maxdelaytime=120, delayTime=0.2, numChannels=2, az=0.0, ampl=0.0;
+		var buf=LocalBuf(SampleRate.ir*maxdelaytime).clear;
+		var phase, centerpos, trigger;
+		trigger=Impulse.ar(dur.reciprocal*overlap);
+		phase=Phasor.ar(0, 1, 0, BufFrames.ir(buf), 0);
+		BufWr.ar(in, buf, phase);
+		centerpos=phase*SampleDur.ir- delayTime - ((rate.abs-1).max(0)*dur);
+		^TGrains.ar(numChannels, trigger, buf, rate, centerpos, dur, az, ampl, 4)
+	}
+}
+
+
 PitchShifter {
 
 	*ar {arg in=0.0, rate=1.0, dur=0.10, overLap=4.0, maxdelaytime=5.0, delayTime=0.005, interp=2, numChannels=1, az=0.0, envbufnum= -1, maxGrains = 2048, rateScaling= -0.85, timeJitter=0.005, mul=1.0, add=0.0, fb=0.0, run=1.0, lagTime=0.2, tr=0.001, minRateScaling=1.0;
@@ -144,12 +158,12 @@ PitchShiftModT {
 			, pitchRatio
 			, posT
 			, 4, 0, tBuf, 512, tAmp,
-		GrainBuf.ar(1
-			, Impulse.ar(windowSize.reciprocal*overLap)
-			, windowSize, buf, pitchRatio, pos, 4, 0
-			, -1
-			, 512
-			, overLap.max(1).reciprocal.sqrt*mul, add)
+			GrainBuf.ar(1
+				, Impulse.ar(windowSize.reciprocal*overLap)
+				, windowSize, buf, pitchRatio, pos, 4, 0
+				, -1
+				, 512
+				, overLap.max(1).reciprocal.sqrt*mul, add)
 		)
 	}
 }
@@ -180,12 +194,12 @@ PitchShiftModkT {
 			, pitchRatio
 			, posT
 			, 4, 0, tBuf, 512, tAmp,
-		GrainBuf.ar(1
-			, Impulse.kr(windowSize.reciprocal*overLap)
-			, windowSize, buf, pitchRatio, pos, 4, 0
-			, -1
-			, 512
-			, overLap.max(1).reciprocal.sqrt*mul, add)
+			GrainBuf.ar(1
+				, Impulse.kr(windowSize.reciprocal*overLap)
+				, windowSize, buf, pitchRatio, pos, 4, 0
+				, -1
+				, 512
+				, overLap.max(1).reciprocal.sqrt*mul, add)
 		)
 	}
 }
@@ -337,14 +351,14 @@ GranulatorIBF2 {
 			- ControlRate.ir.reciprocal
 			- ((1-run.lag(duration))*((duration*2).clip(duration, maxdelaytime-0.1   )))
 		)*bdR;
-/*
+		/*
 		pos=(
-			phase*bsR
-			-((rate.abs-1).max(0)*dur)
-			- delayTime.max(0)
-			- WhiteNoise.ar(timeJitter,timeJitter)
-			- ControlRate.ir.reciprocal
-			- ((1-run.lag(dur))*((dur*2).clip(dur, maxdelaytime-0.1   )))
+		phase*bsR
+		-((rate.abs-1).max(0)*dur)
+		- delayTime.max(0)
+		- WhiteNoise.ar(timeJitter,timeJitter)
+		- ControlRate.ir.reciprocal
+		- ((1-run.lag(dur))*((dur*2).clip(dur, maxdelaytime-0.1   )))
 		)*bdR;
 		*/
 
@@ -381,8 +395,8 @@ PitchShifterT {
 		pos=(
 			phase*bsR
 			- ((rate.abs-1).max(0)*dur)
-//			+ (dur*0.5)//ofzoiets, nog ff beter checken denk ik....
-//			- (((rate.abs<1)*rate.abs.reciprocal)*dur)
+			//			+ (dur*0.5)//ofzoiets, nog ff beter checken denk ik....
+			//			- (((rate.abs<1)*rate.abs.reciprocal)*dur)
 			- delayTime.max(0)
 			- WhiteNoise.ar(timeJitter,timeJitter)
 			- ControlRate.ir.reciprocal
@@ -440,43 +454,43 @@ PitchShifternoDC {
 /*
 PitchShifter2 {
 
-	*ar {arg in=0.0, rate=1.0, dur=0.10, overLap=4.0, maxdelaytime=5.0, delayTime=0.005, interp=2, numChannels=1, az=0.0, envbufnum= -1, maxGrains = 2048, rateScaling= -0.85, timeJitter=0.005, mul=1.0, add=0.0, fb=0.0, run=1.0, lagTime=0.2, tr=0.001, minRateScaling=1.0;
-		var buf=LocalBuf(SampleRate.ir*maxdelaytime).clear, isRunning;
+*ar {arg in=0.0, rate=1.0, dur=0.10, overLap=4.0, maxdelaytime=5.0, delayTime=0.005, interp=2, numChannels=1, az=0.0, envbufnum= -1, maxGrains = 2048, rateScaling= -0.85, timeJitter=0.005, mul=1.0, add=0.0, fb=0.0, run=1.0, lagTime=0.2, tr=0.001, minRateScaling=1.0;
+var buf=LocalBuf(SampleRate.ir*maxdelaytime).clear, isRunning;
 
-		var phase,pos,input,output, bdR=BufDur.ir(buf).reciprocal, bsR=BufSampleRate.ir(buf).reciprocal;
+var phase,pos,input,output, bdR=BufDur.ir(buf).reciprocal, bsR=BufSampleRate.ir(buf).reciprocal;
 
-		rate=rate*DC.ar(1);
+rate=rate*DC.ar(1);
 
-		run=A2K.kr(K2A.ar(run));//can this be more efficient?????
-		isRunning=(run.lag(0,dur)>tr);
-		phase=Phasor.ar(0, 1*isRunning, 0, BufFrames.ir(buf),0);
+run=A2K.kr(K2A.ar(run));//can this be more efficient?????
+isRunning=(run.lag(0,dur)>tr);
+phase=Phasor.ar(0, 1*isRunning, 0, BufFrames.ir(buf),0);
 
-		input=(fb*BufRd.ar(1,buf,phase,1))+((in*run.lag(dur)));
+input=(fb*BufRd.ar(1,buf,phase,1))+((in*run.lag(dur)));
 
-		BufWr.ar( input,buf,phase,1);
+BufWr.ar( input,buf,phase,1);
 
-		dur=rate.abs.pow(rateScaling).min(minRateScaling)*dur;
+dur=rate.abs.pow(rateScaling).min(minRateScaling)*dur;
 
-		delayTime=delayTime-((rate<0)*rate.abs*dur);
+delayTime=delayTime-((rate<0)*rate.abs*dur);
 
-		pos=(
-			phase*bsR
-			-((rate.abs-1).max(0)*dur)
-			- delayTime.max(0)
-			- WhiteNoise.ar(timeJitter,timeJitter)
-			- ControlRate.ir.reciprocal
-			- ((1-run.lag(dur))*((dur*2).clip(dur, maxdelaytime-0.1   )))
-		)*bdR;
+pos=(
+phase*bsR
+-((rate.abs-1).max(0)*dur)
+- delayTime.max(0)
+- WhiteNoise.ar(timeJitter,timeJitter)
+- ControlRate.ir.reciprocal
+- ((1-run.lag(dur))*((dur*2).clip(dur, maxdelaytime-0.1   )))
+)*bdR;
 
-		^GrainBuf.ar(numChannels
-			, Impulse.ar(dur.reciprocal*overLap)
-			, dur, buf, rate, pos, interp, az
-			, envbufnum
-			, maxGrains
-			,overLap.max(1).reciprocal.sqrt*mul, add);
+^GrainBuf.ar(numChannels
+, Impulse.ar(dur.reciprocal*overLap)
+, dur, buf, rate, pos, interp, az
+, envbufnum
+, maxGrains
+,overLap.max(1).reciprocal.sqrt*mul, add);
 
 
-	}
+}
 
 }
 */

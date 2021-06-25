@@ -1,0 +1,1 @@
+( 'indices': [ 0, 3, 2 ], 'blendType': 0, 'value': [ 0.64412808418274 ], 'method': 0 )

@@ -83,7 +83,7 @@ AnalyzerJT : AnalyzerSystemJT {
 
 
 	makeSynth {
-		synth=Synth(synthDef, [], target, if (target.class==Synth, {\addAfter}
+		synth=Synth(synthDef, [\inBus, inBus], target, if (target.class==Synth, {\addAfter}
 			, {\addToTail})).register;
 		server.sync;
 	}

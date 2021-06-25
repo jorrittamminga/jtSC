@@ -31,6 +31,7 @@ BufWrSystemJT : JT {
 		//threaded=thisProcess.mainThread.state>3;
 		this.isThreaded;
 		server=target.server??{Server.default};
+		if (inBus.class!=Bus, {inBus=inBus.asBus(\audio, 1, server)});
 		numChannels=inBus.numChannels;
 		currentFrame=0;
 		hasEnvelope=hasEnvelope??{true};
@@ -128,16 +129,14 @@ BufWrSystemJT : JT {
 			, doneAction=1;
 			var in, inTK, inTA;
 			var phase, env;
-
 			in=In.ar(inB, inBus.numChannels);
-			if (tphaseRequestFlag || tphaseOutFlag, {inTK=In.kr(inBusT)});
-
+			if (tphaseRequestFlag || tphaseOutFlag, {
+				inTK=In.kr(inBusT);
+			});
 			phase=Phasor.ar(t_reset, 1, startFrame, BufFrames.ir(bufnum), resetFrame);
-
 			if (hasOverdub, {
 				in=BufRd.ar(numChannels, bufnum, phase)*preLevel+in
 			});
-
 			if (hasEnvelope, {
 				env=EnvGen.kr(Env.asr(fadeIn, 1, fadeOut, -4.0), gate
 					, doneAction:doneAction
@@ -146,11 +145,11 @@ BufWrSystemJT : JT {
 			},{
 				BufWr.ar(in, bufnum, phase, loop);
 			});
-
 			if (t_phaseRequestFlag, {
 				SendReply.kr(t_phaseRequest, cmdName, phase)});
 			if (tphaseRequestFlag, {
-				SendReply.kr(inTK, cmdNameT, phase)});
+				SendReply.kr(inTK, cmdNameT, phase);
+			});
 			if (phaseOutFlag, {
 				Out.ar(outBus.index, phase)});
 			if (tphaseOutFlag, {

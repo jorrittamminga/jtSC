@@ -28,9 +28,13 @@ MetaPresetJT {
 		array=array??{[]};
 		func=func??{()};
 		[\restoreAction, \restore, \restoreI, \store, \save, \add, \removeAt, \name, \swap].do{|key| func[key]=func[key]};
+		"init1".postln;
 		this.getValues;
+		"init2".postln;
 		this.prInit(extra);
+		"init3".postln;
 		objectsChanged=false;
+		"init4".postln;
 		if (dirname!=nil, {
 			if (File.exists(dirname).not, {
 				dirname.mkdir;
@@ -39,9 +43,11 @@ MetaPresetJT {
 				this.store;
 				this.restore;
 			},{
+		"init4b".postln;
 				this.loadAll
 			});//loadAll
 		});
+		"init5".postln;
 	}
 	getValues {
 		values=objects.collect{|o| o.value};
@@ -81,8 +87,10 @@ MetaPresetJT {
 	}
 	loadAll {
 		var restoreFlag=false;
+		"loadAll1".postln;
 		if (File.exists(dirname), {
 			//PathName(dirname).entriesFilesOnly.do{|p|}
+		"loadAll2".postln;
 			PathName(dirname).entries.do{|p|
 				if (p.isFile, {
 					entries=entries.add(p.fullPath);
@@ -92,15 +100,18 @@ MetaPresetJT {
 				});
 			}
 		});
+		"loadAll3".postln;
 		index=0;
 		if (array.size==0, {
 			this.store;
 		});
+		"loadAll4".postln;
 		if (restoreFlag, {
 			name=names[index];
 			entry=entries[index];
 			this.restore;
 		});
+		"loadAll5".postln;
 	}
 	saveAll {
 		array.do{var values,i;

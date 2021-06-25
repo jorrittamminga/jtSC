@@ -5,14 +5,17 @@ PresetJTCollectionBlender : PresetJTCollection {
 
 	*new { arg preset, indices, methode='clipAt', blender='normal';//'normal', 'depth'
 		var objects, dirname;
+		"new1".postln;
 		methodClassVar=methode;
 		blendTypeClassVar=blender;
+		"new2".postln;
 		if (preset.dirname!=nil, {
 			dirname=preset.dirname++"Collections/";
 			objects=indices??{(0..preset.array.size-1)};
 		},{
 			objects=indices??{(0..preset.array.size-1)};
 		});
+		"new3".postln;
 		^this.basicNew(objects, dirname, preset)
 	}
 	method_ {arg methode;
@@ -107,16 +110,24 @@ PresetJTCollectionBlenderGUI : PresetJTGUI {
 	}
 	prInit {
 		var prevrank, rank;
+		"prInit 1".postln;
 		compositeView=CompositeView(parent, bounds.x@(bounds.y*4)); compositeView.addFlowLayout(0@0,0@0); compositeView.background_(Color.grey);
+		"prInit 2".postln;
 		views[\values]=TextField(compositeView, bounds).action_{|t|
 			presetJT.values_(t.string.interpret);
 		}.string_(presetJT.values.asCompileString).canFocus_(false).font_(font);
-		blenderCompositeView=CompositeView(compositeView, bounds.x@(bounds.y*2)); blenderCompositeView.addFlowLayout(0@0, 0@0); blenderCompositeView.background_(Color.yellow);
+		"prInit 3".postln;
+		blenderCompositeView=CompositeView(compositeView, bounds.x@(bounds.y*2)); blenderCompositeView.addFlowLayout(0@0, 0@0);
+		"prInit 4".postln;
+		blenderCompositeView.background_(Color.yellow);
+		"prInit 5".postln;
 		this.makeBlendFader;
+		"prInit 6".postln;
 		views[\values].mouseDownAction={arg b;
 			b.enabled_(true);
 			b.canFocus_(true);
 		};
+		"prInit 7".postln;
 		rank=presetJT.presets.array.rank;
 		prevrank=rank;
 		[\restore, \restoreI].do{|key|

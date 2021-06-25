@@ -1,4 +1,5 @@
 PresetsJT : PresetsFileJT {
+	var <neuralNet, <blender;
 	*new {arg object, pathName;
 		var flag=false;
 		if (pathName.class==String, {if (pathName.contains($/), {flag=false},{flag=true})}, {
@@ -30,22 +31,26 @@ PresetsJT : PresetsFileJT {
 		cueName=cueName??{(directory).allFolders.last.asSymbol};
 		cueJT=CuesJT(this, cueName);
 		if (gui!=nil, {
-			cueJT.makeGui(gui.parent)
+			cueJT.makeGui(gui.parent, gui.bounds)
 		});
 		cueJT.addToCueList(cueList);
 	}
+	addNN{neuralNet=PresetsNNJT(this)}
+	addBlender{blender=PresetsBlenderJT(this)}
 	makeGui {arg parent, bounds=350@20;
 		gui=1.0;
 		{
 			gui=PresetsGUIJT(this, parent, bounds);
 			if (cueJT!=nil, {cueJT.makeGui(gui.parent)});
+			if (neuralNet!=nil, {neuralNet.makeGui(parent, bounds)});
+			if (blender!=nil, {blender.makeGui(parent, bounds)});
 		}.defer;
 	}
 }
 //----------------------------------------------------------------------------- GUIs
 PresetsGUIJT {
 	var <presets;
-	var <views, <parent, <bounds;
+	var <views, <parent, <bounds, <font;
 	*new {arg presets, parent, bounds;
 		^super.newCopyArgs(presets).init(parent, bounds)
 	}
@@ -53,32 +58,35 @@ PresetsGUIJT {
 	postInit {}
 	init {arg argparent, argbounds;
 		var boundsName=(argbounds.x/3).floor@argbounds.y;
-		var boundsButton=(boundsName.x/7).floor@argbounds.y;
+		var boundsButton=(boundsName.x/9)@argbounds.y;
 		var c;
 		views=();
 		parent=argparent;
 		bounds=argbounds;
+		font=Font("Monaco", bounds.y*0.75);
 		this.preInit;
 		c=CompositeView(argparent, argbounds);
 		c.addFlowLayout(0@0, 0@0);
 		views[\addBefore]=Button(c, boundsButton).states_([ ["±"] ])
-		.action_{ presets.add("new"++presets.entries.size, \addBefore, presets.entries[presets.index]) };
+		.action_{ presets.add("new"++presets.entries.size, \addBefore, presets.entries[presets.index]) }.font_(font);
 		views[\addAfter]=Button(c, boundsButton).states_([ ["+"] ])
-		.action_{ presets.add("new"++presets.entries.size, \addAfter, presets.entries[presets.index]) };
-		views[\delete]=Button(c, boundsButton).states_([ ["-"] ]).action_{ presets.delete };
-		views[\store]=Button(c, boundsButton).states_([ ["s"] ]).action_{ presets.store };
-		views[\restore]=Button(c, boundsButton).states_([ ["r"] ]).action_{ presets.restore };
+		.action_{ presets.add("new"++presets.entries.size, \addAfter, presets.entries[presets.index]) }.font_(font);
+		views[\delete]=Button(c, boundsButton).states_([ ["-"] ]).action_{ presets.delete }.font_(font);
+		views[\store]=Button(c, boundsButton).states_([ ["s"] ]).action_{ presets.store }.font_(font);
+		views[\restore]=Button(c, boundsButton).states_([ ["r"] ]).action_{ presets.restore }.font_(font);
 		views[\basename]=TextField(c, boundsName)
 		.string_(presets.fileNamesWithoutNumbers[presets.index]??{presets.basename})
-		.action_{arg str; presets.basename_(str.string); };
-		views[\prev]=Button(c, boundsButton).states_([ ["<"] ]).action_{ presets.prev };
+		.action_{arg str; presets.basename_(str.string); }.font_(font);
+		views[\prev]=Button(c, boundsButton).states_([ ["<"] ]).action_{ presets.prev }.font_(font);
 		views[\presets]=PopUpMenu(c, boundsName)
 		.items_(if (presets.array.size>0, {presets.fileNamesWithoutNumbers},{["(empty)"]}))
 		.action_{|p|
 			presets.restoreAtIndex(p.value);
 			{views[\basename].string_(presets.fileNamesWithoutNumbers[p.value])}.defer
-		};
-		views[\next]=Button(c, boundsButton).states_([ [">"] ]).action_{ presets.next };
+		}.font_(font);
+		views[\next]=Button(c, boundsButton).states_([ [">"] ]).action_{ presets.next }.font_(font);
+		views[\index]=StaticText(c, (boundsButton.x*2)@(boundsButton.y)).string_("0").align_(\right)
+		.font_(font).stringColor_(Color.white).background_(Color.black);
 		this.postInit;
 		//------------------------------------------------------------------------------- FUNCTIONS
 		//combi update en index is dubbelopperdepop!
@@ -87,6 +95,7 @@ PresetsGUIJT {
 				{
 					views[\basename].string_( presets.fileNamesWithoutNumbers[presets.index] );
 					views[\presets].items_( presets.fileNamesWithoutNumbers ).value_(presets.index);
+					views[\index].string_(presets.index);
 				}.defer
 			});
 		};

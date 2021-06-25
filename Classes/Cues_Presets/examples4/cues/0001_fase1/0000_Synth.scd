@@ -1,1 +1,1 @@
-( 'basename': "ding2", 'durations': 0.0, 'method': 0 )
+( 'basename': "ding2", 'extras': ( 'postAction': {"klaar fase 1".postln} ), 'durations': 0.0, 'method': 0 )

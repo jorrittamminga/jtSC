@@ -6,7 +6,7 @@ change wintype in FFT's to 1 instead of 0???
 	makeSynthDef {arg synthDefName;
 		synthDef=synthDefName??{\Analyzer};
 
-		SynthDef(synthDef, {arg updateF;//inBus
+		SynthDef(synthDef, {arg inBus, updateF;//inBus
 			var in=Array.newClear(5);
 			var onsets;
 			var analysis=[], pars=();//=[[],[],[],[],[]], pars=();
@@ -69,7 +69,7 @@ change wintype in FFT's to 1 instead of 0???
 					SendReply.kr(onsets, cmdNames[\onsets], 1);
 				})
 			});
-			if (outFlag, {
+			if (outFlag && (analysis.size>0), {
 				Out.kr(outBus.index, analysis.flat);
 			});
 			if (outFFTs.size>0, {
