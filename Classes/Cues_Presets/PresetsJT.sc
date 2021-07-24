@@ -50,7 +50,7 @@ PresetsJT : PresetsFileJT {
 //----------------------------------------------------------------------------- GUIs
 PresetsGUIJT {
 	var <presets;
-	var <views, <parent, <bounds, <font;
+	var <views, <parent, <bounds, <font, <fontNames;
 	*new {arg presets, parent, bounds;
 		^super.newCopyArgs(presets).init(parent, bounds)
 	}
@@ -64,6 +64,7 @@ PresetsGUIJT {
 		parent=argparent;
 		bounds=argbounds;
 		font=Font("Monaco", bounds.y*0.75);
+		fontNames=Font("Monaco", bounds.y*0.75);
 		this.preInit;
 		c=CompositeView(argparent, argbounds);
 		c.addFlowLayout(0@0, 0@0);
@@ -76,14 +77,14 @@ PresetsGUIJT {
 		views[\restore]=Button(c, boundsButton).states_([ ["r"] ]).action_{ presets.restore }.font_(font);
 		views[\basename]=TextField(c, boundsName)
 		.string_(presets.fileNamesWithoutNumbers[presets.index]??{presets.basename})
-		.action_{arg str; presets.basename_(str.string); }.font_(font);
+		.action_{arg str; presets.basename_(str.string); }.font_(fontNames);
 		views[\prev]=Button(c, boundsButton).states_([ ["<"] ]).action_{ presets.prev }.font_(font);
 		views[\presets]=PopUpMenu(c, boundsName)
 		.items_(if (presets.array.size>0, {presets.fileNamesWithoutNumbers},{["(empty)"]}))
 		.action_{|p|
 			presets.restoreAtIndex(p.value);
 			{views[\basename].string_(presets.fileNamesWithoutNumbers[p.value])}.defer
-		}.font_(font);
+		}.font_(fontNames);
 		views[\next]=Button(c, boundsButton).states_([ [">"] ]).action_{ presets.next }.font_(font);
 		views[\index]=StaticText(c, (boundsButton.x*2)@(boundsButton.y)).string_("0").align_(\right)
 		.font_(font).stringColor_(Color.white).background_(Color.black);

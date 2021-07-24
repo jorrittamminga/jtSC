@@ -5,6 +5,6 @@
 	author:			"Jorrit Tamminga",
 	version:		0.1,
 	schelp: 		"HelpSource",
-	dependencies: 	["wblib", "KDTree", "KMeans", "XML", "ZArchive"],
+	dependencies: 	["wslib", "KDTree", "KMeans", "XML", "ZArchive"],
 	url:			"http://www.jorrittamminga.nl"
 )

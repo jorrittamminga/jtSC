@@ -10,7 +10,7 @@ PathNameNumberedManager : Numbered {
 	var <folderStructure, <folderID, <deepFolderNamesWithoutNumbers;
 	var <>action, <>actionList, <>updateAction;
 
-	*new {arg pathName, updateAction, numDigits;
+	*new {arg pathName, updateAction, numDigits=4;
 		^super.new.init(pathName, updateAction, numDigits)
 	}
 	init {arg argPath, argupdateAction, argnumDigits;
@@ -18,12 +18,12 @@ PathNameNumberedManager : Numbered {
 		rootPathName=argPath.asPathName;
 		rootPath=rootPathName.fullPath;
 		if ((rootPathName.isFolder) && (rootPath.last!=$/), {rootPath=rootPath++"/"});
-		numDigits=argnumDigits??{4};
+		numDigits=argnumDigits;//??{4};
 		if (File.exists(rootPath).not, {File.mkdir(rootPath)});
 		if (rootPathName.entries.size==0, {
 			File.mkdir( rootPath++(0.asDigits(10, numDigits).join++"_"++"Init/"))
 		});
-		numDigits=argPath.asPathName.getNumDigits.asArray.maxItem.unbubble;
+		numDigits=numDigits??{argPath.asPathName.getNumDigits.asArray.maxItem.unbubble};
 		updateAction=argupdateAction;
 		this.updatePaths;
 	}

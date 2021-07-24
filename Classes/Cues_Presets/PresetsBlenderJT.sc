@@ -81,7 +81,10 @@ PresetsBlenderJT
 		},{
 			if (blendType=='depth', {
 				//preset=array.blendAtIndicesDepth(blendIndex, blendDepth, \doMapValue);
-				{arg index, depth; value=index; array.blendAtIndicesDepth(index, depth)}
+				{arg index, depth;
+					value=index;
+					array.blendAtIndicesDepth(index, depth)
+				}
 			},{
 				//preset=array.blendAtIndices(blendIndex, blendDepth, \doMapValue);
 				{arg index; value=index; array.blendAtIndices(index)}
@@ -147,7 +150,7 @@ PresetsBlenderGUIJT {
 		if (presetsBlender.blendType=='depth', {
 			views[\depth]=EZSlider(cv, bounds.x@(bounds.y/3), \depth, ControlSpec(0, 1.0), {|ez|
 				depth=ez.value;
-				presetsBlender.blendFunc.value(index, ez.value)
+				presetsBlender.blendFunc.value(presetsBlender.value, ez.value)
 			}, 1.0).font_(font);
 		});
 	}

@@ -4,14 +4,14 @@ CueListJT {
 	var array, entries;
 	var indices, prevIndex= -1;
 
-	*new {arg path, cues=(), enviroment=();
-		^super.new.init(path, cues, enviroment)
+	*new {arg path, cues=(), enviroment=(), numDigits;
+		^super.new.init(path, cues, enviroment, numDigits)
 	}
-	init { arg pathname, argcues, argenviroment;
+	init { arg pathname, argcues, argenviroment, argnumDigits;
 		root=pathname.asPathName;
 		cues=argcues??{()};
 		enviroment=argenviroment??{()};
-		pathNameNumberedManager=PathNameNumberedManager(root);
+		pathNameNumberedManager=PathNameNumberedManager(root, numDigits:argnumDigits);
 		indices=();
 		this.initCues;
 		pathNameNumberedManager.updateAction={arg pm, key;
@@ -134,7 +134,9 @@ CueListJT {
 		cues[key]=cue;
 		this.initCue(cue, key, deepFoldersRelative, keys);
 		this.updateCue(cue,key);
-		if (cue.entries.size>0, {cue.restore});
+		if (cue.entries.size>0, {
+			cue.restore
+		});
 		//cue.funcs[\directory].value(pathNameNumberedManager.deepFoldersRelative[pathNameNumberedManager.folderID], flag);
 	}
 	makeGui {arg parent, bounds=350@20, boundsList;

@@ -1,6 +1,7 @@
 CuesJT : PresetsFileJT {
 	var <objectDefault;
-
+	var <neuralNet, <blender;
+	//	var <keysNoTransition;
 	*new {arg object, cueName;
 		/*
 		^if (object.class==PresetsJT, {
@@ -11,16 +12,22 @@ CuesJT : PresetsFileJT {
 		//})
 	}
 	//--------------------------------------------------------------------------------- INITS
+	/*
+	keysNoTransition_ {
+	keysNoTransition=keys;
+	//this.initSetAction
+	}
+	*/
 	initPathName {
 		basename=pathName;
 	}
 	initSetAction {
 		var actionFunc;
+		//keysNoTransition=keysNoTransition??{[]};
 		actionFunc={arg val;
 			var valObject=(), valPreset=(), index;//oid
 			var actionObject, actionPreset, extras=val[\extras].deepCopy??{()};
 			var presetsObject;
-
 			if (presetsJT.class==PresetsJT, {
 				presetsObject=presetsJT.object;
 				if (val[\basename]!=nil, {
@@ -41,7 +48,7 @@ CuesJT : PresetsFileJT {
 					};
 				};
 				actionPreset={
-					valPreset.keysValuesDo{|key,val|
+					valPreset.sortedKeysValuesDo{|key,val|
 						presetsObject[key].action.value(val);
 						{presetsObject[key].value_(val)}.defer;
 					}
@@ -56,12 +63,16 @@ CuesJT : PresetsFileJT {
 				actionObject={
 					presetsObject[\routinesJT].do(_.stop);
 					valObject.keysValuesDo{|key,val|
+						if (presetsObject[key]==nil, {
+
+						},{
 						presetsObject[key].action.value(val);
 						{presetsObject[key].value_(val)}.defer;
+						})
 					};
 				};
 				actionPreset={
-					valPreset.keysValuesDo{|key,val|
+					valPreset.sortedKeysValuesDo{|key,val|
 						object[key].action.value(val);
 						{object[key].value_(val)}.defer;
 					}
@@ -80,8 +91,18 @@ CuesJT : PresetsFileJT {
 							},{
 								extras=(durations: val[\durations]);
 							});
-							actionPreset={presetsObject.valuesActionsTransition(valPreset, extras[\durations], extras[\curves], extras[\delayTimes]
-								, extras[\specs], extras[\actions], extras[\resolution]??{10})}
+							//if (keysNoTransition.size>0, {},{});
+							actionPreset={
+								/*
+								valPreset.sortedKeysValuesDo{|key,val|
+								object[key].action.value(val);
+								{object[key].value_(val)}.defer;
+								}
+								*/
+								presetsObject.valuesActionsTransition(valPreset, extras[\durations], extras[\curves]
+									, extras[\delayTimes]
+									, extras[\specs], extras[\actions], extras[\resolution]??{10})
+							}
 						})
 					})
 				})
@@ -100,7 +121,7 @@ CuesJT : PresetsFileJT {
 						extras[\postAction].value(val, enviroment);
 					}.fork(AppClock)
 				}
-			})
+			});
 		};
 		action=action.addFunc(actionFunc);
 	}
@@ -109,6 +130,8 @@ CuesJT : PresetsFileJT {
 		cueList.addCue(this);
 	}
 	cueName {^basename}
+	addNN{neuralNet=PresetsNNJT(this)}
+	addBlender{blender=PresetsBlenderJT(this)}
 	makeGui {arg parent, bounds=350@20;
 		{gui=CuesGUIJT(this, parent, bounds)}.defer;
 	}
@@ -207,5 +230,6 @@ CuesGUIJT {
 				}.defer
 			});
 		};
+		//presets.funcs[\directory].value;
 	}
 }

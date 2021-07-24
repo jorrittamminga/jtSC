@@ -130,6 +130,7 @@ Button zeker bij twee states niet laten interpoleren!
 			};
 		},{
 			//====================================================================== UPDATE
+			newKeys=newKeys.sort;
 			newKeys.do{arg key;
 				var value=newEvent[key];
 				var startValue, func, cs, rico, start, end, step, stepSize, duration, delayTime, val;

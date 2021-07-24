@@ -1,5 +1,22 @@
 +SimpleNumber {
-
+	nextInList { |list|  // collection is sorted
+		var index, out;
+		out=list.performNearestInList(this);
+		index=list.indexOf(out);
+		if (out<this, {
+			out=list.clipAt(index+1)
+		});
+		^out
+	}
+	prevInList { |list|  // collection is sorted
+		var index, out;
+		out=list.performNearestInList(this);
+		index=list.indexOf(out);
+		if (out>this, {
+			out=list.clipAt(index-1)
+		});
+		^out
+	}
 	/*
 	noise {arg i=0, prev, bits=5, w=1.0, maxBits=16, rand={1.0.rand};
 	var that, out;

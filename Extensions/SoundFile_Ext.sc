@@ -1,6 +1,8 @@
 + String {
 	//string is path to soundfile
 	//maybe make also a +SoundFile makeFades....
+
+
 	makeFades {arg fadeIn=1.0, fadeOut=1.0, curveA=4, curveR= -4.0, completionMessage, newPath;
 		var path=this;
 		var server,inputFile, duration, tmpPath=path++"tmp";

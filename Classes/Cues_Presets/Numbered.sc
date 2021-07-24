@@ -56,7 +56,7 @@ NumberedFile : Numbered {
 	}
 	writeAsCompileString {arg item, close=true;
 		var file;
-		"write in new File with path ".post; pathName.fullPath.postln;
+		//"write in new File with path ".post; pathName.fullPath.postln;
 		file=File(pathName.fullPath, "w");
 		file.write(item.asCompileString);
 		if (close, {file.close});

@@ -86,6 +86,40 @@ PitchShifter {
 	}
 }
 
+PitchShiftJT {
+	*ar {arg in = 0.0, windowSize = 0.2, pitchRatio = 2.0, pitchDispersion = 0.0, timeDispersion = 0.1, mul = 1.0, add = 0.0;
+		var overlap=4, interpolation=2, maxWindowSize=5;
+		var buf=LocalBuf(SampleRate.ir*maxWindowSize).clear, phase, pos, out, factor=BufFrames.ir(buf).reciprocal, factor2=SampleRate.ir*factor, timeDev, ws;
+		phase=Phasor.ar(1, 1, 0, BufFrames.ir(buf),0);
+		BufWr.ar(in, buf, phase, 1);
+		timeDev=timeDispersion.min(windowSize)*factor2;
+		ws=windowSize*factor2;
+		pos=(
+			phase*factor
+			-((pitchRatio.abs-1).max(0)*ws)
+			- WhiteNoise.ar.range(0, timeDev)
+		);
+		^GrainBuf.ar(1, Impulse.ar(windowSize.reciprocal*overlap), windowSize, buf, pitchRatio, pos, interpolation, 0, -1, 512, mul*overlap.reciprocal.sqrt, add)
+	}
+}
+
+PitchShift2JT {
+	*ar {arg in = 0.0, windowSize = 0.2, pitchRatio = 2.0, pitchDispersion = 0.0, timeDispersion = 0.1, mul = 1.0, add = 0.0
+		, overlap=4, envelope= -1, interpolation=2, maxWindowSize=5;
+		var buf=LocalBuf(SampleRate.ir*maxWindowSize).clear, phase, pos, out, factor=BufFrames.ir(buf).reciprocal, factor2=SampleRate.ir*factor, timeDev, ws;
+		phase=Phasor.ar(1, 1, 0, BufFrames.ir(buf),0);
+		BufWr.ar(in, buf, phase, 1);
+		timeDev=timeDispersion.min(windowSize)*factor2;
+		ws=windowSize*factor2;
+		pos=(
+			phase*factor
+			-((pitchRatio.abs-1).max(0)*ws)
+			- WhiteNoise.ar.range(0, timeDev)
+		);
+		^GrainBuf.ar(1, Impulse.ar(windowSize.reciprocal*overlap), windowSize, buf, pitchRatio, pos, interpolation, 0, envelope, 512, mul*overlap.reciprocal.sqrt, add)
+	}
+}
+
 PitchShiftMod {
 	*ar {arg in=0.0, windowSize=0.1, pitchRatio=1.0, pitchDispersion=0, timeDispersion=0.005, mul=1.0, add=0.0, overLap=8;
 		var buf=LocalBuf(SampleRate.ir*5).clear;

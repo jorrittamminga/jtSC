@@ -131,12 +131,11 @@ EZMultiSlider : EZGui {
 		};
 
 		this.prSetViewParams;
-
 	}
 
 	value_ { arg val;
 		value = controlSpec.constrain(val);
-		numberView.value = value.asArray.clipAt(sliderView.index).round(round);
+		numberView.value = value.asArray.clipAt(sliderView.index??{0}).round(round);
 		sliderView.value = controlSpec.unmap(value);
 	}
 

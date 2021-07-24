@@ -97,7 +97,9 @@ PresetsFileJT : Numbered {
 	}
 	initGetAction {
 		getAction=switch(object.class, Event, {
-			{ object.collect(_.value) };//default getAction
+			{
+				object.collect(_.value)
+			};//default getAction
 		}, PresetsJT, {
 			object=();
 			{ //arg presetsJT;
@@ -234,7 +236,7 @@ PresetsFileJT : Numbered {
 		actionArray[i]=action.value(val);
 		this.prSave(i, val);
 	}
-	store {arg i;
+	store {arg i, funcStoreFlag=true;
 		this.index_(i);
 		this.getValue;
 		//value=value++extra;
@@ -246,7 +248,7 @@ PresetsFileJT : Numbered {
 			actionArray[index]=action.value(value);
 			this.prSave;
 		});
-		funcs[\store].value(index)
+		if (funcStoreFlag, {funcs[\store].value(index)})
 	}
 	//prStore {}
 	prSave {arg i, saveValue;
