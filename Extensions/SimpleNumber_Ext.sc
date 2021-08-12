@@ -1,4 +1,18 @@
 +SimpleNumber {
+
+	//after Vassilakis, 2001 & 2005 http://www.acousticslab.org/learnmoresra/moremodel.html
+	//value between 0.0 and 0.090387257747353
+	roughness {arg item2=440, weight1=1.0, weight2=1.0, normalize=true;
+		var freqMin=this.min(item2), freqMax=item2.max(this);
+		var ampMin=weight1.min(weight2), ampMax=weight2.max(weight1);
+		var x=(ampMin*ampMax);
+		var y=(2*ampMin)/(ampMin+ampMax);
+		var b1 = 3.5,  b2 = 5.75,  s1 = 0.0207,  s2 = 18.96,  s = 0.24/(s1*freqMin + s2);
+		var z= (b1.neg*s*(freqMax-freqMin)).exp - (b2.neg*s*(freqMax-freqMin)).exp;
+		var factor=if (normalize, {11.063506349481},{1.0});
+		^x.pow(0.1)*0.5*(y.pow(3.11))*z*factor
+	}
+
 	nextInList { |list|  // collection is sorted
 		var index, out;
 		out=list.performNearestInList(this);

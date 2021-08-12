@@ -9,11 +9,27 @@ ScoreJT {
 		nrt=argnrt;
 		score=[];
 	}
-	add {arg item, latency=0;
+	add {arg bundle, latency=0;
 		if (nrt, {
-			score = score.add(item);
+			score = score.add(bundle);
 		},{
-			server.listSendBundle(server.latency+latency, item.copyToEnd(1))
+			server.listSendBundle(server.latency+latency, bundle.copyToEnd(1))
+		})
+	}
+	addSync {arg bundle, latency=0, condition;
+		condition=condition??{Condition.new};
+		if (nrt, {
+			if (bundle[0]==nil, {bundle[0]=0});
+			score = score.add(bundle);
+		},{
+			if ((bundle[0]==nil)||(bundle[0]==0), {
+				bundle.copyToEnd(1).do{|msg|
+					server.sendMsg(*msg);
+					server.sync;
+				}
+			},{
+				server.listSendBundle(server.latency+latency, bundle.copyToEnd(1))
+			})
 		})
 	}
 	recordNRT {}
