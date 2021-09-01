@@ -1,4 +1,5 @@
 /*
+folderID_ is nog wat te lomp, voert alle actions nog eens een keertje uit, lijkt me wat overdreven....
 maak voor de gui ook een listView met de deepFolderNamesWithoutNumbers
 of misschien drie type views: \nested, \listview, \combi (nested én listview)
 maak een onderscheid (hahaha, onder schijt) tussen Files (deepFiles) en Folders (deepFolders)
@@ -35,23 +36,19 @@ PathNameNumberedManager : Numbered {
 		this.init(path)
 	}
 	//--------------------------------------------------------- FILE/FOLDER ANALYSIS
-	updatePaths {arg index, actionArgs, updateActionArgs;
+	updatePaths {arg index, actionArgs, updateActionArgs, method;
 		deepFoldersPathName=rootPathName.deepFolders;
 		deepFolders=deepFoldersPathName.collect(_.fullPath);
 		deepFoldersRelative=deepFolders.collect{|p| p.replace(rootPath, "/")};
-
 		deepFilesPathName=deepFoldersPathName.collect{|p| p.entries};
 		deepFiles=deepFilesPathName.collect{|p| p.collect(_.fullPath)};
 		deepKeys=deepFilesPathName.collect{|p| p.collect{|p| p.fileNameWithoutExtension.split($_).copyToEnd(1).join($_).asSymbol}};
-
 		this.analyzeFolderStructure;
-
 		updateAction.value(this, updateActionArgs);
-
 		if (index.class==String, {
-			this.folderIDfromPath_(index, actionArgs)
+			this.folderIDfromPath_(index, actionArgs, method)
 		},{
-			this.folderID_(index??{folderID??{0}}, actionArgs)
+			this.folderID_(index??{folderID??{0}}, actionArgs, method)
 		});
 	}
 	analyzeFolderStructure {
@@ -107,11 +104,11 @@ PathNameNumberedManager : Numbered {
 		index=deepFolders.indexOfEqual(path);
 		if (index!=nil, {this.folderID_(index, actionArgs)});
 	}
-	folderID_ {arg index, actionArgs;
+	folderID_ {arg index, actionArgs, method;
 		folderID=index;
 		currentFolder=deepFolders[folderID];
 		currentPathName=deepFoldersPathName[folderID];
-		action.value(index, this, actionArgs);
+		action.value(index, this, actionArgs, method);
 	}
 	prev {arg action;
 		if (folderID>0, {
@@ -170,8 +167,8 @@ PathNameNumberedManager : Numbered {
 	renameFolder {arg folderName="test", pathName, action;
 		{
 			NumberedFolder.rename(folderName, pathName);
-			this.updatePaths;
-			action.value(this)
+			this.updatePaths(method: \renameFolder);
+			action.value(this);
 		}.fork
 	}
 	moveUp {

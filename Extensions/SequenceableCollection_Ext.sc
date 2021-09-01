@@ -40,4 +40,11 @@ x[0].linexp(0.0, 1.0, 100, 1000);
 		^([0]++geom.integrate.copyRange(0, geom.size-[1,2][includeLast.not.binaryValue]))
 	}
 
+	*betarandFF {arg size=16, minVal=0.0, maxVal=1.0, prob1=1, prob2=1;
+		^({|i|
+			var rand=0.0.betarand(1.0, prob1, prob2);
+			if ( (rand>0.5)&&(i.even), {rand=1-rand});
+			if ( (rand<0.5)&&(i.even.not), {rand=1-rand});
+			rand  }!size).normalize.range(minVal,maxVal)
+	}
 }

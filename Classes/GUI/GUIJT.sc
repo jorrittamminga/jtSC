@@ -271,25 +271,37 @@ GUIJT {
 	makeEZGUI {arg argbounds=350@20, label, controlSpec, action, value,
 		initAction=false, labelWidth, numberWidth, unitWidth=0, labelHeight
 		,  layout=\horz, arggap=0@0, argmargin=0@0, equalLength=true, defaultRound=0.0001;
-		var boundz=argbounds.copy??{bounds.copy}, type, round, guiOut;
+		var boundz=argbounds.copy??{bounds.copy}, type, round=0, guiOut;
 		//font=Font(fontName??{Font.defaultMonoFace}, boundz.y*0.6);//Font.defaultMonoFace
 		labelWidth=labelWidth??{boundz.y*0.6 * 8;};
 		numberWidth=numberWidth??{boundz.x*0.15};
-		type=if (value!=nil, {
+
+		if (controlSpec.class==Array, {
+			if ((controlSpec[0].class==String)||(controlSpec[0].class==Symbol), {
+				type=EZPopUpMenu;
+				//action=action.addFunc({|ez| [ez, ez.value].postln})
+			})
+		});
+		type=type??{if (value!=nil, {
 			switch(value.asArray.size, 1, {EZSlider}, 2, {
 				EZRanger}, {
 				boundz.y=boundz.x*0.25;
 				EZMultiSlider
 			})
-		},{EZSlider});
+		},{EZSlider})};
 
 		if ((type==EZRanger) && (equalLength), {
 			labelWidth=labelWidth-numberWidth-4;
 		});
 		if ((type==EZMultiSlider) && ((boundz.x/boundz.y)>8)
 			, {boundz.y=boundz.x*0.125});
-		round=controlSpec.step;
-		if (round<0.00000001, {round=defaultRound.copy});
+		if (type==EZPopUpMenu, {
+
+		},{
+			round=controlSpec.step;
+			if (round<0.00000001, {round=defaultRound.copy});
+		});
+		//action=action.addFunc({|ez| [ez, ez.value].postln});
 		^type.new(parent, boundz, label, controlSpec, action
 			, value, false, labelWidth, numberWidth
 			, layout: layout

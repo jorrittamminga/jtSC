@@ -26,6 +26,24 @@ Button zeker bij twee states niet laten interpoleren!
 			curve.resamp1(steps)
 		}, {steps})
 	}
+	atTime {arg time=0, key;
+		if (key==nil, {
+			^this.allTime(time)
+		},{
+			this[\routinesJT][key].value(time);
+			^this[key]
+		})
+	}
+	allTime {arg time=0;
+		var that;
+		this[\routinesJT].do{arg r; r.value(time)};
+		that=this.deepCopy;
+		that.removeAt(\routinesJT);
+		^that
+	}
+	valuesTransition {arg event, durations, curves, delayTimes, specs;
+
+	}
 	valuesActionsTransition {arg event, durations, curves, delayTimes, specs, actions, resolution=10, nrt=false;
 		var newEvent=event;
 		var waitTime=resolution;
@@ -37,13 +55,10 @@ Button zeker bij twee states niet laten interpoleren!
 		resolution=resolution??{10};
 		nrt=nrt??{false};
 		waitTime=resolution.reciprocal;
-
 		[\routinesJT].do{|key| keyz.remove(key)};
 		newKeys=newKeys.sect(keyz);
 		this[\routinesJT]=this[\routinesJT]??{()};
-		newKeys.do{|key|
-			this[\routinesJT][key].stop;
-		};
+		newKeys.do{|key| this[\routinesJT][key].stop;};
 		#durations, curves, delayTimes=[durations, curves, delayTimes].collect{|key|
 			if (key.class.superclass==SimpleNumber, {key.asFloat},{key});
 		};
@@ -133,14 +148,27 @@ Button zeker bij twee states niet laten interpoleren!
 			newKeys=newKeys.sort;
 			newKeys.do{arg key;
 				var value=newEvent[key];
-				var startValue, func, cs, rico, start, end, step, stepSize, duration, delayTime, val;
+				var startValue, func, cs, rico, start, end, step, stepSize, duration, delayTime=delayTimes[key]??{0}, val;
 				var env, action;
 				startValue=this[key].value??{value};
 				duration=durations[key]??{durations[\common]??{0}};
 				if ((value==startValue) || (duration<waitTime), {
-					//if (((value-startValue).abs<0.0001) || (duration<waitTime), {
 					//hier ook nog een nrt versie maken!
-					actions[key].value(value)
+					if (delayTime<=0.0, {
+						actions[key].value(value)
+					},{
+						if (nrt, {
+							//hier ook nog een nrt versie maken!
+							this[\routinesJT][key]={arg time;
+								//func.value((time-delayTime).clip(0, duration+delayTime)*resolution)
+							};
+						},{
+							this[\routinesJT][key]={
+								delayTime.wait;
+								actions[key].value(value)
+							}.fork;
+						});
+					})
 				},{
 					//====================================================================== FORKS
 					cs=specs[key];
@@ -167,7 +195,7 @@ Button zeker bij twee states niet laten interpoleren!
 							}
 					});
 					//========================================
-					delayTime=delayTimes[key]??{0.0};
+					//delayTime=delayTimes[key]??{0.0};
 					if (nrt, {
 						this[\routinesJT][key]={arg time;
 							func.value((time-delayTime).clip(0, duration+delayTime)*resolution)

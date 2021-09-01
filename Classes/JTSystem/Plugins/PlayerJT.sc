@@ -62,7 +62,7 @@ PlayerJT : JT {
 				b.index
 			},{b})
 		};
-		numChannels=2;
+		numChannels= 2;
 
 		pathFunction={
 			var soundFile, init=false;
@@ -73,39 +73,40 @@ PlayerJT : JT {
 				tmpIsPlaying=true;
 				this.stopPlaying;
 			});
-
 			soundFile=SoundFile.openRead(path);
-			sampleRate=soundFile.sampleRate;
-			duration=soundFile.duration;
-			numFrames=soundFile.numFrames;
-			soundFile.close;
-			if (soundFile.numChannels!=numChannels, {
+			if (soundFile!=nil, {
+				sampleRate=soundFile.sampleRate;
+				duration=soundFile.duration;
+				numFrames=soundFile.numFrames;
+				soundFile.close;
+				if (soundFile.numChannels!=numChannels, {
+					numChannels=soundFile.numChannels;
+					init=true;
+					//this.initBufferAndSynthDef;
+					this.makeSynthDef;
+
+					if (monitor!=nil, {if (monitor.isPlaying, {
+						monitor.free;
+						this.addMonitor(monitoroutBus, monitornumChannels, monitoramp
+							, monitorserverID);
+					})});
+
+				});
 				numChannels=soundFile.numChannels;
-				init=true;
-				//this.initBufferAndSynthDef;
-				this.makeSynthDef;
+				startFrame=0;
+				endFrame=numFrames;
+				this.allocBuffer;
+				this.cueSoundFile(startFrame, false);
+				bufferIsClosed=false;
+				isPaused=tmpIsPaused;
 
-				if (monitor!=nil, {if (monitor.isPlaying, {
-					monitor.free;
-					this.addMonitor(monitoroutBus, monitornumChannels, monitoramp
-						, monitorserverID);
-				})});
-
-			});
-			numChannels=soundFile.numChannels;
-			startFrame=0;
-			endFrame=numFrames;
-			this.allocBuffer;
-			this.cueSoundFile(startFrame, false);
-			bufferIsClosed=false;
-			isPaused=tmpIsPaused;
-
-			if (tmpIsPlaying, {
-				if (isPaused.not, {
-					this.startPlaying
-				})
-			});
-			pathFunc.value(this);
+				if (tmpIsPlaying, {
+					if (isPaused.not, {
+						this.startPlaying
+					})
+				});
+				pathFunc.value(this);
+			})
 		};
 		this.path_(argpath);
 	}
@@ -351,22 +352,26 @@ PlayerJTGUI : GUIJT {
 	}
 
 	changePath {
-		views[\sf].soundfile=SoundFile.openRead(classJT.path);
-		views[\sf].read(0, views[\sf].soundfile.numFrames, closeFile:true);
-		views[\sf].refresh;
-		views[\sf].timeCursorPosition=0;
-		views[\sf].selectNone(0);
-		[\start, \end].do{|key,i|
-			views[key].controlSpec.maxval=classJT.duration;
-			views[key].value=[0, classJT.duration][i]
-		};
-		if ((path.dirname!=classJT.path.dirname)
-			|| (fileNames.size!=PathName(classJT.path.dirname).entries.size)
-			, {
-				this.pathsAndFilesNames;
+		var soundFile;
+		soundFile=SoundFile.openRead(classJT.path);
+		if (soundFile!=nil, {
+			views[\sf].soundfile=soundFile;
+			views[\sf].read(0, views[\sf].soundfile.numFrames, closeFile:true);
+			views[\sf].refresh;
+			views[\sf].timeCursorPosition=0;
+			views[\sf].selectNone(0);
+			[\start, \end].do{|key,i|
+				views[key].controlSpec.maxval=classJT.duration;
+				views[key].value=[0, classJT.duration][i]
+			};
+			if ((path.dirname!=classJT.path.dirname)
+				|| (fileNames.size!=PathName(classJT.path.dirname).entries.size)
+				, {
+					this.pathsAndFilesNames;
+			});
+			path=classJT.path;
+			views[\fileNames].value_(paths.indexOfEqual(classJT.path));
 		});
-		path=classJT.path;
-		views[\fileNames].value_(paths.indexOfEqual(classJT.path));
 	}
 
 	updateFrames {
@@ -462,7 +467,7 @@ PlayerJTGUI : GUIJT {
 					this.updateFrames;
 			});
 		};
-		views[\end].value_(classJT.duration);
+		views[\end].value_(classJT.duration??{0});
 		views[\playTime]=StaticText(parent, (bounds.x*0.4-gap.x)@bounds.y)
 		.string_(0.asTimeString.copyRange(1,9))
 		.align_(\right).font_(Font(font.name, bounds.y*0.5));

@@ -8,6 +8,20 @@
 		var event=this.copy;
 		^(objects: event, controlSpecs: event.collect(_.controlSpec), routines: (), actions: event.collect(_.action))
 	}
+	deepPut {arg that;
+		//f={arg q, p;
+		that.keysValuesDo{|key,val|
+			if (val.class==Event, {
+				if (this[key].class==Event, {
+					this[key].deepPut(that[key])
+				},{
+					this[key]=val
+				})
+			},{
+				this[key]=val
+			})
+		}
+	}
 }
 /*
 EventJT

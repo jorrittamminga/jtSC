@@ -1,4 +1,25 @@
 + Env {
+	*initClass {
+		shapeNames = IdentityDictionary[
+			\step -> 0,
+			\lin -> 1,
+			\linear -> 1,
+			\exp -> 2,
+			\exponential -> 2,
+			\sin -> 3,
+			\sine -> 3,
+			\wel -> 4,
+			\welch -> 4,
+			\sqr -> 6,
+			\squared -> 6,
+			\amp -> 6,
+			\db -> 6, //levels=dbamp, out=ampdb
+			\cub -> 7,
+			\cubed -> 7,
+			\hold -> 8,
+		];
+		shapeNames.freeze;
+	}
 
 	resampForBlend {arg newSize;
 		var factor = this.levels.size - 1 / (newSize - 1).max(1);

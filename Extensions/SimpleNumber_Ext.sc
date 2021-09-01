@@ -10,7 +10,34 @@
 		var b1 = 3.5,  b2 = 5.75,  s1 = 0.0207,  s2 = 18.96,  s = 0.24/(s1*freqMin + s2);
 		var z= (b1.neg*s*(freqMax-freqMin)).exp - (b2.neg*s*(freqMax-freqMin)).exp;
 		var factor=if (normalize, {11.063506349481},{1.0});
+
 		^x.pow(0.1)*0.5*(y.pow(3.11))*z*factor
+	}
+
+	//inverse formule of roughess. returns [freqMin, freqMax] in relation to this (=centerfreq)
+	bwr {arg roughness=0.24, normalized=true;
+		/*
+		var dev=this.copy, attempt=0, attempts=10, diff=10000, r;
+		while({(diff>0.01)&&(attempt<attempts)},{
+
+		diff=(roughness-this.roughness(this+dev));
+		attempt=attempt+1
+		});
+
+		^dev
+		*/
+		/*
+		//var freqMin=this.min(item2), freqMax=item2.max(this);
+		var b1 = 3.5,  b2 = 5.75,  s1 = 0.0207,  s2 = 18.96,  s = 0.24/(s1*this + s2);
+		//var z= (b1.neg*s*(freqMax-freqMin)).exp - (b2.neg*s*(freqMax-freqMin)).exp;
+		//var factor=if (normalize, {11.063506349481},{1.0});
+
+		[b1.neg*s, b2.neg*s].postln;
+
+		^((roughness*2.0).log / ((b1.neg*s) - (b2.neg*s)) )
+
+		//z*factor
+		*/
 	}
 
 	nextInList { |list|  // collection is sorted
@@ -224,8 +251,14 @@
 	}
 
 	azToBusAndPan2 {arg numChannels=2, outBus=0;
-		var factor=(this+numChannels.reciprocal*(numChannels*0.5))%numChannels;
-		^[outBus+factor.asInteger, factor.frac.linlin(0.0, 1.0, -1.0, 1.0)]
+		var factor, out;
+		if (numChannels>2, {
+			factor=(this+numChannels.reciprocal*(numChannels*0.5))%numChannels;
+			out=[outBus+factor.asInteger, factor.frac.linlin(0.0, 1.0, -1.0, 1.0)];
+		},{
+			out=[outBus, (this*2).fold2(1.0)]
+		});
+		^out
 	}
 	azToBussesAndPan2 {arg numChannels=2, outBus=0;
 		var factor=(this+numChannels.reciprocal*(numChannels*0.5))%numChannels;
@@ -243,7 +276,14 @@
 		outBusses=outBusses.copyRange(0, numChannels-2)++outBusses.last;
 		^[outBusses+outBus, amps]
 	}
-
+	azToBussesAndAmps2 {arg numChannels=4, outBus=0, compensate=1.0, orientation;
+		var az= this;
+		var factor, amps, outBusses, az2, rotation=(numChannels*this).asInteger.neg;
+		//factor=(az+totalNumChannels.reciprocal*(totalNumChannels/2))%totalNumChannels;
+		//az2=factor.frac.linlin(0, 1.0, numChannels.reciprocal.neg, numChannels.reciprocal);
+		amps=az.azToAmps(numChannels);
+		^[(0..numChannels-1).rotate(rotation).copyRange(0,1)+outBus, amps.rotate(rotation).copyRange(0,1)]
+	}
 	azToAmps2 {arg numChannels=4, compensate=1.0, orientation;
 		^((this*pi-numChannels.asAzimuthArray(orientation)).abs/pi*(0.5*pi)).wrap2(0.5pi).abs.cos*((numChannels*0.5).pow(-0.5*compensate))
 	}

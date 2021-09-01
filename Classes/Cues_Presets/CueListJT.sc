@@ -4,7 +4,7 @@ CueListJT {
 	var array, entries;
 	var indices, prevIndex= -1;
 
-	*new {arg path, cues=(), enviroment=(), numDigits;
+	*new {arg path, cues=(), enviroment=(), numDigits=4;
 		^super.new.init(path, cues, enviroment, numDigits)
 	}
 	init { arg pathname, argcues, argenviroment, argnumDigits;
@@ -21,11 +21,12 @@ CueListJT {
 				this.updateCue(cues[key],key)
 			})
 		};
-		pathNameNumberedManager.action=pathNameNumberedManager.action.addFunc({arg index, pm, restoreFlag=true;
+		pathNameNumberedManager.action=pathNameNumberedManager.action.addFunc({arg index, pm, restoreFlag=true, method;
 			var deepFoldersRelative, entries, entriesFullPath, keys, allKeys=cues.keys.asArray.copy, jump=false;
 			restoreFlag=restoreFlag??{true};
 			#deepFoldersRelative, entries, entriesFullPath, keys=this.getCurrent(pm);
 			jump=(index-prevIndex)!=1;
+			if (method==\renameFolder, {jump=false});
 			/*
 			cues.keysValuesDo{|key,cue|
 			cue.directory_(pm.currentPathName);
@@ -138,6 +139,10 @@ CueListJT {
 			cue.restore
 		});
 		//cue.funcs[\directory].value(pathNameNumberedManager.deepFoldersRelative[pathNameNumberedManager.folderID], flag);
+	}
+	removeCue {arg cue;
+		var key=cue.basename.asSymbol;
+		cues.removeAt(key);
 	}
 	makeGui {arg parent, bounds=350@20, boundsList;
 		{gui=CueListGUI(this, parent, bounds, boundsList)}.defer

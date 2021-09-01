@@ -1,5 +1,6 @@
 ScoreJT {
 	var <server, <score, <nrt;
+	var <scoreWatcher, hasScoreWatcher;
 
 	*new {arg nrt=true, server;
 		^super.new.init(nrt, server)
@@ -7,9 +8,11 @@ ScoreJT {
 	init {arg argnrt, argserver;
 		server=argserver??{Server.default};
 		nrt=argnrt;
+		hasScoreWatcher=false;
 		score=[];
 	}
 	add {arg bundle, latency=0;
+		//if (hasScoreWatcher, {scoreWatcher.add(bundle)});
 		if (nrt, {
 			score = score.add(bundle);
 		},{
@@ -30,6 +33,13 @@ ScoreJT {
 			},{
 				server.listSendBundle(server.latency+latency, bundle.copyToEnd(1))
 			})
+		})
+	}
+	addNow {arg bundle;
+		if (nrt, {
+			score = score.add(bundle);
+		},{
+			server.listSendBundle(nil, bundle.copyToEnd(1))
 		})
 	}
 	recordNRT {}
@@ -56,6 +66,7 @@ ScoreJT {
 				tmpPath=outputFilePath++"tmp";
 				action=action.addFuncFirst({cond.unhang});
 			});
+			score = score.sort({ arg a, b; b[0] >= a[0] });
 			Score(score).recordNRT(outputFilePath: tmpPath
 				, sampleRate: sampleRate, headerFormat: headerFormat, sampleFormat: sampleFormat, options: options, action: action);
 			if (normalize, {

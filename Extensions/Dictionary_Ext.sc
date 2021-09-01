@@ -6,6 +6,10 @@
 		this[newKey]=this[oldKey];
 		this.removeAt(oldKey);
 	}
+	renameKey {arg oldKey, newKey;
+		this.put(newKey, this[oldKey]);
+		this.removeAt(oldKey);
+	}
 	sortedKeys {arg sortFunc;
 		var keys = this.keys(Array);
 		^keys.sort(sortFunc)

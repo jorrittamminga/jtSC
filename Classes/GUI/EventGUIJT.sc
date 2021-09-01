@@ -12,7 +12,7 @@ EventGUIJT : GUIJT {
 
 	init {arg argevent, argparent, argbounds, argname, argcontrolSpecs, argonClose
 		, argcanFocus, arglabelWidth, arggap, argmargin, argactions;
-
+		//var drawName=false;
 		event=argevent;
 		parent=argparent;
 		bounds=argbounds;
@@ -26,12 +26,20 @@ EventGUIJT : GUIJT {
 		margin=argmargin;
 		this.initVars;
 		this.initGUI;
-
 		labelWidth=event.keys.asArray.collect{|key| key.asString.size}.maxItem*font.size*0.6;
-
+		if ((parent!=nil)&&(name!=nil), {
+			StaticText(parent, bounds).string_(name).font_(font).stringColor_(Color.white).background_(Color.black)
+		});
 		event.sortedKeysValuesDo{|key,val|
 			var cs, action;
-			cs=controlSpecs[key].asSpec??{ControlSpec(val*0.5, val*2)};
+			if (controlSpecs[key]!=nil, {
+				if (controlSpecs[key].class==Array, {
+					if ( (controlSpecs[key][0].class==String)||(controlSpecs[key][0].class==Symbol), {
+						cs=controlSpecs[key]
+					});
+				})
+			});
+			cs=cs??{controlSpecs[key].asSpec??{ControlSpec(val*0.5, val*2)}};
 			action=actions[key]??{{|ez|
 				event[key]=ez.value}};
 			views[key]=this.makeEZGUI(bounds, key
@@ -40,7 +48,6 @@ EventGUIJT : GUIJT {
 		};
 		parent.rebounds;
 		if (hasWindow, {window.rebounds});
-
 		if (onClose!=nil, {
 			parent.onClose=parent.onClose.addFunc(onClose);
 		});

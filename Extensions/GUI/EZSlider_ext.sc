@@ -52,6 +52,20 @@
 
 }
 
++ EZPopUpMenu {
+
+	action {^globalAction}
+
+	round2_ {arg r;
+		//dummy
+	}
+	controlSpec {
+		^[0,items.size-1, 0, 1].asSpec
+	}
+	controlSpec_ {arg items;
+		this.items_(items)
+	}
+}
 
 + EZKnob {
 	decimals_ {arg decimals;

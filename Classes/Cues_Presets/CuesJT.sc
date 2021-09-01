@@ -1,6 +1,10 @@
+/*
+valPreset=object.removeAllWithoutActions(valPreset);//WARNING: THIS IS A NEW LINE!! COULD BREAK THIS
+*/
 CuesJT : PresetsFileJT {
 	var <objectDefault;
 	var <neuralNet, <blender;
+	var <cueListJT;
 	//	var <keysNoTransition;
 	*new {arg object, cueName;
 		/*
@@ -66,11 +70,14 @@ CuesJT : PresetsFileJT {
 						if (presetsObject[key]==nil, {
 
 						},{
-						presetsObject[key].action.value(val);
-						{presetsObject[key].value_(val)}.defer;
+							presetsObject[key].action.value(val);
+							{presetsObject[key].value_(val)}.defer;
 						})
 					};
 				};
+
+				valPreset=object.removeAllWithoutActions(valPreset);//WARNING: THIS IS A NEW LINE!! COULD BREAK THIS
+
 				actionPreset={
 					valPreset.sortedKeysValuesDo{|key,val|
 						object[key].action.value(val);
@@ -128,6 +135,10 @@ CuesJT : PresetsFileJT {
 	addToCueList {arg cueList;
 		pathName=basename;
 		cueList.addCue(this);
+		cueListJT=cueList;
+	}
+	removeFromCueList {arg cueList;
+		cueList.removeCue(this);
 	}
 	cueName {^basename}
 	addNN{neuralNet=PresetsNNJT(this)}
@@ -141,6 +152,7 @@ CuesJT : PresetsFileJT {
 CuesGUIJT {
 	var <presets;
 	var <views, <parent, <bounds;
+	var <prevIndex=0;
 	*new {arg presets, parent, bounds;
 		^super.newCopyArgs(presets).init(parent, bounds)
 	}
@@ -156,34 +168,48 @@ CuesGUIJT {
 		views[\addBefore]=Button(c, boundsButton).states_([ ["±"] ])
 		.action_{
 			if (views[\basename].stringColor==Color.red, {
+				views[\addAfter].states_([ ["cp"] ]);
 				views[\basename].stringColor_(Color.black);
 				presets.add(presets.basename, \addToHead, presets.directory)
 			},{
+				//copy?
 				presets.store
 			});
 		};
 		views[\addAfter]=Button(c, boundsButton).states_([ ["+"] ])
 		.action_{
+			var currentPath, currentCueListPath, index;
 			if (views[\basename].stringColor==Color.red, {
+				views[\addAfter].states_([ ["cp"] ]);
 				views[\basename].stringColor_(Color.black);
 				presets.add(presets.basename, \addToTail, presets.directory)
 			},{
-				presets.store
+				currentCueListPath=presets.cueListJT.pathNameNumberedManager.currentFolder;
+				currentPath=(presets.entries[presets.index].fullPath.dirname++"/");
+				if (currentPath!=currentCueListPath, {
+					index=presets.entries.collect{|path| path.fullPath.dirname++"/"}.indexOfEqual(currentCueListPath);
+					presets.put(index, presets.array[presets.index].deepCopy);
+					views[\presets].value_(index);
+					presets.index_(index);
+				},{
+					presets.store
+				});
 			});
 		};
 		views[\delete]=Button(c, boundsButton).states_([ ["-"] ]).action_{
 			presets.delete
 		};
+		views[\basename]=StaticText(c, boundsName).string_(presets.directory??{presets.basename}).font_(Font("Monaco", boundsName.y*0.45));
 		views[\store]=Button(c, boundsButton).states_([ ["s"] ]).action_{
 			//views[\basename].stringColor_(Color.black);
 			presets.store
 		};
 		views[\restore]=Button(c, boundsButton).states_([ ["r"] ]).action_{ presets.restore };
-		views[\basename]=StaticText(c, boundsName).string_(presets.directory??{presets.basename}).font_(Font("Monaco", boundsName.y*0.45));
 		views[\prev]=Button(c, boundsButton).states_([ ["<"] ]).action_{ presets.prev };
 		views[\presets]=PopUpMenu(c, boundsName)
 		.items_(if (presets.array.size>0, {presets.entriesFullPath},{["(empty)"]}))
 		.action_{|p|
+			prevIndex=presets.index;
 			presets.restore(p.value);
 		};
 		views[\next]=Button(c, boundsButton).states_([ [">"] ]).action_{ presets.next };
@@ -209,7 +235,13 @@ CuesGUIJT {
 			presets.funcs[key]=presets.funcs[key].addFunc({arg deepFoldersRelative, exists=true;
 				{views[\basename].string_(
 					deepFoldersRelative.removeNumbersFromNumberedPath
-				).stringColor_(if (exists, {Color.black},{Color.red}))}.defer;
+				).stringColor_(if (exists, {
+					views[\addAfter].states_([ ["cp"] ]);
+					Color.black
+				},{
+					views[\addAfter].states_([ ["+"] ]);
+					Color.red
+				}))}.defer;
 			});
 		};
 		[\update].do{|key|
