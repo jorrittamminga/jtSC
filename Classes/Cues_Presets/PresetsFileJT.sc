@@ -87,11 +87,13 @@ PresetsFileJT : Numbered {
 		}, Event, {
 			value=();
 			object.sortedKeysValuesDo{|key,obj|
-				var cs=ControlSpec(0.0, 1.0);
-				cs=obj.controlSpec;
-				if (cs.step<0.01, {cs=cs.warp});
+				var cs;//=ControlSpec(0.0, 1.0);
 				value[key]=obj.value;
-				controlSpecs[key]=cs;
+				cs=obj.controlSpec;
+				if (cs!=nil, {
+					if (cs.step<0.01, {cs=cs.warp});
+					controlSpecs[key]=cs;
+				})
 			}
 		});
 	}

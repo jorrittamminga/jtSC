@@ -1,0 +1,6 @@
++ EZText {
+	controlSpec {
+		^nil
+	}
+
+}

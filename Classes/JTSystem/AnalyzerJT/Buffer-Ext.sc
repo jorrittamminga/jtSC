@@ -21,26 +21,30 @@
 	}
 
 
-	beatRoot {arg dirName=PathName("~/Desktop").fullPath++"/", saPath="/Applications/sonic-annotator-1.5-osx-amd64/sonic-annotator", bpmLimits=[60.0, 125.0];
-		var bpm;
+	beatRoot {arg dirName=PathName("~/Desktop").fullPath++"/", saPath="/Applications/sonic-annotator-1.5-osx-amd64/sonic-annotator", bpmLimits=[60.0, 125.0], maken3file=true;
+		var bpm, cmd;
 		var fileName="tmp", cvsfile, file, string;
 		var cond=Condition.new;
 		//this.write
 		this.write(dirName++fileName++".aiff");
 		this.server.sync;
 		//this.write(dirName++fileName++".aiff", completionMessage: {
-		("/Applications/sonic-annotator-1.5-osx-amd64/sonic-annotator -s vamp:beatroot-vamp:beatroot:beats > "++dirName++"beatroot-vamp.n3").unixCmd({cond.unhang}, false);
-		cond.hang;
-		if (this.server.sampleRate!=44100, {
-			file=File(dirName++"beatroot-vamp.n3", "r");
-			string=file.readAllString;
-			file.close;
-			string=string.replace("vamp:step_size \"441\"^^xsd:int", "vamp:step_size \""++(this.server.sampleRate*0.01).round(1.0).asInteger++"\"^^xsd:int");
-			file=File(dirName++"beatroot-vamp.n3", "w");
-			file.write(string);
-			file.close;
+		if (maken3file, {
+			cmd=("/Applications/sonic-annotator-1.5-osx-amd64/sonic-annotator -s vamp:beatroot-vamp:beatroot:beats > "++dirName++"beatroot-vamp.n3");
+			cmd.unixCmd({cond.unhang}, false);
+			cond.hang;
+			if (this.server.sampleRate!=44100, {
+				file=File(dirName++"beatroot-vamp.n3", "r");
+				string=file.readAllString;
+				file.close;
+				string=string.replace("vamp:step_size \"441\"^^xsd:int", "vamp:step_size \""++(this.server.sampleRate*0.01).round(1.0).asInteger++"\"^^xsd:int");
+				file=File(dirName++"beatroot-vamp.n3", "w");
+				file.write(string);
+				file.close;
+			});
 		});
-		("/Applications/sonic-annotator-1.5-osx-amd64/sonic-annotator -t "++dirName++"beatroot-vamp.n3 "++dirName++fileName++".aiff -w csv  --csv-force --csv-basedir "++dirName++" --force").unixCmd({cond.unhang}, false);
+		cmd=("/Applications/sonic-annotator-1.5-osx-amd64/sonic-annotator -t "++dirName++"beatroot-vamp.n3 "++dirName++fileName++".aiff -w csv  --csv-force --csv-basedir "++dirName++" --force");
+		cmd.unixCmd({cond.unhang}, false);
 		cond.hang;
 		cvsfile=dirName++fileName++"_vamp_beatroot-vamp_beatroot_beats.csv";
 		if (File.exists(cvsfile), {
@@ -48,7 +52,6 @@
 			("rm "++dirName++fileName++".aiff").unixCmd(postOutput:false);
 			("rm "++cvsfile).unixCmd(postOutput:false);
 			("rm "++dirName++"beatroot-vamp.n3").unixCmd(postOutput:false);
-
 			if (bpm>bpmLimits[0], {
 				if (bpm>bpmLimits[1], {
 					bpm=2.pow((log(bpm/bpmLimits[1])/2.log).ceil.neg)*bpm;
@@ -62,7 +65,6 @@
 		});
 		^bpm
 	}
-
 
 	tempoTracker {arg dirName=PathName("~/Desktop").fullPath++"/", saPath="/Applications/sonic-annotator-1.5-osx-amd64/sonic-annotator", bpmLimits=[60.0, 125.0], mean=false;
 		var bpm, cvs, stepsize;

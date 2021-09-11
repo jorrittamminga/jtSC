@@ -36,10 +36,17 @@ EventGUIJT : GUIJT {
 				if (controlSpecs[key].class==Array, {
 					if ( (controlSpecs[key][0].class==String)||(controlSpecs[key][0].class==Symbol), {
 						cs=controlSpecs[key]
+					},{
+						cs=controlSpecs[key].asSpec
 					});
+				},{
+					cs=controlSpecs[key].asSpec
 				})
 			});
-			cs=cs??{controlSpecs[key].asSpec??{ControlSpec(val*0.5, val*2)}};
+			if ((cs==nil) && (controlSpecs[key]==nil), {if (val.size==0, {cs=controlSpecs[key].asSpec})});
+			//cs=cs??{controlSpecs[key].asSpec??{if (val.size==0, {ControlSpec(val*0.5, val*2)}, {nil})}};
+			//cs=cs??{controlSpecs[key].asSpec??{[val, val.size].postln; if (val.size==0, {ControlSpec(val*0.5, val*2)}, {nil})}};
+			//[key, val, cs, \after].postln;
 			action=actions[key]??{{|ez|
 				event[key]=ez.value}};
 			views[key]=this.makeEZGUI(bounds, key

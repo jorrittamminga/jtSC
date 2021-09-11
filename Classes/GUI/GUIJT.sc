@@ -275,7 +275,9 @@ GUIJT {
 		//font=Font(fontName??{Font.defaultMonoFace}, boundz.y*0.6);//Font.defaultMonoFace
 		labelWidth=labelWidth??{boundz.y*0.6 * 8;};
 		numberWidth=numberWidth??{boundz.x*0.15};
-
+		^if (controlSpec==nil, {
+			EZText(parent, boundz, label, action, value, false, layout: argmargin, gap:arggap).font_(font)
+		},{
 		if (controlSpec.class==Array, {
 			if ((controlSpec[0].class==String)||(controlSpec[0].class==Symbol), {
 				type=EZPopUpMenu;
@@ -284,7 +286,9 @@ GUIJT {
 		});
 		type=type??{if (value!=nil, {
 			switch(value.asArray.size, 1, {EZSlider}, 2, {
-				EZRanger}, {
+				EZRanger
+			}, {
+				//LET OP, hier iets doen! [value, controlSpec, value.class].postln;
 				boundz.y=boundz.x*0.25;
 				EZMultiSlider
 			})
@@ -302,10 +306,12 @@ GUIJT {
 			if (round<0.00000001, {round=defaultRound.copy});
 		});
 		//action=action.addFunc({|ez| [ez, ez.value].postln});
-		^type.new(parent, boundz, label, controlSpec, action
+		//EZText(parent, bounds, label, action, value, false, layout: layout, margin: argmargin, gap: arggap).font_(font);
+		type.new(parent, boundz, label, controlSpec, action
 			, value, false, labelWidth, numberWidth
 			, layout: layout
-			, margin: argmargin, gap: arggap).font_(font).round2_(round, value);
+			, margin: argmargin, gap: arggap).font_(font).round2_(round, value)
+		});
 	}
 
 	reboundsAll {
