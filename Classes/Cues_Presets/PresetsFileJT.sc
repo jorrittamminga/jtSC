@@ -204,7 +204,7 @@ PresetsFileJT : Numbered {
 			});
 			if(i<entries.size, {
 				index=i;
-				basename=keys[index];
+				basename=keys[index]??{basename};
 				funcs[\index].value(index, this);
 			})
 		});

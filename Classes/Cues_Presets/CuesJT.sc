@@ -23,7 +23,7 @@ CuesJT : PresetsFileJT {
 	}
 	*/
 	initPathName {
-		basename=pathName;
+		basename=pathName.deepCopy;
 	}
 	initSetAction {
 		var actionFunc;
@@ -133,7 +133,7 @@ CuesJT : PresetsFileJT {
 		action=action.addFunc(actionFunc);
 	}
 	addToCueList {arg cueList;
-		pathName=basename;
+		pathName=basename.deepCopy;
 		cueList.addCue(this);
 		cueListJT=cueList;
 	}
@@ -164,7 +164,6 @@ CuesGUIJT {
 		views=();
 		c=CompositeView(argparent, bounds.x@(bounds.y*2));
 		c.addFlowLayout(0@0, 0@0);
-
 		views[\addBefore]=Button(c, boundsButton).states_([ ["±"] ])
 		.action_{
 			if (views[\basename].stringColor==Color.red, {
@@ -197,9 +196,18 @@ CuesGUIJT {
 			});
 		};
 		views[\delete]=Button(c, boundsButton).states_([ ["-"] ]).action_{
-			presets.delete
+			presets.delete;
 		};
-		views[\basename]=StaticText(c, boundsName).string_(presets.directory??{presets.basename}).font_(Font("Monaco", boundsName.y*0.45));
+		views[\basename]=StaticText(c, boundsName).string_(
+			presets.directory??{presets.basename}
+			//"/"++presets.cueListJT.pathNameNumberedManager.currentPathName.folderName.removeNumbersFromNumberedPath++"/"
+		).font_(Font("Monaco", boundsName.y*0.45)).stringColor_(
+			if (presets.entries.size>0, {
+				Color.black
+			},{
+				Color.red
+			})
+		);
 		views[\store]=Button(c, boundsButton).states_([ ["s"] ]).action_{
 			//views[\basename].stringColor_(Color.black);
 			presets.store
@@ -262,6 +270,8 @@ CuesGUIJT {
 				}.defer
 			});
 		};
-		//presets.funcs[\directory].value;
+		if (presets.cueListJT!=nil, {
+			presets.cueListJT.pathNameNumberedManager.folderID_(presets.cueListJT.pathNameNumberedManager.folderID)//BRUTE FORCE!
+		});
 	}
 }

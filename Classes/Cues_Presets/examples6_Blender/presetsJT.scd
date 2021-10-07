@@ -7,6 +7,8 @@ keys.do{|key|
 views[\range]=EZRanger(w, 350@40, \freq2, \freq.asSpec);
 views[\but]=Button(w, 350@20).states_([ [\a],[\b],[\c] ]);
 
-p=PresetsJT(views, path++"presets/").addBlender.makeGui(w, 350@20);
+w.view.decorator.gap=0@0;
+//w.view.decorator.margin=0@0;
+p=PresetsJT(views, path++"presets/").addBlender.makeGui(w, 350@15);
 w.rebounds;
 )

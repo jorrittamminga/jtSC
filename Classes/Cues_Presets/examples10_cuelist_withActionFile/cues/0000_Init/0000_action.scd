@@ -1,0 +1,3 @@
+{
+	"init de frinit!!".postln;
+}

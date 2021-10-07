@@ -160,10 +160,11 @@ PresetsBlenderGUIJT {
 		parent=argparent;
 		views=();
 		c=CompositeView(parent, argbounds); c.addFlowLayout(0@0,0@0);
+		font=Font("Monaco", argbounds.y*0.75);
 		presetsBlender.presets.object[\method]=PopUpMenu(c, (argbounds.x*0.5)@argbounds.y).items_([\clipAt, \wrapAt]).action_{arg i;
-			presetsBlender.method_([\clipAt, \wrapAt][i.value])}.value_(presetsBlender.presets.value[\method]);
+			presetsBlender.method_([\clipAt, \wrapAt][i.value])}.value_(presetsBlender.presets.value[\method]).font_(font);
 		presetsBlender.presets.object[\blendType]=PopUpMenu(c, (argbounds.x*0.5)@argbounds.y).items_([\normal, \depth]).action_{|i|
-			presetsBlender.blendType_([\normal, \depth][i.value])}.value_(presetsBlender.presets.value[\blendType]);
+			presetsBlender.blendType_([\normal, \depth][i.value])}.value_(presetsBlender.presets.value[\blendType]).font_(font);
 		cv=CompositeView(parent, argbounds.x@(4*argbounds.y)); cv.addFlowLayout(0@0, 0@0);
 		bounds=argbounds.x@(argbounds.y*3);
 		this.makeBlender
