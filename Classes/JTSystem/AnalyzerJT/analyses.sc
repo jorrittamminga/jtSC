@@ -1,8 +1,8 @@
 + String {
 
-	findOnsets {arg ws=512, tr=0.5, relaxtime=1.0, s, fileDelete=false;
+	findOnsets {arg ws=512, tr=0.5, relaxtime=1.0, s, fileDelete=false, action;
 		var path="~/";
-		var resultbuf, resultpath, oscpath, score, dur, sf, cond, size, data;
+		var resultbuf, resultpath, oscpath, score, dur, sf, cond, size, data, o;
 		var deleteTmp=false;
 		//var path=thisProcess.nowExecutingPath.dirname++"/";
 
@@ -43,9 +43,12 @@
 
 		cond = Condition.new;
 
+		o=ServerOptions.new;
+		o.memSize = 2**18;
+
 		// osc file path, output path, input path - input is soundfile to analyze
 		score.recordNRT(oscpath, "/dev/null", sf.path, sampleRate: sf.sampleRate,
-			options: ServerOptions.new
+			options: o
 			.verbosity_(-1)
 			.numInputBusChannels_(sf.numChannels)
 			.numOutputBusChannels_(sf.numChannels)
@@ -64,6 +67,7 @@
 		//		data=data.collect{|d| if (d>2.5, {d/2},{d})};
 		//		data.mean.postln;
 		//		data.stdev.postln;
+		action.value;
 		^(data-(ws/2/sf.sampleRate))
 	}
 
@@ -119,6 +123,7 @@
 		sf.readData(data = FloatArray.newClear(size));
 		sf.close;
 		File.delete(oscpath); File.delete(resultpath);
+
 		data=data.collect{|d| if (d>2.5, {d/2},{d})};
 		//		data.mean.postln;
 		//		data.stdev.postln;

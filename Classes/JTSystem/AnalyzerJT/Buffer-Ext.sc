@@ -1,13 +1,12 @@
 + Buffer {
-
-
-	findOnsets {
+	findOnsets {arg action;
 		var tmpPath="~/tmppppp.aif".asAbsolutePath;
 		this.write(tmpPath);
 		this.server.sync;
-		^tmpPath.findOnsets(s:this.server, fileDelete:true);
+		^tmpPath.findOnsets(s:this.server, fileDelete:true, action: action);
 	}
 
+	//mmm, this is loadCollection or sendCollection....
 	allocSetn {arg values;
 		//arg server, numFrames, numChannels = 1, completionMessage, bufnum;
 

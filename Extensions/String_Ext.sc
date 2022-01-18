@@ -6,6 +6,17 @@
 		^array.copyRange(0, array.size-1-levels).join($/)++"/"
 	}
 
+	asciiProduct {
+		var x=1;
+		this.ascii.do{|val|
+			if ([val.log/2.log, x.log/2.log].sum>=30, {
+				x=x.mod(x.log/2.log).round(1.0).asInteger;
+			});
+			x=x*val.max(1);
+			x.abs
+		};
+		^x
+	}
 
 	unixPath {
 		^(this.replace(" ","\\ ").replace("(","\\(").replace(")","\\)").replace("&","\\&").replace("!","\\!").replace("'","\\'")).replace("[", "\\[").replace("]", "\\]").replace(",", "\\,").replace(":", "\\:")

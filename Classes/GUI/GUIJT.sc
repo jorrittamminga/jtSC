@@ -181,6 +181,11 @@ GUIJT {
 		^presets
 	}
 
+	addToCueList {arg cueList, key;
+		CuesJT(views, key).addToCueList(cueList).makeGui(parent, bounds);
+		parent.rebounds;
+	}
+
 	addPresetSystem {arg guiObjects, path, folderName, type, index, guiType=2
 		, argguiflag=false, rebounds=true, interpolationTime, parentPS, preLoad;
 		var ps, windowReboundsFlag=true;

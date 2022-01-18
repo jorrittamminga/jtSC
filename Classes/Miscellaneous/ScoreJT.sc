@@ -1,6 +1,7 @@
 ScoreJT {
 	var <server, <score, <nrt;
 	var <scoreWatcher, hasScoreWatcher;
+	var <nodeWatcher, <nodes;
 
 	*new {arg nrt=true, server;
 		^super.new.init(nrt, server)
@@ -10,6 +11,11 @@ ScoreJT {
 		nrt=argnrt;
 		hasScoreWatcher=false;
 		score=[];
+		/*
+		nodes=();
+		nodeWatcher=NodeWatcher(server);
+		nodeWatcher.start;
+		*/
 	}
 	add {arg bundle, latency=0;
 		//if (hasScoreWatcher, {scoreWatcher.add(bundle)});
@@ -42,8 +48,20 @@ ScoreJT {
 			server.listSendBundle(nil, bundle.copyToEnd(1))
 		})
 	}
+	/*
+	registerNode {
+		//Synth.basicNew(\Sine, server, nodeID)
+
+	}
+	updateNodes {
+		var nodesTmp=();
+		nodeWatcher.nodes.keys.collect{|key| nodesTmp[key]=nodes[key]};
+		nodes=nodesTmp.copy;
+	}
+	*/
 	recordNRT {}
-	render {arg outputFilePath, sampleRate=48000, headerFormat="aiff", sampleFormat="int24", numChannels=2, options, action={"READY".postln}, normalize=false;
+	render {arg outputFilePath, sampleRate=48000, headerFormat="aiff", sampleFormat="int24", numChannels=2, options
+		, action={"READY".postln}, normalize=false;
 		var tmpPath, sf;
 		var cond=Condition.new;
 		outputFilePath=outputFilePath??{

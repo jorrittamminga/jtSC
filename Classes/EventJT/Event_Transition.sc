@@ -126,7 +126,11 @@ Button zeker bij twee states niet laten interpoleren!
 						}
 					})
 				},{
-					{arg val; this[key]=val}
+					if (nrt, {
+						{arg val; val}
+					},{
+						{arg val; this[key]=val}
+					})
 				})
 			};
 			specs[key]=specs[key]??{
@@ -158,8 +162,9 @@ Button zeker bij twee states niet laten interpoleren!
 						actions[key].value(value)
 					},{
 						if (nrt, {
-							//hier ook nog een nrt versie maken!
+							//ws hoeft hier helemaal geen delayTime wait!
 							this[\routinesJT][key]={arg time;
+								actions[key].value(value)
 								//func.value((time-delayTime).clip(0, duration+delayTime)*resolution)
 							};
 						},{

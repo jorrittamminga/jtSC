@@ -144,6 +144,15 @@ EZMultiSlider : EZGui {
 		this.doAction;
 	}
 
+	index {^sliderView.index}
+	index_ {arg index; sliderView.index_(index)}
+	currentvalue {^controlSpec.map(sliderView.currentvalue)}
+	currentvalue_ {arg val;
+		value[sliderView.index]=val;
+		numberView.value = val.round(round);
+		sliderView.currentvalue_(controlSpec.unmap(val));
+	}
+
 	doAction { action.value(this) }
 
 	set { arg label, spec, argAction, initVal, initAction = false;

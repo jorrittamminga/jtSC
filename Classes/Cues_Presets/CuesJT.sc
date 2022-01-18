@@ -231,7 +231,7 @@ CuesGUIJT {
 			//presets.methodsArray[p.value];
 			*/
 		};
-		presets.object[\durations]=EZNumber(c, (bounds.x*0.1).floor@bounds.y, nil, ControlSpec(0.0, 60.0), {|ez|
+		presets.object[\durations]=EZNumber(c, (bounds.x*0.1).floor@bounds.y, nil, ControlSpec(0.0, 1800.0), {|ez|
 			if (ez.value<=0.0, {
 				{presets.object[\method].valueAction_(0)}.defer
 			});

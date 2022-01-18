@@ -1,3 +1,0 @@
-{arg e;
-	"endyluk".postln
-}

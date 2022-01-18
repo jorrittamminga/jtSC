@@ -25,12 +25,16 @@ PresetsBlenderJT
 		});
 		presets=argpresetsCollection;
 		saveInPresetFlag=argsaveInPresetFlag;
-
-		argmethod=presets.value[\method]??{argmethod};
-		argblendType=presets.value[\blendType]??{argblendType};
+		if (presets.value!=nil, {
+			argmethod=presets.value[\method]??{argmethod};
+			argblendType=presets.value[\blendType]??{argblendType};
+		},{
+			argmethod
+		});
+		//argmethod=presets.value[\method]??{argmethod};
+		//argblendType=presets.value[\blendType]??{argblendType};
 		argmethod=addActions[\method][argmethod];
 		argblendType=addActions[\blendType][argblendType];
-
 		this.prInit(argmethod, argblendType);
 		funcs=();
 		presets.funcs[\store]=presets.funcs[\store].addFunc({arg i;
@@ -56,7 +60,6 @@ PresetsBlenderJT
 	prInit {arg methode, blendTyp, specs, actions;
 		method=methode??{method};
 		blendType=blendTyp??{blendType};
-
 		if (presets.presetsCollection.rank<2, {
 			controlSpec=ControlSpec(0, presets.presetsCollection.size-('clipAt': 1, 'wrapAt':0)[method]).warp;
 			value=value??{0};
@@ -68,7 +71,11 @@ PresetsBlenderJT
 			value=value??{Array.fill(controlSpec.size, {0})};
 			value=value.asArray.lace(controlSpec.size);
 		});
-		array=EventsArrayJT.fill(presets.presetsCollection, presets.presetsJT.object, method, specs, actions);//, method
+		if (presets.presetsCollection.includesEqual(nil), {
+			array=[];
+		},{
+			array=EventsArrayJT.fill(presets.presetsCollection, presets.presetsJT.object, method, specs, actions);//, method
+		});
 		//blendFunc={arg index; array.blendAtIndex(index)}
 		blendFunc=if (presets.presetsCollection.rank<2, {
 			if (blendType=='depth', {
@@ -157,14 +164,27 @@ PresetsBlenderGUIJT {
 	init {arg argpresetsBlender, argparent, argbounds;
 		var c;
 		presetsBlender=argpresetsBlender;
+		//presetsBlender.presets.value[\method].postln;
+
+
 		parent=argparent;
 		views=();
 		c=CompositeView(parent, argbounds); c.addFlowLayout(0@0,0@0);
 		font=Font("Monaco", argbounds.y*0.75);
-		presetsBlender.presets.object[\method]=PopUpMenu(c, (argbounds.x*0.5)@argbounds.y).items_([\clipAt, \wrapAt]).action_{arg i;
-			presetsBlender.method_([\clipAt, \wrapAt][i.value])}.value_(presetsBlender.presets.value[\method]).font_(font);
-		presetsBlender.presets.object[\blendType]=PopUpMenu(c, (argbounds.x*0.5)@argbounds.y).items_([\normal, \depth]).action_{|i|
-			presetsBlender.blendType_([\normal, \depth][i.value])}.value_(presetsBlender.presets.value[\blendType]).font_(font);
+		presetsBlender.presets.object[\method]=PopUpMenu(c, (argbounds.x*0.5)@argbounds.y)
+		.items_([\clipAt, \wrapAt]).action_{arg i;
+			presetsBlender.method_([\clipAt, \wrapAt][i.value])}.value_(
+			if (presetsBlender.presets.value==nil, {0},{
+				presetsBlender.presets.value[\method]??{0}
+			})
+		).font_(font);
+		presetsBlender.presets.object[\blendType]=PopUpMenu(c, (argbounds.x*0.5)@argbounds.y)
+		.items_([\normal, \depth]).action_{|i| presetsBlender.blendType_([\normal, \depth][i.value])}
+		.value_(
+			if (presetsBlender.presets.value==nil, {0},{
+				presetsBlender.presets.value[\blendType]??{0}
+			})
+		).font_(font);
 		cv=CompositeView(parent, argbounds.x@(4*argbounds.y)); cv.addFlowLayout(0@0, 0@0);
 		bounds=argbounds.x@(argbounds.y*3);
 		this.makeBlender

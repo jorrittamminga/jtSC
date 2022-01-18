@@ -1,3 +1,7 @@
+/*
+- maak een 're-order' functie waarmee je de volgorde kunt instellen waarme de cues verlopen, dus de 0000, 0001 etc veranderen
+-
+*/
 CueListJT {
 	var <root, <cues, <>enviroment;
 	var <pathNameNumberedManager, <gui;
@@ -8,6 +12,7 @@ CueListJT {
 		^super.new.init(path, cues, enviroment, numDigits)
 	}
 	init { arg pathname, argcues, argenviroment, argnumDigits;
+		if (pathname.last!=$/, {pathname=pathname++"/"});
 		root=pathname.asPathName;
 		cues=argcues??{()};
 		enviroment=argenviroment??{()};
@@ -143,6 +148,12 @@ CueListJT {
 	removeCue {arg cue;
 		var key=cue.basename.asSymbol;
 		cues.removeAt(key);
+	}
+	next {
+		pathNameNumberedManager.next
+	}
+	prev {
+		pathNameNumberedManager.prev
 	}
 	makeGui {arg parent, bounds=350@20, boundsList;
 		{gui=CueListGUI(this, parent, bounds, boundsList)}.defer

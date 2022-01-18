@@ -42,7 +42,6 @@ GrainDelay {
 	}
 }
 
-/*
 PitchShifter {
 
 	*ar {arg in=0.0, rate=1.0, dur=0.10, overLap=4.0, maxdelaytime=5.0, delayTime=0.005, interp=2, numChannels=1, az=0.0, envbufnum= -1, maxGrains = 2048, rateScaling= -0.85, timeJitter=0.005, mul=1.0, add=0.0, fb=0.0, run=1.0, lagTime=0.2, tr=0.001, minRateScaling=1.0;
@@ -85,7 +84,7 @@ PitchShifter {
 			, add);
 	}
 }
-*/
+
 PitchShiftJT {
 	*ar {arg in = 0.0, windowSize = 0.2, pitchRatio = 2.0, pitchDispersion = 0.0, timeDispersion = 0.1, mul = 1.0, add = 0.0;
 		var overlap=4, interpolation=2, maxWindowSize=5;

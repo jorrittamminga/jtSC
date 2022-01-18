@@ -1,3 +1,4 @@
+//(title: "test", album: "test", artist: "test", date: "test", copyright: "test", license: "test", comment: "test")
 + SoundFile {
 	*writeMetaData {arg pathName, metadata=(), action;
 		var file;
@@ -8,6 +9,45 @@
 		} {
 			^nil
 		};
+	}
+
+	*getMetaData {arg pathName, keys, action;
+		var file, string;
+		file = this.new(pathName);
+		^if(file.openRead(pathName)) {
+			string=file.getMetaData(keys.deepCopy, action);
+			file.close;
+			string
+		} {
+			nil
+		};
+	}
+
+	getMetaData {arg keys, action;
+		var cmd="/usr/local/bin/sndfile-metadata-get ", string="", metadata=(), out;
+		/*
+		--str-title            Print the title metadata.
+		--str-copyright        Print the copyright metadata.
+		--str-artist           Print the artist metadata.
+		--str-comment          Print the comment metadata.
+		--str-date             Print the creation date metadata.
+		--str-album            Print the album metadata.
+		--str-license          Print the license metadata.
+		*/
+		//cmd=cmd++" --str-comment ";
+		cmd=cmd++this.path.unixPath;
+		out=cmd.unixCmdGetStdOut;
+		out=out.split($\n);
+		out.do{|string|
+			var key, val;
+			var data=string.split($:);
+			key=data[0];
+			key=key.replace(" ", "").replace(".","_");
+			val=data[1].interpret;
+			if (val!=nil, {metadata[key.asSymbol]=val})
+		};
+		action.value;
+		^metadata
 	}
 
 	writeMetaData {arg metadata=(), action;
@@ -30,7 +70,6 @@
 			})
 		};
 		string=string++this.path.unixPath;
-		string.postln;
 		//^string.runInTerminal
 		^string.unixCmd(action)
 	}

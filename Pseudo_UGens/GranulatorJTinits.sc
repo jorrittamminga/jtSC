@@ -15,7 +15,7 @@ GrainInJT {
 		if (rate.rate==\demand, {rate=Ddup(2, rate)});
 		if (rOverLap.rate==\demand, {rOverLap=Ddup(2, rOverLap)});
 
-		dur=rate.abs.pow(rateScaling).min(1.0)*dur;//scale the during according to the pitch/rate.maybe get rid off the .min
+		dur=rate.abs.pow(rateScaling).min(1.0)*dur;//scale the dur according to the pitch/rate, maybe get rid off the .min
 
 		switch ( dur.rate,
 			\audio, {
@@ -31,12 +31,34 @@ GrainInJT {
 		}, {maxDur = dur});
 
 		//??[dur, rate, mul, delayTime, rOverLap].do{|par| if (par.rate==\demand, {par=Demand.ar(impulse, 0, par)})};
-		if (dur.rate==\demand, {dur=Demand.ar(impulse, 0, dur)});
-		if (rate.rate==\demand, {rate=Demand.ar(impulse, 0, rate)});
-		if (mul.rate==\demand, {mul=Demand.ar(impulse, 0, mul)});
-		if (delayTime.rate==\demand, {delayTime=Demand.ar(impulse, 0, delayTime)});
-		if (rOverLap.rate==\demand, {rOverLap=Demand.ar(impulse, 0, rOverLap)});
-		timeJitter=Demand.ar(impulse, 0, Dwhite(0, timeJitter));
+		if (dur.rate==\demand, {
+			dur=Demand.ar(impulse, 0, dur)
+			//dur=Demand.multiNewList([dur.rate, impulse, 0] ++ dur.asArray);
+		});
+		if (rate.rate==\demand, {
+			rate=Demand.ar(impulse, 0, rate);
+			//rate=Demand.multiNewList([dur.rate, impulse, 0] ++ rate.asArray);
+		});
+		if (mul.rate==\demand, {
+			mul=Demand.ar(impulse, 0, mul);
+			//mul=Demand.multiNewList([dur.rate, impulse, 0] ++ mul.asArray);
+		});
+		if (delayTime.rate==\demand, {
+			delayTime=Demand.ar(impulse, 0, delayTime);
+			//delayTime=Demand.multiNewList([dur.rate, impulse, 0] ++ delayTime.asArray);
+		});
+		if (rOverLap.rate==\demand, {
+			rOverLap=Demand.ar(impulse, 0, rOverLap);
+			//rOverLap=Demand.multiNewList([dur.rate, impulse, 0] ++ rOverLap.asArray);
+		});
+		//timeJitter=Demand.multiNewList([dur.rate, impulse, 0] ++ [Dwhite(0, timeJitter)]);
+		if (impulse.rate==\audio, {
+			timeJitter=Demand.ar(impulse, 0, Dwhite(0, timeJitter));
+			//demandList=Demand.ar(impulse, 0, demandList);
+		},{
+			timeJitter=Demand.kr(impulse, 0, Dwhite(0, timeJitter));
+			//demandList=Demand.kr(impulse, 0, demandList);
+		});
 
 		phase=Phasor.ar(0, (run.lag(0, maxDur)>0.0001), 0, BufFrames.ir(buf),0);
 		input=(fb*BufRd.ar(1,buf,phase,1))+((in*run.lag(maxDur)));
