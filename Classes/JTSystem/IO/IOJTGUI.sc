@@ -23,6 +23,10 @@ IOJTGUI : GUIJT {
 		channelbounds=bounds.copy;
 		masterFaderbounds=bounds.copy;
 
+		if (parent==nil, {
+			hasWindow=true;
+			parent=Window("", Rect(0,0,400,400)); parent.addFlowLayout; parent.alwaysOnTop_(true); parent.front});
+
 		channelbounds.x=channelbounds.x-(margin.x*2);
 		channelbounds.y=channelbounds.y-(margin.y*2);
 		masterFaderbounds.x=masterFaderbounds.x-(margin.x*2);

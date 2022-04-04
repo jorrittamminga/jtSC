@@ -1,4 +1,4 @@
-+Point {
++Polar {
 
 	azimuth {//azimith in radians
 		^(0.5pi-this.theta).wrap2(pi)

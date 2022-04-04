@@ -69,7 +69,7 @@ ScoreJT {
 			path.dirname++"/"++PathName(path).fileNameWithoutExtension++"."++headerFormat.toLower
 		};
 		tmpPath=outputFilePath;
-		options=options??{ServerOptions.new};
+		options=options??{server.options};
 
 		options.verbosity_(-1);
 		options.numOutputBusChannels = numChannels;

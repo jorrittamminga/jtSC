@@ -1,5 +1,15 @@
 + SimpleNumber {
 
+	//PV_MaxMagN  bins.binsamp
+	binsamp {arg fftSize=2048;
+		^this.expexp(1, fftSize, 31, 0.2).max(1)
+	}
+
+	//PV_MagSmooth  smooth.smoothamp
+	smoothamp {
+		^this.linexp(0.0, 1.0, 1, 3.0)
+	}
+
 	//decaytime.ringzamp
 	ringzamp {arg power=0.5, server;
 		var sr;

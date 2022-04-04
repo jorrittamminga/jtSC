@@ -1,5 +1,5 @@
 EventGUIJT : GUIJT {
-	var <controlSpecs, <event, <actions;
+	var <controlSpecs, <event, <actions, <nameView;
 	var onClose, canFocus;
 
 	*new {arg event, parent, bounds=350@20, name, controlSpecs, onClose=true, canFocus=true
@@ -29,7 +29,7 @@ EventGUIJT : GUIJT {
 		this.initGUI;
 		labelWidth=event.keys.asArray.collect{|key| key.asString.size}.maxItem*font.size*0.6;
 		if ((parent!=nil)&&(name!=nil)&&(name!="Nil"), {
-			StaticText(parent, bounds).string_(name).font_(font).stringColor_(Color.white).background_(Color.black)
+			nameView=StaticText(parent, bounds).string_(name).font_(font).stringColor_(Color.white).background_(Color.black)
 		});
 		event.sortedKeysValuesDo{|key,val|
 			var cs, action, flag=true;

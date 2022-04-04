@@ -4,7 +4,7 @@
 */
 CueListJT {
 	var <root, <cues, <>enviroment;
-	var <pathNameNumberedManager, <gui;
+	var <pathNameNumberedManager, <gui, <value=0;
 	var array, entries;
 	var indices, prevIndex= -1;
 
@@ -154,6 +154,10 @@ CueListJT {
 	}
 	prev {
 		pathNameNumberedManager.prev
+	}
+	value_ {arg val;
+		value=val;
+		pathNameNumberedManager.folderID_(val);
 	}
 	makeGui {arg parent, bounds=350@20, boundsList;
 		{gui=CueListGUI(this, parent, bounds, boundsList)}.defer

@@ -90,10 +90,10 @@ PathNameNumberedManager : Numbered {
 				event=event[name.asSymbol];
 				[
 					keys.collect{|key,i|
-					//key.asString.split($_).copyToEnd(1).join($_)
-					key
-				}
-				, index, folderIDs, extras];
+						//key.asString.split($_).copyToEnd(1).join($_)
+						key
+					}
+					, index, folderIDs, extras];
 			};
 		};
 		^folderStructure
@@ -105,10 +105,12 @@ PathNameNumberedManager : Numbered {
 		if (index!=nil, {this.folderID_(index, actionArgs)});
 	}
 	folderID_ {arg index, actionArgs, method;
-		folderID=index;
-		currentFolder=deepFolders[folderID];
-		currentPathName=deepFoldersPathName[folderID];
-		action.value(index, this, actionArgs, method);
+		if (index<deepFolders.size, {
+			folderID=index;
+			currentFolder=deepFolders[folderID];
+			currentPathName=deepFoldersPathName[folderID];
+			action.value(index, this, actionArgs, method);
+		});
 	}
 	prev {arg action;
 		if (folderID>0, {

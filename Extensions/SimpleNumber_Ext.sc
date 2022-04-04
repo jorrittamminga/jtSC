@@ -278,11 +278,17 @@
 	}
 	azToBussesAndAmps2 {arg numChannels=4, outBus=0, compensate=1.0, orientation;
 		var az= this;
-		var factor, amps, outBusses, az2, rotation=(numChannels*this).asInteger.neg;
-		//factor=(az+totalNumChannels.reciprocal*(totalNumChannels/2))%totalNumChannels;
-		//az2=factor.frac.linlin(0, 1.0, numChannels.reciprocal.neg, numChannels.reciprocal);
+		var factor, amps, outBusses, az2, rotation, rotationAmps;
+
+		//rotation=(numChannels*this).asInteger.neg;
+		rotation=(numChannels*this*0.5).round(1.0).asInteger.neg;
+		//rotationAmps=(rotation*0.5).abs.round(1.0).asInteger*(if (rotation>0.0, {1},{-1}));
+
+		rotationAmps=rotation;
+
+
 		amps=az.azToAmps(numChannels);
-		^[(0..numChannels-1).rotate(rotation).copyRange(0,1)+outBus, amps.rotate(rotation).copyRange(0,1)]
+		^[(0..numChannels-1).rotate(rotation).copyRange(0,1)+outBus, amps.rotate(rotationAmps).copyRange(0,1)]
 	}
 	azToAmps2 {arg numChannels=4, compensate=1.0, orientation;
 		^((this*pi-numChannels.asAzimuthArray(orientation)).abs/pi*(0.5*pi)).wrap2(0.5pi).abs.cos*((numChannels*0.5).pow(-0.5*compensate))

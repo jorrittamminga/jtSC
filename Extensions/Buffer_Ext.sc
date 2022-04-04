@@ -1,5 +1,11 @@
 + Buffer {
 
+	updateInfoSync { arg action;
+		this.updateInfo(action);
+		if (thisProcess.mainThread.state>3, {server.sync});
+	}
+
+
 	// transfer a collection of numbers to a buffer through a file
 	*loadCollectionMsg { arg server, collection, numChannels = 1, action;
 		var data, sndfile, path, bufnum, buffer;
