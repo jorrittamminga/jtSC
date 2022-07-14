@@ -25,6 +25,9 @@ EventGUIJT : GUIJT {
 		gap=arggap;
 		margin=argmargin;
 		argexcludeKeys=argexcludeKeys??{[]};
+
+		//argexcludeKeys=argexcludeKeys.addAll([\method_CuesJT, \durations_CuesJT, \extras_CuesJT]);
+
 		this.initVars;
 		this.initGUI;
 		labelWidth=event.keys.asArray.collect{|key| key.asString.size}.maxItem*font.size*0.6;

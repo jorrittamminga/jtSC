@@ -1,11 +1,11 @@
 Bell {
 	classvar <all;
 
-	*at { |key| ^all.at(key)}
+	*at { |key| ^all.at(key).deepCopy}
 
-	*sjoerd { ^all.at(\Sjoerd) }
-	*goes { ^all.at(\Goes) }
-	*domutrecht { ^all.at(\DomUtrecht)}
+	*sjoerd { ^all.at(\Sjoerd).deepCopy }
+	*goes { ^all.at(\Goes).deepCopy }
+	*domutrecht { ^all.at(\DomUtrecht).deepCopy}
 
 	*initClass {
 		all = (

@@ -3,7 +3,7 @@ valPreset=object.removeAllWithoutActions(valPreset);//WARNING: THIS IS A NEW LIN
 */
 CuesJT : PresetsFileJT {
 	var <objectDefault;
-	var <neuralNet, <blender;
+	var <neuralNet, <blender, <bypass=false;
 	var <cueListJT;
 	//	var <keysNoTransition;
 	*new {arg object, cueName;
@@ -30,8 +30,15 @@ CuesJT : PresetsFileJT {
 		//keysNoTransition=keysNoTransition??{[]};
 		actionFunc={arg val;
 			var valObject=(), valPreset=(), index;//oid
-			var actionObject, actionPreset, extras=val[\extras].deepCopy??{()};
+			var actionObject, actionPreset, extras;
 			var presetsObject;
+
+			if (val[\method]!=nil, {val[\method_CuesJT]=val[\method].deepCopy; val.removeAt(\method)});
+			if (val[\durations]!=nil, {val[\durations_CuesJT]=val[\durations].deepCopy; val.removeAt(\durations)});
+			if (val[\extras]!=nil, {val[\extras_CuesJT]=val[\extras].deepCopy; val.removeAt(\extras)});
+
+			extras=val[\extras_CuesJT].deepCopy??{()};
+
 			if (presetsJT.class==PresetsJT, {
 				presetsObject=presetsJT.object;
 				if (val[\basename]!=nil, {
@@ -60,7 +67,8 @@ CuesJT : PresetsFileJT {
 			}, {
 				presetsObject=object;
 				valPreset=val.deepCopy;
-				[\method, \durations, \extras].do{|key|
+				[\method_CuesJT, \durations_CuesJT, \extras_CuesJT].do{|key|
+					//[\method, \durations, \extras].do{|key|
 					valObject[key]=val[key];
 					valPreset.removeAt(key)
 				};
@@ -85,30 +93,31 @@ CuesJT : PresetsFileJT {
 					}
 				};
 			});
-			if (val[\method]!=nil, {
-				if (val[\method]>0, {
-					if (val[\durations]!=nil, {
-						if (val[\durations]>0.0, {
-							if (val[\extras]!=nil, {
+			if (val[\method_CuesJT]!=nil, {
+				if (val[\method_CuesJT]>0, {
+					if (val[\durations_CuesJT]!=nil, {
+						if (val[\durations_CuesJT]>0.0, {
+							if (val[\extras_CuesJT]!=nil, {
 								if (extras[\durations]!=nil, {
-									extras[\durations][\common]=(val[\durations]??{0});
+									extras[\durations][\common]=(val[\durations_CuesJT]??{0});
 								},{
-									extras[\durations]=val[\durations]
+									extras[\durations]=val[\durations_CuesJT]
 								});
 							},{
-								extras=(durations: val[\durations]);
+								extras=(durations: val[\durations_CuesJT]);
 							});
 							//if (keysNoTransition.size>0, {},{});
 							actionPreset={
-								/*
-								valPreset.sortedKeysValuesDo{|key,val|
-								object[key].action.value(val);
-								{object[key].value_(val)}.defer;
-								}
-								*/
-								presetsObject.valuesActionsTransition(valPreset, extras[\durations], extras[\curves]
-									, extras[\delayTimes]
-									, extras[\specs], extras[\actions], extras[\resolution]??{10})
+								if (bypass, {
+									valPreset.sortedKeysValuesDo{|key,val|
+										object[key].action.value(val);
+										{object[key].value_(val)}.defer;
+									}
+								},{
+									presetsObject.valuesActionsTransition(valPreset, extras[\durations], extras[\curves]
+										, extras[\delayTimes]
+										, extras[\specs], extras[\actions], extras[\resolution]??{10})
+								})
 							}
 						})
 					})
@@ -139,6 +148,13 @@ CuesJT : PresetsFileJT {
 	}
 	removeFromCueList {arg cueList;
 		cueList.removeCue(this);
+	}
+	bypass_ {arg flag;
+		bypass=flag;
+		this.restore;
+		if (gui!=nil, {
+			{gui.views[\bypass].value_(flag.not.binaryValue) }.defer;
+		});
 	}
 	cueName {^basename}
 	addNN{neuralNet=PresetsNNJT(this)}
@@ -221,7 +237,7 @@ CuesGUIJT {
 			presets.restore(p.value);
 		};
 		views[\next]=Button(c, boundsButton).states_([ [">"] ]).action_{ presets.next };
-		presets.object[\method]=PopUpMenu(c, (bounds.x*0.1).floor@bounds.y).items_(
+		presets.object[\method_CuesJT]=PopUpMenu(c, (bounds.x*0.1).floor@bounds.y).items_(
 			[\restore, \valuesActionsTransition]
 		).action_{|p|
 			/*
@@ -231,13 +247,16 @@ CuesGUIJT {
 			//presets.methodsArray[p.value];
 			*/
 		};
-		presets.object[\durations]=EZNumber(c, (bounds.x*0.1).floor@bounds.y, nil, ControlSpec(0.0, 1800.0), {|ez|
+		presets.object[\durations_CuesJT]=EZNumber(c, (bounds.x*0.1).floor@bounds.y, nil, ControlSpec(0.0, 1800.0), {|ez|
 			if (ez.value<=0.0, {
-				{presets.object[\method].valueAction_(0)}.defer
+				{presets.object[\method_CuesJT].valueAction_(0)}.defer
 			});
 		}, 0.0, false, 0).round2_(0.01);
-		presets.object[\extras]=TextField(c, (bounds.x*0.8).floor@bounds.y).string_("").action_{arg t;
+		presets.object[\extras_CuesJT]=TextField(c, (bounds.x*0.8-bounds.y).floor@bounds.y).string_("").action_{arg t;
 		};
+		views[\bypass]=Button(c, bounds.y@bounds.y).states_([ [\I],[\I, Color.black, Color.green] ]).action_{|b|
+			presets.bypass_((b.value>0).not)
+		}.canFocus_(false).value_(presets.bypass.not.binaryValue);
 		//------------------------------------------------------------------------------- FUNCTIONS
 		[\directory].do{|key|
 			presets.funcs[key]=presets.funcs[key].addFunc({arg deepFoldersRelative, exists=true;
@@ -257,7 +276,8 @@ CuesGUIJT {
 				{
 					//views[\basename].string_( presets.directory );
 					views[\presets].items_(
-						presets.entries.collect{|p| p.pathOnly.replace(presets.rootPath, "").removeNumbersFromNumberedPath}
+						presets.entries.collect{|p| p.pathOnly.replace(presets.rootPath, "")
+							.removeNumbersFromNumberedPath}
 					).value_(presets.index);
 				}.defer
 			});

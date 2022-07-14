@@ -1,2 +1,2 @@
-( 'extras': ( 'durations': ( 'selectForCueList': 0, 'aaapresets': 0 ) ), 'selectForCueList': 0, 'aaapresets': 1, 'durations': 3.0, 
-  'slider': [ 0.70106762647629, 0.62277579307556, 0.83629894256592 ], 'method': 1 )
+( 'selectForCueList': 0, 'aaapresets': 1, 'slider': [ 0.70106762647629, 0.62277579307556, 0.83629894256592 ], 'method_CuesJT': 1, 
+  'extras_CuesJT': ( 'durations': ( 'selectForCueList': 0, 'aaapresets': 0 ) ), 'durations_CuesJT': 3.0 )

@@ -17,6 +17,7 @@ CueListJT {
 		cues=argcues??{()};
 		enviroment=argenviroment??{()};
 		pathNameNumberedManager=PathNameNumberedManager(root, numDigits:argnumDigits);
+		pathNameNumberedManager.parent=this;
 		indices=();
 		this.initCues;
 		pathNameNumberedManager.updateAction={arg pm, key;
@@ -162,7 +163,63 @@ CueListJT {
 	makeGui {arg parent, bounds=350@20, boundsList;
 		{gui=CueListGUI(this, parent, bounds, boundsList)}.defer
 	}
+	do {arg function, render=false;
+		this.pathNameNumberedManager.deepFolders.copyRange(0, render.binaryValue
+			*(this.pathNameNumberedManager.deepFolders.size-1)).do(function)
+	}
+	restore {arg id, values=(), specs=(), targets=(), scoreJT, time=0, render=false;
+		var par=(), routines=(), target;
+		PathName(this.pathNameNumberedManager.deepFolders[id]).entries.do{|pathname|
+			var key, methodFlag=false;
+			var durations, out, delayTimes, curves, extras;
+			key=pathname.fileNameWithoutExtension.split($_).copyToEnd(1).join($_).asSymbol;
+			par[key]=values[key].deepCopy;
+			values[key]=pathname.fullPath.load;
+			if ((values[key][\method_CuesJT]==nil), {
+				par[key]=values[key].deepCopy
+			},{
+				if (values[key][\method_CuesJT]<1, {
+					par[key]=values[key].deepCopy;
+				},{
+					methodFlag=true
+				});
+			});
+			[\durations_CuesJT, \method_CuesJT, \extras_CuesJT, \routinesJT].do{|key2| par[key].removeAt(key2)};
+			if (methodFlag&&render,{
+				target=targets[key]??{values[key]};
+				switch(target.class, Synth, {
+					scoreJT.addTransition(time, targets[key], par[key], values[key]);
+				}, Event, {
+					[\routinesJT].do{|key2| par[key].removeAt(key2); values[key].removeAt(key2)};
+					durations=values[key][\durations_CuesJT].deepCopy;
+					extras=values[key][\extras];
+					if (extras!=nil, {
+						if (extras[\durations_CuesJT]!=nil, {
+
+						});
+
+					},{
+						extras=();
+					});
+					out=par[key].valuesActionsTransition(values[key], durations, specs: specs[key].deepCopy.asSpec
+						, nrt:render);
+					values[key][\routinesJT]=out[\routinesJT];
+				}, Function, {
+
+				})
+			},{
+				switch(targets[key].class, Synth, {
+					scoreJT.add([time, targets[key].setMsg(*par[key].asKeyValuePairs)])
+				}, Event, {
+
+				})
+			})
+		};
+		//--------------------------- OUTPUT
+		^values.deepCopy
+	}
 }
+
 CueListGUI {
 	var <cueList;
 	var <views, <parent, <bounds;
@@ -177,6 +234,7 @@ CueListGUI {
 		//c=CompositeView(parent, bounds.x@(bounds.x+bounds.y));
 		c=CompositeView(parent, argboundsList??{bounds.x@bounds.x});
 		c.addFlowLayout(0@0,0@0);
-		views[\PathNameNumbered]=PathNameNumberedGUI(cueList.pathNameNumberedManager, c, argboundsList??{bounds.x@bounds.x});
+		views[\PathNameNumbered]=PathNameNumberedGUI(cueList.pathNameNumberedManager, c
+			, argboundsList??{bounds.x@bounds.x});
 	}
 }

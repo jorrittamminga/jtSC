@@ -159,6 +159,7 @@ Button zeker bij twee states niet laten interpoleren!
 				if ((value==startValue) || (duration<waitTime), {
 					//hier ook nog een nrt versie maken!
 					if (delayTime<=0.0, {
+						//if (nrt, {},{});
 						actions[key].value(value)
 					},{
 						if (nrt, {

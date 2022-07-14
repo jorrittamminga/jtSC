@@ -165,8 +165,6 @@ PresetsBlenderGUIJT {
 		var c;
 		presetsBlender=argpresetsBlender;
 		//presetsBlender.presets.value[\method].postln;
-
-
 		parent=argparent;
 		views=();
 		c=CompositeView(parent, argbounds); c.addFlowLayout(0@0,0@0);

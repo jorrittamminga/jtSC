@@ -7,9 +7,10 @@ betere naam verzinnen (PathNavigator? PathOrganizer? )
 subclass of PathName?
 */
 PathNameNumberedManager : Numbered {
-	var <deepFiles, <deepKeys, <deepFilesPathName, <deepFolders, <deepFoldersPathName, <deepFoldersRelative, <currentFolder, <currentFile, <currentPathName;
+	var <deepFiles, <deepKeys, <deepFilesPathName, <deepFolders, <deepFoldersPathName, <deepFoldersRelative
+	, <currentFolder, <currentFile, <currentPathName;
 	var <folderStructure, <folderID, <deepFolderNamesWithoutNumbers;
-	var <>action, <>actionList, <>updateAction;
+	var <>action, <>actionList, <>updateAction, <>parent;
 
 	*new {arg pathName, updateAction, numDigits=4;
 		^super.new.init(pathName, updateAction, numDigits)
@@ -42,7 +43,8 @@ PathNameNumberedManager : Numbered {
 		deepFoldersRelative=deepFolders.collect{|p| p.replace(rootPath, "/")};
 		deepFilesPathName=deepFoldersPathName.collect{|p| p.entries};
 		deepFiles=deepFilesPathName.collect{|p| p.collect(_.fullPath)};
-		deepKeys=deepFilesPathName.collect{|p| p.collect{|p| p.fileNameWithoutExtension.split($_).copyToEnd(1).join($_).asSymbol}};
+		deepKeys=deepFilesPathName.collect{|p| p.collect{|p|
+			p.fileNameWithoutExtension.split($_).copyToEnd(1).join($_).asSymbol}};
 		this.analyzeFolderStructure;
 		updateAction.value(this, updateActionArgs);
 		if (index.class==String, {
@@ -224,7 +226,9 @@ PathNameNumberedGUI {
 	}
 	getCurrentFolder {arg depth=0;
 		^if (depth>=0, {
-			(pathNameNumbered.rootPath++PathName("/"++(pathNameNumbered.currentFolder.copy.replace(pathNameNumbered.rootPath, ""))).allFolders.copyRange(0, depth).join($/)++"/")
+			(pathNameNumbered.rootPath++PathName("/"
+				++ (pathNameNumbered.currentFolder.copy.replace(pathNameNumbered.rootPath, "")))
+				.allFolders.copyRange(0, depth).join($/)++ "/")
 		},{
 			pathNameNumbered.rootPath.copy
 		})
@@ -241,7 +245,8 @@ PathNameNumberedGUI {
 		views[\listView]=ListView(c, bounds.x@(bounds.y- (2*bb.min(20)) )).items_(
 			entriesWithoutNumbers
 		).action_(action).font_(fontList).value_(value).selectionMode_(\extended)
-		.background_(Color.black).hiliteColor_(hiliteColor).stringColor_(Color.grey(0.5)).selectedStringColor_(Color.white);
+		.background_(Color.black).hiliteColor_(hiliteColor).stringColor_(Color.grey(0.5))
+		.selectedStringColor_(Color.white);
 		views[\name]=TextField(c, bounds.x@(bb.min(minHeight))).string_(entriesWithoutNumbers[value]).action_{arg t;
 			pathNameNumbered.renameFolder( t.string, this.getCurrentFolder(depth));
 		}.font_(fontButton);
@@ -289,13 +294,22 @@ PathNameNumberedGUI {
 		views[\prevB]=Button(cMain, (font.size*2.75).floor@(font.size*2.75).floor).states_([ ["<"] ]).action_{
 			pathNameNumbered.prev;
 		}.font_(font).canFocus_(false);
-		views[\currentPath]=StaticText(cMain, (bounds.x-(font.size*5.5))@(font.size*2.75)).string_( pathNameNumbered.deepFoldersRelative[pathNameNumbered.folderID] ).align_(\center)
+		views[\currentPath]=StaticText(cMain, (bounds.x-(font.size*5.5))@(font.size*2.75))
+		.string_( pathNameNumbered.deepFoldersRelative[pathNameNumbered.folderID] ).align_(\center)
 		.font_(Font(font.name, font.size*2)).stringColor_(Color.white).background_(hiliteColor);
 		views[\nextB]=Button(cMain, (font.size*2.75).floor@(font.size*2.75).floor).states_([ [">"] ]).action_{
 			pathNameNumbered.next
 		}.font_(font).canFocus_(false);
-		views[\previous]=StaticText(cMain, (bounds.x*0.5).floor.asInteger@20).string_("").align_(\left).font_(font);
-		views[\upcoming]=StaticText(cMain, (bounds.x*0.5).floor.asInteger@20).string_("").align_(\right).font_(font);
+		views[\previous]=StaticText(cMain, (bounds.x*0.5-10).floor.asInteger@20).string_("").align_(\left).font_
+		.stringColor_(Color.white);
+		views[\bypass]=Button(cMain, 20@20).states_([ [\I],[\I, Color.black, Color.green] ]).action_{|b|
+			var bypass=(b.value>0).not;
+			pathNameNumbered.parent.cues.keysValuesDo{|key, cue|
+				cue.bypass_(bypass);
+			};
+		}.value_(1).canFocus_(false);
+		views[\upcoming]=StaticText(cMain, (bounds.x*0.5-10).floor.asInteger@20).string_("").align_(\right).font_(font)
+		.stringColor_(Color.white);
 		cMain.decorator.nextLine;
 		cListViews=CompositeView(cMain, bounds.x@(bounds.y-cMain.decorator.top));
 		cListViews.addFlowLayout(0@0, 0@0);

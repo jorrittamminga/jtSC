@@ -1,1 +1,1 @@
-( 'basename': "ding1", 'extras': ( 'postAction': {"klaar".postln} ), 'durations': 0.0, 'method': 1 )
+( 'extras_CuesJT': ( 'postAction': {"klaar".postln} ), 'method_CuesJT': 1, 'durations_CuesJT': 0.0, 'basename': "ding1" )

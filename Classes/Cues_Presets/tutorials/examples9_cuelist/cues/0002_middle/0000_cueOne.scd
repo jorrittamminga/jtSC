@@ -1,1 +1,1 @@
-( 'basename': "initspoep", 'durations': 1.0, 'method': 1 )
+( 'method_CuesJT': 1, 'durations_CuesJT': 1.0, 'basename': "initspoep" )

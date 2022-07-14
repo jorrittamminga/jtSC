@@ -1,1 +1,1 @@
-( 'durations': 3.0, 'method': 1, 'basename': "inits" )
+( 'method_CuesJT': 1, 'durations_CuesJT': 3.0, 'basename': "inits" )

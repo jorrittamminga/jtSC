@@ -249,9 +249,9 @@ CueFunctionsGUIJT {
 			presets.delete;
 		};
 		if (presets.directory!=nil, {
-			presets.directory.postln;
-			presets.directory.allFolders.postln;
-			presets.directory.allFolders.last.postln;
+			//presets.directory.postln;
+			//presets.directory.allFolders.postln;
+			//presets.directory.allFolders.last.postln;
 			initName="/"++presets.directory.allFolders.last.removeNumbersFromNumberedPath++"/";
 		});
 		views[\basename]=StaticText(c, boundsName).string_(

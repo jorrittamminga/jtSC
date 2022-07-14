@@ -115,6 +115,7 @@ JT {
 
 	getServer {arg target;
 		var rank;//deepCollect
+		//if (target==nil, {target=Server.default});
 		^target.asArray.deepCollect(target.asArray.maxRank, {|target|
 			switch(target.class, Synth, {
 				target.server

@@ -1,1 +1,1 @@
-( 'extras': ( 'preAction': {"poep".postln} ), 'durations': 6.0, 'method': 1, 'basename': "ding3b" )
+( 'extras_CuesJT': ( 'preAction': {"poep".postln} ), 'method_CuesJT': 1, 'durations_CuesJT': 6.0, 'basename': "ding3b" )

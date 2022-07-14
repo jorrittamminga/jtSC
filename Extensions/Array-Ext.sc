@@ -653,6 +653,15 @@
 		^uniques
 	}
 
+	removeduplicates {
+		var array=[];
+		this.do{|i|
+			if (array.includes(i).not, {
+				array=array.add(i);
+			});
+		};
+		^array
+	}
 
 	removerepetitions {
 		var array=this.deepCopy;

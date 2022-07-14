@@ -17,6 +17,9 @@ ScoreJT {
 		nodeWatcher.start;
 		*/
 	}
+	initScore {
+		score=[]
+	}
 	add {arg bundle, latency=0;
 		//if (hasScoreWatcher, {scoreWatcher.add(bundle)});
 		if (nrt, {
@@ -50,13 +53,13 @@ ScoreJT {
 	}
 	/*
 	registerNode {
-		//Synth.basicNew(\Sine, server, nodeID)
+	//Synth.basicNew(\Sine, server, nodeID)
 
 	}
 	updateNodes {
-		var nodesTmp=();
-		nodeWatcher.nodes.keys.collect{|key| nodesTmp[key]=nodes[key]};
-		nodes=nodesTmp.copy;
+	var nodesTmp=();
+	nodeWatcher.nodes.keys.collect{|key| nodesTmp[key]=nodes[key]};
+	nodes=nodesTmp.copy;
 	}
 	*/
 	recordNRT {}
@@ -82,7 +85,7 @@ ScoreJT {
 		if (nrt, {
 			if (normalize, {
 				tmpPath=outputFilePath++"tmp";
-				action=action.addFuncFirst({cond.unhang});
+				action=action.addFuncFirst({cond.unhang; "normalize ready".postln;});
 			});
 			score = score.sort({ arg a, b; b[0] >= a[0] });
 			Score(score).recordNRT(outputFilePath: tmpPath
@@ -94,6 +97,7 @@ ScoreJT {
 			});
 		});
 	}
+
 	play {
 		Score.play(score, server)
 	}

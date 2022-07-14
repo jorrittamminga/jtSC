@@ -10,28 +10,11 @@ PlayerJT : JT {
 	var <time, <duration, <numFrames;
 	var <paths, <fileNames, <>startFrame, <>endFrame, <>loop;
 	var <cmdNameT, <ff, <pathFunction;
-	var <monitor, <monitornumChannels, <monitoroutBus, <monitoramp, <monitorserverID, <hasMonitor;
+	var <monitor, <monitornumChannels, <monitoroutBus, <monitoramp, <monitorserverID
+	, <hasMonitor;
 
 	*new {arg outBus, target, path, addAction=\addBefore;
-		var serv;
-		if (target==nil, {
-			serv=[Server.default]
-		},{
-			serv=target.asArray.deepCollect(target.asArray.maxRank, {|target|
-				switch(target.class, Synth, {
-					target.server
-				}, Group, {
-					target.server
-				}, Server, {
-					target
-				})
-			})
-		});
-		^if (serv.collect{|serv| serv.serverRunning.binaryValue}.sum==serv.size, {
-			super.new.init(outBus, target, path, addAction)
-		},{
-			"Please boot server(s) first".warn
-		})
+		^super.new.init(outBus, target, path, addAction);
 	}
 
 	free {
@@ -67,10 +50,10 @@ PlayerJT : JT {
 		id=UniqueID.next;
 		cmdName=('/playingTime'++id).asSymbol;
 		cmdNameT=('/finished'++id).asSymbol;
-		outBus=argoutBus??{0};
-		target=argtarget??{Server.default};
+		outBus=argoutBus;
+		target=argtarget;
 		addAction=argaddAction??{\addBefore};
-		servers=this.getServer(target)??{[Server.default]};
+		servers=this.getServer(target);
 		oscFunc=();
 		updateFreq=10;
 		outBus=outBus.asArray.collect{|b|
@@ -79,7 +62,7 @@ PlayerJT : JT {
 				b.index
 			},{b})
 		};
-		numChannels= -1;//was 2
+		numChannels= 2;
 
 		pathFunction={
 			var soundFile, init=false;
@@ -102,13 +85,12 @@ PlayerJT : JT {
 					//this.initBufferAndSynthDef;
 					this.makeSynthDef;
 
-					if (monitor!=nil, {
-						if (monitor.isPlaying, {
-							monitor.free;
-							this.addMonitor(monitoroutBus, monitornumChannels, monitoramp
-								, monitorserverID);
-						})
-					});
+					if (monitor!=nil, {if (monitor.isPlaying, {
+						monitor.free;
+						this.addMonitor(monitoroutBus, monitornumChannels, monitoramp
+							, monitorserverID);
+					})});
+
 				});
 				numChannels=soundFile.numChannels;
 				startFrame=0;
@@ -124,7 +106,7 @@ PlayerJT : JT {
 					})
 				});
 				pathFunc.value(this);
-			});
+			})
 		};
 		this.path_(argpath);
 	}
@@ -246,7 +228,6 @@ PlayerJT : JT {
 						this.cueSoundFile(startF)
 					});
 				});
-				//if (buffer==nil, {this.allocBuffer});
 				if (bufferIsClosed, { this.cueSoundFile(startFrame) });
 				isPlaying=true;
 				if (endF!=nil, {if (endF!=endFrame, {endFrame=endF})});
@@ -276,12 +257,10 @@ PlayerJT : JT {
 	}
 
 	pausePlaying {arg flag=true;
-		if (synth!=nil, {
-			if (synth.collect{|syn| syn.isPlaying.binaryValue}.sum>0, {
-				isPaused=flag;
-				synth.do{|syn| syn.run(flag.not)};
-			});
-		})
+		if (synth.collect{|syn| syn.isPlaying.binaryValue}.sum>0, {
+			isPaused=flag;
+			synth.do{|syn| syn.run(flag.not)};
+		});
 		/*
 		if (flag, {
 		},{
@@ -334,19 +313,12 @@ PlayerJT : JT {
 		monitor={arg amp=0.0;
 			Out.ar(bus,
 				if (noc==2, {
-					Splay.ar(
-						In.ar(
-							outBus.asArray[serverID].asArray.minItem
-							, numChannels.abs
-						)
+					Splay.ar(In.ar(outBus.asArray[serverID].asArray.minItem, numChannels)
 						, 1, amp.lag(0.1))
 				},{
 
 					SplayAz.ar(noc
-						, In.ar(
-							outBus.asArray[serverID].asArray.minItem
-							, numChannels.abs
-						)
+						, In.ar(outBus.asArray[serverID].asArray.minItem, numChannels)
 						, 1, amp.lag(0.1))
 
 				})
@@ -358,16 +330,8 @@ PlayerJT : JT {
 	}
 
 	makeGUI {arg parent, bounds=150@20, margin=0@0, gap=0@0, userCanClose=true;
-		^if (path==nil, {
-			{
-				while({path==nil},{0.1.wait});
-				gui=PlayerJTGUI(this, parent, bounds, margin, gap, userCanClose);
-			}.fork(AppClock);
-			gui
-		},{
-			gui=PlayerJTGUI(this, parent, bounds, margin, gap, userCanClose);
-			gui
-		})
+		gui=PlayerJTGUI(this, parent, bounds, margin, gap, userCanClose);
+		^gui
 	}
 }
 
@@ -434,6 +398,7 @@ PlayerJTGUI : GUIJT {
 		userCanClose=arguserCanClose??{true};
 		this.initAll;
 		path=classJT.path;
+
 		parent.resize=5;
 
 		startFunc={{views[\playB].value_(1)}.defer};
@@ -542,12 +507,11 @@ PlayerJTGUI : GUIJT {
 				);
 				views[\sf].timeCursorPosition=msg[3];
 			}.defer
-		}, classJT.cmdName
-		, if (classJT.server==nil, {Server.default.addr},{classJT.servers[0].addr})
+		}, classJT.cmdName, classJT.servers[0].addr);
 
-		);
 		this.pathsAndFilesNames;
 		this.changePath;
+
 		classJT.startPlayingFunc=classJT.startPlayingFunc.addFunc(startFunc);
 		classJT.stopPlayingFunc=classJT.stopPlayingFunc.addFunc(stopFunc);
 		classJT.pathFunc=classJT.pathFunc.addFunc(pathFunc);
