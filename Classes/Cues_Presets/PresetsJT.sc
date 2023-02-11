@@ -11,6 +11,11 @@ PresetsJT : PresetsFileJT {
 			super.basicNew(object, pathName)
 		})
 	}
+	initSelect {
+		selectMouseButton=1;//is modifier 262144
+		selectModifierKey=131072;//393216 of 131072
+		selectColor=Color.blue;
+	}
 	basename_ {arg filename="newfilename";
 		var file, old=basename.copy, new=filename.copy;
 		var pathNameFrom, pathNameTo;
@@ -35,15 +40,18 @@ PresetsJT : PresetsFileJT {
 		});
 		cueJT.addToCueList(cueList);
 	}
-	addNN{neuralNet=PresetsNNJT(this)}
+	addNN{
+		neuralNet=PresetsNNJT(this);
+	}
 	addBlender{blender=PresetsBlenderJT(this)}
-	makeGui {arg parent, bounds=350@20;
+	makeGui {arg parent, bounds=350@20, action;
 		gui=1.0;
 		{
 			gui=PresetsGUIJT(this, parent, bounds);
 			if (cueJT!=nil, {cueJT.makeGui(gui.parent)});
 			if (neuralNet!=nil, {neuralNet.makeGui(parent, bounds)});
 			if (blender!=nil, {blender.makeGui(parent, bounds)});
+
 		}.defer;
 	}
 }

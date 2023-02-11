@@ -5,11 +5,12 @@ InJT : IOJT {
 	var <busForMeter, <synthForMeter, <groupForMeter;
 	//var <soundInOffset;
 
-	*new {arg inBus, server, label, addAction=\addBefore;
-		^super.new.init(inBus, server, label, addAction);
+	*new {arg inBus, server, label, addAction=\addBefore, hasInputGains=false;//hasInputGains=false
+		^super.new.init(inBus, server, label, addAction, hasInputGains);
 	}
 
-	init {arg arginBus, argtarget, arglabel, argaddAction;
+	init {arg arginBus, argtarget, arglabel, argaddAction, arghasInputGains;
+		hasInputGains=arghasInputGains;
 		this.isThreaded;//dit moet je dus sws doen! eigenlijk bij alle JT class
 		if (threaded, {
 			this.initFunc(arginBus, argtarget, arglabel, argaddAction)
@@ -18,12 +19,24 @@ InJT : IOJT {
 		}.fork
 		})
 	}
-
-	makeSynth {
+	makeSynth {//arg hasInputGains=false;
+		if (hasInputGains, {gains=Array.fill(labels.flatten.size, {1.0})},{gains=nil});
 		^servers.collect{|server, serverIndex|
-			var synth, synthDef=(\InJT++serverIndex).asSymbol;
+			var synth, synthDef=(\InJT++serverIndex).asSymbol, indices;
+			indices=busIndexPerServer[serverIndex].deepCopy.unbubble.collect{|index,i|
+				i//inBus[serverIndex].deepCopy.unbubble.indexOf(index)
+			};
 			synth=SynthDef(synthDef, {
-				var in=SoundIn.ar(busIndexPerServer[serverIndex].unbubble);
+				var in, gains;
+				if (hasInputGains&&(indices!=nil), {
+					gains=indices.collect{|i|
+						NamedControl.kr((\gain_++labels[i]).asSymbol, 1.0, 0.1)
+					};
+					in=SoundIn.ar(busIndexPerServer[serverIndex].unbubble, gains);
+				},{
+					in=SoundIn.ar(busIndexPerServer[serverIndex].unbubble);
+				});
+				//in=SoundIn.ar(busIndexPerServer[serverIndex].unbubble);
 				Out.ar(busPerServer[serverIndex].index, in)
 			}).play(group[serverIndex], [], \addToHead);
 			server.sync;
@@ -44,13 +57,20 @@ InJT : IOJT {
 	//plugins.keysValuesDo{|key,val| val.asArray.flat.do{|class| class.free}};
 	}
 	*/
+	/*
+	addInputGains {
+	synth.do(_.free);
+	gains=Array.fill(labels.flatten.size, {1.0});
+	this.makeSynth(true);
+	}
+	*/
 	addPlugin {arg type=\Meter, args=[];
 		var plugIn, func;
 		func=switch(type
 			, \Meter, {{arg target, updateFreq=20;
 				this.optimizeSynthAndBusForMeter;
 				target=target??{groupForMeter};
-				MeterJT(busForMeter, target, updateFreq);
+				MeterJT(busForMeter, target, updateFreq, 3.0, this);
 			}}
 			, \Player, {{arg path, monitorBus=0, monitorChannels=2, monitorServerID=0;
 				var buz=bus.copy, player;

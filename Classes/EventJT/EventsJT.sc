@@ -184,7 +184,7 @@ EventJT : Event {
 		var spec;
 		^if (obj.class.methods.collect{|method| (method.name==\controlSpec).binaryValue}.sum>0, {
 			spec=obj.controlSpec.asSpec;
-			if (spec.step<0.00001, {spec=spec.warp});
+			if (spec.step<0.00001, {spec=spec.warp},{spec});
 		},{
 			spec
 		})
@@ -247,12 +247,16 @@ EventJT : Event {
 	}
 	unmapValues {
 		arrayUnmappedSorted=sortedKeys.collect{|key|
-			if (specs[key]!=nil, {
-				specs[key].unmap(values[key])
+			if (values[key]!=nil, {
+				if (specs[key]!=nil, {
+					specs[key].unmap(values[key])
+				},{
+					values[key]
+				})
 			},{
 				values[key]
 			})
-		}
+		};
 	}
 	transitionTo {arg event, durations, curves, delayTimes, specs, actions;
 

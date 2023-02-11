@@ -1,15 +1,17 @@
 JTSingle : JT {
 
-	var <muteSynth;
+	var <muteSynth, <index;
 
-	*new {arg inBus, target, label;
-		^super.new.init(inBus, target, label);
+	*new {arg inBus, target, label, index;
+		^super.new.init(inBus, target, label, index);
 	}
 
-	init {arg arginBus, argtarget, arglabel;
+	init {arg arginBus, argtarget, arglabel, argindex;
 		inBus=arginBus;
 		target=argtarget;
 		label=arglabel;
+		index=argindex;
+
 		synth=[]; group=[]; server=[];
 
 		target.asArray.do{|target, i|
@@ -31,7 +33,12 @@ JTSingle : JT {
 		group=group.unbubble;
 		synth=synth.unbubble;
 	}
-
+	gain_ {arg gain=1.0;
+		synth.do{|syn|
+			syn.set((\gain_++label).asSymbol, gain)
+		};
+		//gains[index]=gain;
+	}
 	mute_ {arg value=true;
 		var synthDef=(\mute++label).asSymbol;
 		mute=value;

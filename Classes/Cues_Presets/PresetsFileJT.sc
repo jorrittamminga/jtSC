@@ -8,11 +8,14 @@ PresetsFileJT : Numbered {
 	var <objectDefault, <presetsJT;
 	var <keys, <>enviroment, <defaultMethod;
 	var <fileNames, <fileNamesWithoutNumbers;//paths, pathsWithoutNumbers
-	var <methodsArray, <removeKeyWhenSave;
+	var <methodsArray, <>removeKeyWhenSave;
 	var <cueJT;
 	var history, <controlSpecs;
 	var <>folderID;
-	var <blender, <neuralnet;
+	//--------------------------------------------------------------------------------- SELECT
+	var <deselectedKeys, <selectedKeys, <>colors, selectActionArray, selectColor, <>selectMouseButton=1
+	, <>selectModifierKey=262144;
+	//var <blender, <neuralnet;
 
 	*initClass {
 		allMethods=(
@@ -31,12 +34,18 @@ PresetsFileJT : Numbered {
 		fileNames=[];
 		fileNamesWithoutNumbers=[];
 		keys=[];
-		funcs=(update:nil, basename:nil, index:nil, delete:nil, directory: nil, add: nil, store: nil, restore: nil);
+		funcs=(update:nil, basename:nil, index:nil, delete:nil, directory: nil, add: nil, store: nil, restore: nil
+			, deselectedKeys: nil
+		);
 		removeKeyWhenSave=[\routinesJT];
 		enviroment=();
+		selectActionArray=();
+		selectColor=Color();
 		//----------------------------------------------------------------------------- OBJECT inits
 		object=argobject;
 		pathName=argPath;
+		this.initSelect;
+		this.initColors;
 		this.initObject;//analyze object
 		//----------------------------------------------------------------------------- ACTIONS inits
 		this.initGetAction;//get values from object
@@ -45,9 +54,33 @@ PresetsFileJT : Numbered {
 		//----------------------------------------------------------------------------- FILE SYSTEM inits
 		this.initPathName;//analyze the content/class of the pathname
 		//----------------------------------------------------------------------------- POST INITS inits
-		if (array.size>0, {
-			this.restore(0)}
-		)
+		if (array.size>0, {this.restore(0)});
+	}
+	initColors {
+		colors=(
+			select: (
+				stringBackground: nil
+				, stringColor: selectColor
+				, sliderBackground:Color(0.16470588235294, 0.16470588235294, 0.16470588235294)
+				, numBackground: Color(1.0, 1.0, 1.0)
+				, numStringColor:selectColor, numNormalColor:selectColor, numTypingColor:Color(1.0), knobColor:selectColor
+				, background: nil
+				, knobColors: [
+					Color(0.91764705882353, 0.91764705882353, 0.91764705882353), selectColor
+					, Color(0.85882352941176, 0.85882352941176, 0.85882352941176), selectColor ]
+
+			),
+			deselect: (
+				stringBackground: nil
+				, stringColor: Color.grey
+				, sliderBackground: Color.grey//Color(0.16470588235294, 0.16470588235294, 0.16470588235294)
+				, numBackground:Color(1.0, 1.0, 1.0)
+				, numStringColor:Color.grey, numNormalColor:Color.grey, numTypingColor:Color(1.0), knobColor:Color.grey
+				, background: nil
+				, knobColors: [ Color(0.91764705882353, 0.91764705882353, 0.91764705882353), Color.grey
+					, Color(0.85882352941176, 0.85882352941176, 0.85882352941176), Color.grey ]
+			)
+		);
 	}
 	initObject {
 		controlSpecs=();
@@ -86,14 +119,41 @@ PresetsFileJT : Numbered {
 			});
 		}, Event, {
 			value=();
+			selectedKeys=object.keys.deepCopy.asArray;
 			object.sortedKeysValuesDo{|key,obj|
-				var cs;//=ControlSpec(0.0, 1.0);
+				var cs, func;//=ControlSpec(0.0, 1.0);
 				value[key]=obj.value;
 				cs=obj.controlSpec;
 				if (cs!=nil, {
 					if (cs.step<0.01, {cs=cs.warp});
 					controlSpecs[key]=cs;
-				})
+				});
+				//---------------------------------------------------------------------- DESELECT related
+				func={|view, x, y, modifiers, buttonNumber, clickCount|
+					if (buttonNumber==selectMouseButton, {
+						if (modifiers>=262144, {modifiers=modifiers-262144});
+						if (modifiers==selectModifierKey, {
+							this.toggleKey(key);
+						})
+					})
+				};
+				if (obj.mouseDownAction==nil, {
+					obj.mouseDownAction_(func)
+				},{
+					if (obj.mouseDownAction.class==Array, {
+						obj.mouseDownAction.do{|obj|
+							if ((obj.mouseDownAction.class==Function) || (obj.mouseDownAction.class==FunctionList), {
+								obj.mouseDownAction=obj.mouseDownAction.addFunc(func);
+							},{
+								obj.mouseDownAction_(func)
+							})
+						};
+					},{
+						obj.mouseDownAction=obj.mouseDownAction.addFunc(func);
+					})
+				});
+
+				//---------------------------------------------------------------------- DESELECT related
 			}
 		});
 	}
@@ -129,7 +189,7 @@ PresetsFileJT : Numbered {
 				});
 				valObject=object.removeAllWithoutActions(val);
 				//defaults=(extras: 0, durations: 0, method:0);//dit zijn die extra dingen
-				//hier--------------------------------------------------------------------------------
+				//--------------------------------------------------------------------------------
 				{
 					valObject.keysValuesDo{|key,val|
 						object[key].action.value(val);
@@ -140,18 +200,21 @@ PresetsFileJT : Numbered {
 						{presetsJT.object[key].value_(val)}.defer;
 					}
 				};
+				//--------------------------------------------------------------------------------
 			}
 		},{
 			if (object.class==Event, {
 				{arg val;
-					var valObject=();
+					var valObject=(), deselectAction;
 					valObject=object.removeAllWithoutActions(val);
+					//--------------------------------------------------------------------------------
 					{
 						valObject.keysValuesDo{|key,val|
 							object[key].action.value(val);
 							{object[key].value_(val)}.defer;
 						}
 					};
+					//--------------------------------------------------------------------------------
 				};
 			});
 		},{
@@ -227,6 +290,9 @@ PresetsFileJT : Numbered {
 		var preset=array[index];
 		actionArray[index].value;
 		value=preset;//was not here before, is this usefull?
+		//---------------------------------------------------------------------- (DE)SELECT related
+		selectActionArray[index].value;
+		//----------------------------------------------------------------------
 		funcs[\restore].value(index);
 		^preset
 	}
@@ -239,9 +305,22 @@ PresetsFileJT : Numbered {
 		this.prSave(i, val);
 	}
 	store {arg i, funcStoreFlag=true;
+		var valueWithoutDeselectedKeys;
 		this.index_(i);
 		this.getValue;
 		//value=value++extra;
+		//---------------------------------------------------------------------- (DE)SELECT related
+		valueWithoutDeselectedKeys=value.deepCopy;
+		if (array.size>0, {
+			if (array[index][\deselectedKeysJT]==nil, {
+				array[index][\deselectedKeysJT]=deselectedKeys
+			},{
+				deselectedKeys=array[index][\deselectedKeysJT]
+			});
+		});
+		deselectedKeys.do{|key| valueWithoutDeselectedKeys.removeAt(key)};
+		if (deselectedKeys!=nil, {value[\deselectedKeysJT]=deselectedKeys});
+		//----------------------------------------------------------------------
 		if (array.size==0, {
 			this.add(basename, '\addToHead', directory);
 		},{
@@ -250,7 +329,9 @@ PresetsFileJT : Numbered {
 			actionArray[index]=action.value(value);
 			this.prSave;
 		});
-		if (funcStoreFlag, {funcs[\store].value(index)})
+		if (funcStoreFlag, {
+			funcs[\store].value(index);
+		});
 	}
 	//prStore {}
 	prSave {arg i, saveValue;
@@ -266,6 +347,7 @@ PresetsFileJT : Numbered {
 	//----------------------------------------------------------------------------- NUMBERED FILESYSTEM related
 	load {}
 	update {arg paths;
+		var deselectedKeys;
 		//this.entries_(paths);
 		entries=this.entriesAction.value(paths);
 		entries=entries.collect{|path| path.asPathName};
@@ -274,14 +356,31 @@ PresetsFileJT : Numbered {
 		fileNames=entries.collect{|entry| entry.fileNameWithoutExtension};
 		fileNamesWithoutNumbers=fileNames.collect{|filename| filename.split($_).copyToEnd(1).join($_)};
 		keys=fileNamesWithoutNumbers;
-		array=entries.collect{|entry| entry.fullPath.load};
-		actionArray=array.collect{|val| action.value(val)};
+		selectActionArray=[];
+		array=entries.collect{|entry|
+			//entry.fullPath.load;
+			var data;
+			data=entry.fullPath.load;//.deepCopy?
+			//-------------------------------------------------- DESELECT
+			if (data[\deselectedKeysJT]==nil, {
+				data[\deselectedKeysJT]=deselectedKeys
+			},{
+				deselectedKeys=data[\deselectedKeysJT]
+			});
+			deselectedKeys.do{|key| data.removeAt(key)};
+			selectActionArray=selectActionArray.add(this.selectActionFunc(deselectedKeys));
+			//--------------------------------------------------
+			data
+		};
+		actionArray=array.collect{|val|
+			action.value(val)
+		};
 		funcs[\update].value
 	}
 	add {arg filename, addAction=\addAfter, target;
 		var file, entry, val;
 		basename=filename??{basename};
-		this.getValue;
+		this.getValue(true);
 		{
 			val=value.deepCopy;
 			removeKeyWhenSave.do{|key| val.removeAt(key)};
@@ -293,7 +392,7 @@ PresetsFileJT : Numbered {
 			this.update;
 			this.index_(entries.collect(_.fullPath).indexOfEqual(file.pathName.fullPath));
 			//funcs[\add].value(index, this);
-		}.fork(AppClock)
+		}.fork(AppClock)//moet dit niet een SystemClock zijn???
 	}
 	delete {arg i, indexOffset=0, doRestore=true;
 		this.index_(i);
@@ -303,7 +402,123 @@ PresetsFileJT : Numbered {
 			this.update;
 			this.index_((index+indexOffset).min(entries.size-1));
 			if (doRestore, {this.restore});//misschien zonder actie?
-		}.fork(AppClock)
+		}.fork(AppClock)//moet dit niet een SystemClock zijn???
+	}
+	//----------------------------------------------------------------------------- deselectedKeys related
+	initSelect {}
+	selectColor_ {arg color;
+		selectColor=color;
+		[\select].do{|k|
+			[\stringColor, \numStringColor, \numNormalColor, \knobColor, \sliderBackground].do{|l|
+				colors[k][l]=color
+			}
+		};
+		colors[\select][\knobColors]=[
+			Color(0.91764705882353, 0.91764705882353, 0.91764705882353), color
+			, Color(0.85882352941176, 0.85882352941176, 0.85882352941176), color ];
+		this.update;
+		selectActionArray[index].value;
+	}
+	selectActionFunc {arg keys;
+		var tmpSelectedKeys=object.keys.deepCopy.asArray;
+		keys.do{|key| tmpSelectedKeys.remove(key)};
+		^{
+			tmpSelectedKeys.do{|key| this.setObjectColor(key, \select)};
+			keys.do{|key| this.setObjectColor(key, \deselect)};
+		}
+	}
+	toggleKey {arg key;
+		if (array[index]!=nil, {
+			if (array[index][\deselectedKeysJT]==nil, {
+				this.removeKey(key);
+			},{
+				if (array[index][\deselectedKeysJT].includes(key), {
+					this.addKey(key);
+				},{
+					this.removeKey(key);
+				})
+			});
+		},{
+			"store preset first".postln;
+		})
+	}
+	setObjectColor {arg key, colorKey=\deselect;
+		switch(object[key].class
+			, EZSlider, {
+				object[key].setColors(
+					colors[colorKey][\stringBackground], colors[colorKey][\stringColor], colors[colorKey][\sliderBackground]
+					, colors[colorKey][\numBackground], colors[colorKey][\numStringColor], colors[colorKey][\numNormalColor]
+					, colors[colorKey][\numTypingColor], colors[colorKey][\knobColor], colors[colorKey][\background]
+				);
+			}, EZRanger, {
+				object[key].setColors(
+					colors[colorKey][\stringBackground], colors[colorKey][\stringColor], colors[colorKey][\sliderBackground]
+					, colors[colorKey][\numBackground], colors[colorKey][\numStringColor], colors[colorKey][\numNormalColor]
+					, colors[colorKey][\numTypingColor], colors[colorKey][\knobColor], colors[colorKey][\background]
+				);
+			}, EZMultiSlider, {
+				object[key].setColors(
+					colors[colorKey][\stringBackground]
+					, colors[colorKey][\stringColor]
+					, colors[colorKey][\sliderBackground]
+					, colors[colorKey][\numBackground]
+					, colors[colorKey][\numStringColor]
+					, colors[colorKey][\numNormalColor]
+					, colors[colorKey][\numTypingColor]
+					, colors[colorKey][\knobColor]
+					, colors[colorKey][\background]
+				);
+			}, EZNumber, {
+				object[key].setColors(
+					colors[colorKey][\stringBackground], colors[colorKey][\stringColor]
+					, colors[colorKey][\numBackground], colors[colorKey][\numStringColor], colors[colorKey][\numNormalColor]
+					, colors[colorKey][\numTypingColor], colors[colorKey][\background]
+				);
+			}, EZKnob, {
+				object[key].setColors(
+					colors[colorKey][\stringBackground], colors[colorKey][\stringColor]
+					, colors[colorKey][\numBackground], colors[colorKey][\numStringColor]
+					, colors[colorKey][\numNormalColor], colors[colorKey][\numTypingColor]
+					, colors[colorKey][\knobColors], colors[colorKey][\background]
+				);
+			}, Button, {
+				var states=object[key].states, value=object[key].value.deepCopy;
+				states=states.collect{|state|
+					[1].do{|i|
+						if (state[i]==nil, {state=state++[Color.black]});
+						if (colorKey==\deselect, {
+							state[i]=Color.grey
+						},{
+							state[i]=Color.black
+						})
+					};
+					state
+				};
+				object[key].states=states;
+				object[key].value_(value)
+		});
+	}
+	removeKey {arg key;
+		key=key.asArray;
+		if (array[index][\deselectedKeysJT]==nil, {array[index][\deselectedKeysJT]=[]});
+		key.do{|key|
+			array[index][\deselectedKeysJT]=array[index][\deselectedKeysJT].add(key);
+			selectedKeys.remove(key);
+			this.setObjectColor(key, \deselect)
+		};
+		this.store;
+		this.update;//brute force....
+	}
+	addKey {arg key;
+		key=key.asArray;
+		if (array[index][\deselectedKeysJT]==nil, {array[index][\deselectedKeysJT]=[]});
+		key.do{|key|
+			array[index][\deselectedKeysJT].remove(key);
+			selectedKeys.add(key);
+			this.setObjectColor(key, \select)
+		};
+		this.store;
+		this.update;//brute force....
 	}
 	//----------------------------------------------------------------------------- GUI	related
 }

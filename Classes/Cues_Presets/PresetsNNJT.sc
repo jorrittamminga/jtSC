@@ -9,41 +9,84 @@ PresetsNNJT : PresetsJT {
 	*new {arg presets;
 		^super.basicNew(presets)
 	}
+	getValue {arg init=false;
+		if (init, {
+			value=(trainingSet:(0: {0}!(nin??{1}) ));
+			input={0}!nin;
+		},{
+			value=this.getAction.value(this);
+		})
+		^value
+	}
 	initObject {//dit kan veeeeel netter
-		var fileName;
+		var fileName, tmp;
 		presetsJT=object;
-		this.makeLists;
+
+		this.makeLists;//deze hier weg!
 		calculate={};
 		if (value==nil, {value=(trainingSet:())});
 		input={0}!nin;
+
+
 		nout=if (presetsJT.array==nil, {
 			nin
 		},{
-			presetsJT.array[0].values.flat.size;
+			if (presetsJT.array.size>0, {
+				tmp=presetsJT.array[0].deepCopy;
+				tmp.removeAt(\deselectedKeysJT);
+				tmp.values.flat.size;
+			},{
+				nin
+			})
 		});
 		nhidden=nout.max(nin);
-		neuralNet=NeuralNet(nin, nhidden, nout);
+		neuralNet=NeuralNetJT(nin, nhidden, nout);
+
 		//----------------------------------------------------------- funcs
 		funcs[\restore]=funcs[\restore].addFunc{
+			var tmp, presets;
 			if (value!=nil, {
 				if (value[\trainingSet]!=nil, {
 					//this.input=value[\trainingSet][value[\trainingSet].keys.asArray.sort[0]];//???
+					presets=value[\trainingSet].keys.asArray.sort;
+					deselectedKeys=presets.collect{|i| presetsJT.array[i][\deselectedKeysJT]}.flat.asSet.asArray.sort;
 					this.nin_(value[\trainingSet].values.collect{|i| i.size}.maxItem);
 					if (mode==0, {
 						input=value[\trainingSet][value[\trainingSet].keys.asArray.sort[0]];//???
 					},{
 						if (input.size!=nin, {input=input.lace(nin)});
 					});
-					nout=presetsJT.array[0].values.flat.size;
+					nout=presets.collect{|i|
+						var tmp=presetsJT.array[i].deepCopy;
+						tmp.removeAt(\deselectedKeysJT);
+						deselectedKeys.do{|key| tmp.removeAt(key)};
+						tmp.values.flat.size
+					}.maxItem;
+					//nout=tmp.values.flat.size;
 					nhidden=nout.max(nin);
 					indicesTrainingSet=value[\trainingSet].keys.asArray.sort;
 					fileName=directory.fullPath++"nns/"++basename++".scmirZ";
 					if (File.exists(fileName), {
-						neuralNet=NeuralNet(nin, nhidden, nout);
+						neuralNet=NeuralNetJT(nin, nhidden, nout);
 						neuralNet.load(fileName);
 					});
+					this.makeLists;
 					this.makeCalculateFunction;
 				})
+			},{
+				nout=if (presetsJT.array==nil, {
+					nin
+				},{
+					if (presetsJT.array.size>0, {
+						tmp=presetsJT.array[0].deepCopy;
+						tmp.removeAt(\deselectedKeysJT);
+						tmp.values.flat.size;
+					},{
+						nin
+					})
+				});
+				nhidden=nout.max(nin);
+				neuralNet=NeuralNetJT(nin, nhidden, nout);
 			});
 		};
 		funcs[\store]=funcs[\store].addFunc{
@@ -71,21 +114,29 @@ PresetsNNJT : PresetsJT {
 		});
 		this.update;
 	}
+	initNN {
+
+
+	}
 	input_ {arg in;
 		input=in;
 		//calculate.value(input)
 	}
 	nin_ {arg n;
 		nin=n.asInteger;
-		this.input_(input.lace(nin))
+		value[\trainingSet]=value[\trainingSet].collect{|val| val.lace(nin)};
+		this.input_(input.lace(nin));
 	}
 	makeNormalizedTrainingSet {
 		normalizedTrainingSet=[];
 		value[\trainingSet].sortedKeysValuesDo{|index, input|
 			var pr=presetsJT.array[index];
-			var norm;
+			var norm, cs;
+			//pr.removeAt(\deselectedKeysJT);
 			norm=keysList.collect{|key,i|
-				presetsJT.controlSpecs[key].unmap(pr[key])
+				var val=pr[key];
+				if (val==nil, {val=presetsJT.object[key].value});
+				presetsJT.controlSpecs[key].unmap(val)
 			}.flat;
 			if (input.size!=nin, {
 				input=input.lace(nin)
@@ -98,14 +149,14 @@ PresetsNNJT : PresetsJT {
 			this.makeCalculateFunction;
 			this.makeNormalizedTrainingSet;
 			nout=normalizedTrainingSet[0][1].size;
-			neuralNet=NeuralNet(nin, nin.max(nout), nout);
+			neuralNet=NeuralNetJT(nin, nin.max(nout), nout);
 		},{
 
 		});
 		neuralNet.trainExt(normalizedTrainingSet, errorTarget, maxEpochs);
 	}
 	makeCalculateFunction {
-		calculate=if (reshapeFlag, {
+		calculate=if (reshapeFlag==true, {
 			{arg arginput;
 				var value, values;
 				input=arginput??{input};
@@ -116,9 +167,11 @@ PresetsNNJT : PresetsJT {
 					actionsList[i].value(value);
 					value;
 				};
-				{ values.do{|val,i|
-					viewsList[i].value_(val)
-				} }.defer
+				{
+					values.do{|val,i|
+						viewsList[i].value_(val)
+					}
+				}.defer
 			};
 		},{
 			{arg arginput;
@@ -147,10 +200,14 @@ PresetsNNJT : PresetsJT {
 		this.store;
 	}
 	makeLists {
+		var tmp, keys;
 		//=========================================================init all
 		viewsList=[]; actionsList=[]; controlSpecsList=[]; keysList=[]; shape=[]; sizes=[];
 		//=========================================================
-		presetsJT.object.sortedKeysValuesDo{|key, view|
+		keys=presetsJT.object.keys.deepCopy.asArray.sort;
+		deselectedKeys.do{|key| keys.remove(key)};
+		keys.do{|key|
+			var view=presetsJT.object[key];
 			viewsList=viewsList.add(view);
 			actionsList=actionsList.add(if (view.action!=nil, {
 				view.action
@@ -162,8 +219,11 @@ PresetsNNJT : PresetsJT {
 			shape=shape.add(presetsJT.value[key]);
 			sizes=sizes.add(presetsJT.value[key].size.max(1));
 		};
+
 		if (sizes.sum!=controlSpecsList.size, {
 			reshapeFlag=true;
+		},{
+			reshapeFlag=false;
 		});
 	}
 	addToCueList {arg cueList, cueName;
@@ -215,7 +275,19 @@ PresetsNNGUIJT : PresetsGUIJT {
 		views[\presetsTrainingSet].items_(
 			presets.indicesTrainingSet.collect{|i| i.asString++"_"++presets.presetsJT.fileNamesWithoutNumbers[i]}
 		);
-		views[\presetsTrainingSet].value_(presets.indicesTrainingSet.indexOfEqual(presets.presetsJT.index));
+		if (presets.indicesTrainingSet!=nil, {
+			views[\presetsTrainingSet].value_(presets.indicesTrainingSet.indexOfEqual(presets.presetsJT.index));
+		})
+	}
+	makeSlider {
+		cv.removeAll;
+		cv.decorator.reset;
+		views[\slider]=EZMultiSlider(cv, cv.bounds, \in, [0.0, 1.0], {|ez|
+			//presets.input_(ez.value);
+			presets.calculate.value(ez.value);
+		}, presets.input, false, cv.bounds.width*0.05).decimals_(8).font_(font);
+		views[\slider].sliderView.indexIsHorizontal = false;
+		views[\slider].sliderView.isFilled=true;
 	}
 	preInit {
 		var c=CompositeView(parent, bounds);
@@ -237,12 +309,15 @@ PresetsNNGUIJT : PresetsGUIJT {
 		presets.object[\nin]=EZNumber(c, (bounds.y*2)@bounds.y, \nin, ControlSpec(1, 16, 0, 1), {|ez|
 			presets.nin_(ez.value);
 			//this.makeSliders;
+			this.makeSlider;
 		}, presets.nin, false, bounds.y).font_(Font(font.name, font.size*0.75));
 		views[\removeFromTrainingSet]=Button(c, bounds.y@bounds.y).states_([ ["-"] ]).action_{
 			presets.removeFromTrainingSet(presets.presetsJT.index);
 			this.updatePresets;
 		}.font_(font);
 		views[\storeInTrainingSet]=Button(c, bounds.y@bounds.y).states_([ ["s"] ]).action_{
+			var index;
+
 			presets.storeInTrainingSet(presets.presetsJT.index, presets.input);
 			this.updatePresets;
 		}.font_(font);
@@ -251,10 +326,11 @@ PresetsNNGUIJT : PresetsGUIJT {
 			//views[\slider].value_(presets.trainingSet[presets.indicesTrainingSet[pop.value]])
 			var i=presets.indicesTrainingSet[pop.value];
 			//if (presets.mode==0, {
-				views[\slider].value_(presets.value[\trainingSet][i]);
+			views[\slider].value_(presets.value[\trainingSet][i]);
 			//});
-			if (presets.cueJT.value[\method]!=nil, {
-				if (presets.cueJT.value[\method]>0, {
+
+			if (presets.presetsJT.value[\method]!=nil, {
+				if (presets.presetsJT.value[\method]>0, {
 					//hier dan dus interpoleren, maar hoe???? maak een soort CueJT oid
 					presets.presetsJT.restore(i)
 				},{
@@ -263,6 +339,7 @@ PresetsNNGUIJT : PresetsGUIJT {
 			},{
 				presets.presetsJT.restore(i)
 			});
+
 		}.font_(font);
 		this.updatePresets;
 		views[\train]=Button(c, bounds.y*2@bounds.y).states_([ ["train"] ]).action_{
@@ -277,18 +354,19 @@ PresetsNNGUIJT : PresetsGUIJT {
 		cv=CompositeView(parent, bounds.x@(bounds.y*4));
 		cv.addFlowLayout(0@0,0@0);
 		index=presets.index;
-
+		/*
 		views[\slider]=EZMultiSlider(cv, cv.bounds, \in, [0.0, 1.0], {|ez|
-			//presets.input_(ez.value);
-			presets.calculate.value(ez.value);
+		//presets.input_(ez.value);
+		presets.calculate.value(ez.value);
 		}, presets.input, false, cv.bounds.width*0.05).decimals_(8).font_(font);
 		views[\slider].sliderView.indexIsHorizontal = false;
 		views[\slider].sliderView.isFilled=true;
-		//this.makeSliders;
+		*/
+		this.makeSlider;
 		presets.funcs[\restore]=presets.funcs[\restore].addFunc{arg i;
 			if (presets.index!=index, {
 				this.updatePresets;
-				//this.makeSliders;
+				this.makeSlider;
 				index=presets.index;
 				views[\slider].value_(presets.input);
 				presets.object[\nin].value_(presets.nin);

@@ -38,8 +38,13 @@ IOJTGUI : GUIJT {
 		in.addPlugin(\Meter);
 		});
 		*/
-		if (in.plugins.keys.includes(\Meter).not, {in.addPlugin(\Meter);});
-
+		if (in.plugins==nil, {
+				in.addPlugin(\Meter);
+		},{
+			if (in.plugins.keys.includes(\Meter).not, {
+				in.addPlugin(\Meter);
+			});
+		});
 		if (in.plugins!=nil, {
 			//if (in.plugins.keys.includes(\Meter).not, {in.addPlugin(\Meter);});
 			if (in.plugins[\MasterFader]!=nil, {
@@ -143,7 +148,7 @@ IOJTGUI : GUIJT {
 		};
 
 		if (in.plugins[\Meter]!=nil,{
-			in.plugins[\Meter].makeGUI(meterViews, meterbounds, 0@0, 0@0);
+			in.plugins[\Meter].makeGUI(meterViews, meterbounds, in.labels, 0@0, 0@0);
 		});
 
 		[\Player, \Recorder].do{|key|

@@ -1,0 +1,2 @@
+( 'deselectedKeysJT': [ 'amp', 'freq', 'amps', 'isOn', 'phase', 'midfreq', 'rq' ], 'phase': 0.0, 'midfreq': 385.0, 'amps': [ 1.0, 0.0, 0.0, 0.0, 0.0 ], 
+  'amp': 1.0, 'lofreq': [ 0.21149553580063, 51.385829729432 ], 'freq': 17031.878636508, 'rq': 1.1768621011647, 'isOn': 0 )

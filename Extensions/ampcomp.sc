@@ -64,3 +64,39 @@
 		^this.collect(_.cpsampa)
 	}
 }
+
++ UGen {
+	//PV_MaxMagN  bins.binsamp
+	binsamp {arg fftSize=2048;
+		^this.expexp(1, fftSize, 31, 0.2).max(1)
+	}
+
+	//PV_MagSmooth  smooth.smoothamp
+	smoothamp {
+		^this.linexp(0.0, 1.0, 1, 3.0)
+	}
+
+	//decaytime.ringzamp
+	ringzamp {arg power=0.5, server;
+		var sr;
+		server=server??{Server.default};
+		sr=server.sampleRate??{44100};
+		^(((sr/this.max(sr.reciprocal)).pow(power)*sr.reciprocal).min(0.5))
+	}
+
+	//freq.resonzamp(rq)
+	resonzamp {arg rq=1.0, power= -0.5, freqPow= -0.5, root=50;
+		^(rq.pow(power)*((this.max(root)/root).pow(freqPow))*7)
+	}
+
+	//returns a scaling amplitude for Comb filter, delayTime.combamp(decayTime, 0.2155)
+	combamp {arg decayTime=3.0, power=0.2155;//power=0.2155 for sustained input such as WhiteNoise.ar
+		var fb=0.001.pow(this/decayTime);
+		^((((1+fb.squared)-(2*fb)).pow(power))*(power*2))
+	}
+	//delayTime.combamp(decayTime, 0.2155, 0.5)
+	comblpamp {arg decayTime=3.0, power=0.2155, coef=0.0;//power=0.2155 for sustained input such as WhiteNoise.ar
+		var fb=0.001.pow(this/decayTime);
+		^((((1+fb.squared)-(2*fb)).pow(power))*(power*2)*((1-coef).reciprocal))
+	}
+}

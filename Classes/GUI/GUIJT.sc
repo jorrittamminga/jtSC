@@ -1,6 +1,6 @@
 //check makeCompositeView! gebruik eventueel bounds.y
 GUIJT {
-	var <bounds, <parent, <font, <window, <compositeView, <labelWidth, <hasWindow;
+	var <bounds, <parent, <font, <scroll, <window, <compositeView, <labelWidth, <hasWindow;
 	var <views, <>classJT, <viewsPreset;
 	var <oscGUI, <>name;
 	var <margin, <gap, <background;
@@ -18,6 +18,7 @@ GUIJT {
 		var nameString;
 		margin=margin??{4@4};
 		gap=gap??{4@4};
+		scroll=scroll??{false};
 		background=background??{Color.grey};
 		font=font??{Font("Monaco", 10)};
 		freeOnClose=freeOnClose??{false};
@@ -40,13 +41,13 @@ GUIJT {
 		viewsPreset=();
 	}
 
-	initGUI {arg parentMargin, parentGap, windowMargin, windowGap;
+	initGUI {arg parentMargin, parentGap, windowMargin, windowGap;//, scroll=false;
 		var tmpBounds;
 		//hieronder is van een andere orde (kan in een {}.defer b.v.)
 
 		if (parent==nil, {
 			hasWindow=true;
-			this.makeWindow(400, 400, windowMargin??{4@0}, windowGap??{4@2}, 4);
+			this.makeWindow(400, 400, windowMargin??{4@0}, windowGap??{4@2}, 4, scroll);
 			pparent=pparent.add(window);
 		},{
 			window=if (parent.class==Window, {
@@ -125,12 +126,15 @@ GUIJT {
 		//^(string??{classJT.class.asString ++ "_" ++ classJT.id});
 	}
 
-	makeWindow {arg left=400, top=400, margin=4@0, gap=4@2, marginAdd=4;
+	makeWindow {arg left=400, top=400, margin=4@0, gap=4@2, marginAdd=4;//, scroll=false;
 		var w;
 		w=Window(name, Rect(left,top
-			,bounds.x+((margin.x+marginAdd)*2)
+			,bounds.x+((margin.x+marginAdd)*2) + (scroll.binaryValue*10)
 			,bounds.y+((margin.y+marginAdd)*2)
-		));
+		)
+		//, true, true, scroll:true
+		, scroll: scroll
+		);
 		windowMargin=margin;
 		windowGap=gap;
 		w.userCanClose_(userCanClose);
@@ -144,7 +148,7 @@ GUIJT {
 
 	makeCompositeView {arg margin=0@0, gap=0@4, backgroundC=Color.grey(0.5);
 		compositeView=CompositeView(parent
-			, (bounds.x+(2*margin.x))
+			, ((bounds.x+(2*margin.x)) + (scroll.binaryValue*10) )
 			@
 			((2*margin.y)+bounds.y)
 			//20//zou ook (2*margin.y)+bounds.y kunnen zijn!

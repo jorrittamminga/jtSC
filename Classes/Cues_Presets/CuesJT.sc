@@ -22,6 +22,11 @@ CuesJT : PresetsFileJT {
 	//this.initSetAction
 	}
 	*/
+	initSelect {
+		selectMouseButton=1;//is modifier 262144
+		selectModifierKey=0;//mouseButton=1
+		selectColor=Color();
+	}
 	initPathName {
 		basename=pathName.deepCopy;
 	}
@@ -83,9 +88,7 @@ CuesJT : PresetsFileJT {
 						})
 					};
 				};
-
 				valPreset=object.removeAllWithoutActions(valPreset);//WARNING: THIS IS A NEW LINE!! COULD BREAK THIS
-
 				actionPreset={
 					valPreset.sortedKeysValuesDo{|key,val|
 						object[key].action.value(val);
@@ -167,8 +170,9 @@ CuesJT : PresetsFileJT {
 
 CuesGUIJT {
 	var <presets;
-	var <views, <parent, <bounds;
+	var <views, <parent, <bounds, <font, <fontNames;
 	var <prevIndex=0;
+
 	*new {arg presets, parent, bounds;
 		^super.newCopyArgs(presets).init(parent, bounds)
 	}
@@ -177,10 +181,12 @@ CuesGUIJT {
 		var boundsButton=(boundsName.x/7).floor@argbounds.y;
 		var c;
 		bounds=argbounds??{350@20};
+		font=Font("Monaco", bounds.y*0.75);
+		fontNames=Font("Monaco", bounds.y*0.75);
 		views=();
 		c=CompositeView(argparent, bounds.x@(bounds.y*2));
 		c.addFlowLayout(0@0, 0@0);
-		views[\addBefore]=Button(c, boundsButton).states_([ ["±"] ])
+		views[\addBefore]=Button(c, boundsButton).states_([ ["±"] ]).font_(font)
 		.action_{
 			if (views[\basename].stringColor==Color.red, {
 				views[\addAfter].states_([ ["cp"] ]);
@@ -191,7 +197,7 @@ CuesGUIJT {
 				presets.store
 			});
 		};
-		views[\addAfter]=Button(c, boundsButton).states_([ ["+"] ])
+		views[\addAfter]=Button(c, boundsButton).states_([ ["+"] ]).font_(font)
 		.action_{
 			var currentPath, currentCueListPath, index;
 			if (views[\basename].stringColor==Color.red, {
@@ -211,7 +217,7 @@ CuesGUIJT {
 				});
 			});
 		};
-		views[\delete]=Button(c, boundsButton).states_([ ["-"] ]).action_{
+		views[\delete]=Button(c, boundsButton).states_([ ["-"] ]).font_(font).action_{
 			presets.delete;
 		};
 		views[\basename]=StaticText(c, boundsName).string_(
@@ -223,20 +229,27 @@ CuesGUIJT {
 			},{
 				Color.red
 			})
-		);
-		views[\store]=Button(c, boundsButton).states_([ ["s"] ]).action_{
+		).background_(Color.white);
+		views[\store]=Button(c, boundsButton).states_([ ["s"] ]).font_(font).action_{
 			//views[\basename].stringColor_(Color.black);
 			presets.store
 		};
-		views[\restore]=Button(c, boundsButton).states_([ ["r"] ]).action_{ presets.restore };
-		views[\prev]=Button(c, boundsButton).states_([ ["<"] ]).action_{ presets.prev };
+		views[\restore]=Button(c, boundsButton).states_([ ["r"] ]).font_(font).action_{ presets.restore };
+		views[\prev]=Button(c, boundsButton).states_([ ["<"] ]).font_(font).action_{ presets.prev };
 		views[\presets]=PopUpMenu(c, boundsName)
-		.items_(if (presets.array.size>0, {presets.entriesFullPath},{["(empty)"]}))
+		.items_(
+			if (presets.array.size>0, {
+				//presets.entriesFullPath;
+				presets.entries.collect{|p| "/"++(p.pathOnly.replace(presets.rootPath, "").removeNumbersFromNumberedPath)}
+			},{
+				["(empty)"]
+			})
+		)
 		.action_{|p|
 			prevIndex=presets.index;
 			presets.restore(p.value);
 		};
-		views[\next]=Button(c, boundsButton).states_([ [">"] ]).action_{ presets.next };
+		views[\next]=Button(c, boundsButton).states_([ [">"] ]).font_(font).action_{ presets.next };
 		presets.object[\method_CuesJT]=PopUpMenu(c, (bounds.x*0.1).floor@bounds.y).items_(
 			[\restore, \valuesActionsTransition]
 		).action_{|p|
@@ -260,15 +273,17 @@ CuesGUIJT {
 		//------------------------------------------------------------------------------- FUNCTIONS
 		[\directory].do{|key|
 			presets.funcs[key]=presets.funcs[key].addFunc({arg deepFoldersRelative, exists=true;
-				{views[\basename].string_(
-					deepFoldersRelative.removeNumbersFromNumberedPath
-				).stringColor_(if (exists, {
-					views[\addAfter].states_([ ["cp"] ]);
-					Color.black
-				},{
-					views[\addAfter].states_([ ["+"] ]);
-					Color.red
-				}))}.defer;
+				{
+					views[\basename].string_(
+						deepFoldersRelative.removeNumbersFromNumberedPath
+					).stringColor_(if (exists, {
+						views[\addAfter].states_([ ["cp"] ]);
+						Color.black
+					},{
+						views[\addAfter].states_([ ["+"] ]);
+						Color.red
+					}));
+				}.defer;
 			});
 		};
 		[\update].do{|key|
@@ -285,7 +300,6 @@ CuesGUIJT {
 		[\index].do{|key|
 			presets.funcs[key]=presets.funcs[key].addFunc({
 				{
-					//views[\basename].string_( presets.fileNamesWithoutNumbers[presets.index] );
 					views[\presets].value_(presets.index);
 				}.defer
 			});

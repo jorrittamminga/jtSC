@@ -1,3 +1,6 @@
+/*
+colors is nil.... waarom????
+*/
 PresetsCollectionJT : PresetsJT {
 	var <>indices;
 	var <presetsCollection, <hasBlender;
@@ -20,7 +23,6 @@ PresetsCollectionJT : PresetsJT {
 				});
 				if (flag, {updateFlag=true; this.put(i, preset)});
 			};
-			//if (updateFlag, {"update!".postln; this.update});
 		});
 		presetsJT.funcs[\add]=presetsJT.funcs[\add].addFunc({arg startIndex;
 			var updateFlag=false;
@@ -35,7 +37,7 @@ PresetsCollectionJT : PresetsJT {
 			});
 		});
 		presetsJT.funcs[\store]=presetsJT.funcs[\store].addFunc({arg i;
-			actionArray[index].value
+			actionArray[index].value;
 		});
 	}
 	initGetAction{
@@ -56,7 +58,8 @@ PresetsCollectionJT : PresetsJT {
 	}
 	initSetAction {
 		action={arg val=();
-			var ind=val[\indices]??{indices};
+			var ind;
+			ind=val[\indices]??{indices};
 			ind=this.convertToIndices(ind);
 			{
 				indices=ind;
@@ -91,7 +94,7 @@ PresetsCollectionGUIJT : PresetsGUIJT {
 	preInit {
 		presets.object[\indices]=TextField(parent, bounds).value_(presets.indices).action_{arg textField;
 			presets.indices=presets.convertToIndices(textField.value);
-			presets.makePresetArray
+			presets.makePresetArray;
 		}.font_(font);
 		[\add].do{|key|
 			presets.funcs[key]=presets.funcs[key].addFunc({

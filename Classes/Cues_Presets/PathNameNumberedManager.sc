@@ -123,7 +123,7 @@ PathNameNumberedManager : Numbered {
 	next {arg action;
 		if (folderID<(deepFolders.size-1), {
 			this.folderID_(this.folderID+1);
-			action.value(folderID, this)
+			action.value(folderID, this);
 		});
 	}
 	//--------------------------------------------------------- FILE/FOLDER MANAGEMENT
@@ -210,7 +210,7 @@ PathNameNumberedManager : Numbered {
 PathNameNumberedGUI {
 	classvar pathNameNumbered;
 	var parent, bounds;
-	var cMain, views, cListViews, numberOfColumns, indices;
+	var cMain, <views, cListViews, numberOfColumns, indices;
 	var <pathNameGuis, font;
 	var <hiliteColor;
 
@@ -221,6 +221,9 @@ PathNameNumberedGUI {
 	makePathNameWithoutNumbers {arg pathName;
 		^PathName(pathName).allFolders.collect{|i| this.removeNumber(i) }.join($/)
 	}
+	makeDeepestPathNameWithoutNumbers {arg pathName;
+		^PathName(pathName).allFolders.last.asString.copy.split($_).copyToEnd(1).join($_)
+	}
 	removeNumber {arg name;
 		^name.asString.copy.split($_).copyToEnd(1).join($_)
 	}
@@ -228,7 +231,7 @@ PathNameNumberedGUI {
 		^if (depth>=0, {
 			(pathNameNumbered.rootPath++PathName("/"
 				++ (pathNameNumbered.currentFolder.copy.replace(pathNameNumbered.rootPath, "")))
-				.allFolders.copyRange(0, depth).join($/)++ "/")
+			.allFolders.copyRange(0, depth).join($/)++ "/")
 		},{
 			pathNameNumbered.rootPath.copy
 		})
@@ -241,7 +244,10 @@ PathNameNumberedGUI {
 		fontList=Font("Monaco", 20);
 		fontButton=Font("Monaco", 10);
 		c=CompositeView(parent, bounds); c.addFlowLayout(0@0, 0@0);
-		action=action.addFunc({arg l; {views[\name].string_(entriesWithoutNumbers[l.value])}.defer});
+		action=action.addFunc({arg l;
+			{views[\name].string_(entriesWithoutNumbers[l.value])}.defer
+
+		});
 		views[\listView]=ListView(c, bounds.x@(bounds.y- (2*bb.min(20)) )).items_(
 			entriesWithoutNumbers
 		).action_(action).font_(fontList).value_(value).selectionMode_(\extended)
@@ -295,7 +301,11 @@ PathNameNumberedGUI {
 			pathNameNumbered.prev;
 		}.font_(font).canFocus_(false);
 		views[\currentPath]=StaticText(cMain, (bounds.x-(font.size*5.5))@(font.size*2.75))
-		.string_( pathNameNumbered.deepFoldersRelative[pathNameNumbered.folderID] ).align_(\center)
+		.string_(
+
+			pathNameNumbered.deepFoldersRelative[pathNameNumbered.folderID]
+
+		).align_(\center)
 		.font_(Font(font.name, font.size*2)).stringColor_(Color.white).background_(hiliteColor);
 		views[\nextB]=Button(cMain, (font.size*2.75).floor@(font.size*2.75).floor).states_([ [">"] ]).action_{
 			pathNameNumbered.next
@@ -330,7 +340,10 @@ PathNameNumberedGUI {
 					}, folderInfo[1], depth, folderInfo[3]);
 				};
 				[\previous, \currentPath, \upcoming].do{|key,i|
-					views[key].string_(this.makePathNameWithoutNumbers(p.deepFoldersRelative.clipAt(index+i-1)));
+					views[key].string_(
+						//this.makePathNameWithoutNumbers(p.deepFoldersRelative.clipAt(index+i-1))
+						this.makeDeepestPathNameWithoutNumbers(p.deepFoldersRelative.clipAt(index+i-1))
+					);
 				};
 			}.defer;
 		});

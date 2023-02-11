@@ -1,7 +1,7 @@
 + EZMultiSlider {
 	decimals_ {arg decimals;
 		this.numberView.decimals_(decimals);
-	//	this.numberView.value_(value);
+		//	this.numberView.value_(value);
 	}
 	round2_ {arg r;
 		this.round=r;
@@ -10,7 +10,20 @@
 			//this.numberView.value_(value);
 		});
 	}
+	mouseDownAction {
+		var out=[
+			this.sliderView//??{this.sliderView}
+			, this.numberView//??{this.numberView}
+			, this.labelView//??{this.labelView}
+		];
 
+		^if (out.count({|i| i.mouseDownAction==nil})==out.size, {nil},{out})
+	}
+	mouseDownAction_ {arg f;
+		this.sliderView.mouseDownAction_(f);
+		this.numberView.mouseDownAction_(f);
+		this.labelView.mouseDownAction_(f);
+	}
 }
 
 + EZSlider {
@@ -35,8 +48,12 @@
 	mouseDownAction_ {arg f;
 		this.sliderView.mouseDownAction_(f);
 		this.numberView.mouseDownAction_(f);
+		this.labelView.mouseDownAction_(f);
 	}
-
+	mouseDownAction {
+		var out=[this.sliderView,this.numberView, this.labelView];
+		^if (out.count({|i| i.mouseDownAction==nil})==out.size, {nil},{out})
+	}
 	keyDownAction_ {arg f;
 		this.sliderView.keyDownAction_(f);
 		this.numberView.keyDownAction_(f);
@@ -78,8 +95,16 @@
 			this.numberView.decimals_(r.decimals);//SCNumberBox
 			this.numberView.value_(value);
 		});
+	}//, <numberView
+	mouseDownAction_ {arg f;
+		this.knobView.mouseDownAction_(f);
+		this.numberView.mouseDownAction_(f);
+		this.labelView.mouseDownAction_(f);
 	}
-
+	mouseDownAction {
+		var out=[this.knobView,this.numberView, this.labelView];
+		^if (out.count({|i| i.mouseDownAction==nil})==out.size, {nil},{out})
+	}
 }
 
 + EZRanger {
@@ -104,6 +129,11 @@
 		this.rangeSlider.mouseDownAction_(f);
 		this.hiBox.mouseDownAction_(f);
 		this.loBox.mouseDownAction_(f);
+		this.labelView.mouseDownAction_(f);
+	}
+	mouseDownAction {
+		var out=[this.rangeSlider,this.hiBox,this.loBox, this.labelView];
+		^if (out.count({|i| i.mouseDownAction==nil})==out.size, {nil},{out})
 	}
 
 	keyDownAction_ {arg f;
@@ -155,6 +185,12 @@
 
 	mouseDownAction_ {arg f;
 		this.numberView.mouseDownAction_(f);
+		this.labelView.mouseDownAction_(f);
+	}
+
+	mouseDownAction {
+		var out=[this.numberView, this.labelView];
+		^if (out.count({|i| i.mouseDownAction==nil})==out.size, {nil},{out})
 	}
 
 	keyDownAction_ {arg f;

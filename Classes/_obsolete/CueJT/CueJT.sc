@@ -1,4 +1,5 @@
 /*
+TODO: haal die enorme paths uit het dropdownmenu
 object kan een PresetJT zijn, [PresetJT, PresetBlender], Function, Event, EventJT, View, EZGUI
 en how about een Array??? (die gebruik ik nu om een CueJTCollection te maken....
 */

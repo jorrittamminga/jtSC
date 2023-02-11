@@ -1,0 +1,1 @@
+( 'trainingSet': ( 1: [ 1.0 ], 0: [ 0.0 ] ), 'deselectedKeysJT': [ 'amp', 'freq', 'rq' ] )

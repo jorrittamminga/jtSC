@@ -6,19 +6,22 @@
 */
 SynthGUIJT : GUIJT {
 	var canFocus, <p, <cs, <synth, <server, <buttons, onClose, <waitTime
-	, <returnOnSwitch, <synths, <excludeKeys, <nodeID, <nrt, <rebounds;
+	, <returnOnSwitch, <synths, <excludeKeys, <nodeID, <nrt, <rebounds, <>action;
 
 	*new {arg synth, parent, bounds, onClose=true, canFocus=true
 		, labelWidth
-		, gap, margin, returnOnSwitch=false, waitTime=0, excludeKeys, server, nrt=false, rebounds=true;
+		, gap, margin, returnOnSwitch=false, waitTime=0, excludeKeys, server, nrt=false, rebounds=true, action, scroll=false;
 		^super.new.init(synth, parent, bounds, onClose, canFocus, labelWidth
-			, gap, margin, returnOnSwitch, waitTime, excludeKeys, server, nrt=false, rebounds=true);
+			, gap, margin, returnOnSwitch, waitTime, excludeKeys, server, nrt=false, rebounds=true, action, scroll);
 	}
 
 	init {arg argsynth, argparent, argbounds, argonClose, argcanFocus
-		, arglabelWidth, arggap, argmargin, argreturnOnSwitch, argwaitTime, argexcludeKeys, argserver, argnrt, argrebounds;
+		, arglabelWidth, arggap, argmargin, argreturnOnSwitch, argwaitTime, argexcludeKeys, argserver, argnrt
+		, argrebounds, argaction, argscroll;
 		nrt=argnrt;
 		rebounds=argrebounds;
+		scroll=argscroll;
+		action=argaction;
 		switch(argsynth.class, Synth, {
 			synth=argsynth;
 			synths=[synth];
@@ -89,7 +92,7 @@ SynthGUIJT : GUIJT {
 				},{
 					synths.do(_.run(b.value.asBoolean));
 				});
-			}.canFocus_(canFocus).value_(1);
+			}.canFocus_(canFocus).value_(p[\gate]??{1});
 			if (returnOnSwitch, {views[\onSwitch]=but},{buttons[\onSwitch]=but});
 			cs.sortedKeysValuesDo{|name,cs|
 				var butFlag=name.asString.copyRange(0,1)=="t_";
@@ -114,7 +117,8 @@ SynthGUIJT : GUIJT {
 				parent.rebounds;
 				if (hasWindow, {
 					window.rebounds});
-			})
+			});
+			action.value;
 		}.defer;
 		if (waitTime>0, {
 			while({views.keys.size<(returnOnSwitch.binaryValue+cs.keys.size)}
@@ -129,23 +133,23 @@ SynthGUIJT : GUIJT {
 
 +Synth {
 
-	makeGui {arg parent, bounds=350@20, onClose=true, canFocus=true, labelWidth, gap, margin, returnOnSwitch=false, waitTime=0, excludeKeys, nrt=false, rebounds=true;
+	makeGui {arg parent, bounds=350@20, onClose=true, canFocus=true, labelWidth, gap, margin, returnOnSwitch=false, waitTime=0, excludeKeys, nrt=false, rebounds=true, action, scroll=false;
 		^SynthGUIJT(this, parent, bounds, onClose, canFocus, labelWidth
-			, gap, margin, returnOnSwitch, waitTime, excludeKeys,nrt, rebounds)
+			, gap, margin, returnOnSwitch, waitTime, excludeKeys,nrt, rebounds, action: action, scroll:scroll)
 	}
 }
 
 +Array {
-	makeGui {arg parent, bounds=350@20, onClose=true, canFocus=true, labelWidth, gap, margin, returnOnSwitch=false, waitTime=0, excludeKeys, nrt=false, rebounds=true;
+	makeGui {arg parent, bounds=350@20, onClose=true, canFocus=true, labelWidth, gap, margin, returnOnSwitch=false, waitTime=0, excludeKeys, nrt=false, rebounds=true, action, scroll=false;
 
 		^SynthGUIJT(this, parent, bounds, onClose, canFocus, labelWidth
-			, gap, margin, returnOnSwitch, waitTime, excludeKeys, nrt:nrt, rebounds:rebounds)
+			, gap, margin, returnOnSwitch, waitTime, excludeKeys, nrt:nrt, rebounds:rebounds, action: action, scroll:scroll)
 	}
 }
 
 + Integer {
-	makeGui {arg parent, bounds=350@20, onClose=true, canFocus=true, labelWidth, gap, margin, returnOnSwitch=false, waitTime=0, excludeKeys, server, nrt=false, rebounds=true;
+	makeGui {arg parent, bounds=350@20, onClose=true, canFocus=true, labelWidth, gap, margin, returnOnSwitch=false, waitTime=0, excludeKeys, server, nrt=false, rebounds=true, action, scroll=false;
 		^SynthGUIJT(this, parent, bounds, onClose, canFocus, labelWidth
-			, gap, margin, returnOnSwitch, waitTime, excludeKeys, server, nrt, rebounds)
+			, gap, margin, returnOnSwitch, waitTime, excludeKeys, server, nrt, rebounds, action, scroll:scroll)
 	}
 }

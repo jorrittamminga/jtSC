@@ -2,15 +2,16 @@ EventsArrayJT {
 	classvar <>event;//an EventJT
 
 	var <keys, <array, <specs, <actions;
+	var <keysJT;
 	var <specsArray, <actionsArray, <events;
 	var <minItem, <maxItem, <mean, <dictionary, <meanArray;//statistics
 	var <method='clipAt', <gui, <>index=0, <>depth=1.0;
 
-	*fill {arg arrayOfEvents, eventJT, method, specs, actions;
+	*fill {arg arrayOfEvents, eventJT, method, specs, actions, removeKeysJT=true;
 		event=eventJT.asEventJT(specs, actions);
-		^super.new.fill(arrayOfEvents, method, true);
+		^super.new.fill(arrayOfEvents, method, true, removeKeysJT);
 	}
-	fill {arg arrayOfEvents, method, update=true;
+	fill {arg arrayOfEvents, method, update=true, removeKeysJT;
 		var tmp;
 		this.method_(method);//.events_(arrayOfEvents, update)
 		if (update, {
@@ -22,10 +23,20 @@ EventsArrayJT {
 		events=arrayOfEvents.deepCopy;
 		array=arrayOfEvents.deepCopy;
 		this.findKeys;
+		//keys [ deselectedKeysJT, durations_CuesJT, method_CuesJT, phase ]
+		if (removeKeysJT, {
+			keysJT=[];
+			keys.do{|key| if (key.asString.contains("JT"), {keysJT=keysJT.add(key.asSymbol)})};
+			keysJT.do{|k| keys.remove(k)};
+		});
 		this.statistics;
 		this.prSpecs;
 		this.prActions;
-		meanArray=keys.collect{|key| specs[key].unmap(mean[key])};
+		meanArray=keys.collect{|key|
+			var out;
+			out=specs[key].unmap(mean[key]);
+			out
+		};
 		tmp=tmp.collect{|event| keys.collect{|key| specs[key].unmap(event[key])}};
 		array=array.deepCollectKeys(0x7FFFFFFF, {|i| i}, keys: keys);
 		array=array.deepCollectWithoutEvents(0x7FFFFFFF, {arg t;

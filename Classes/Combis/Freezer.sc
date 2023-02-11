@@ -1,13 +1,13 @@
 Freezer {
 
-	var freqBus, <index, <target, <addAction, <parent, <bounds, <bufnums, <time, <server, <ff, synthInput, <synthFreeze, <guiO, <guiO2, channels, bus, outbus, <p, <cs, <>ws, <>hop, font, <ready;
+	var freqBus, <>index, <target, <addAction, <parent, <bounds, <bufnums, <time, <server, <ff, synthInput, <synthFreeze, <guiO, <guiO2, channels, bus, outbus, <p, <cs, <>ws, <>hop, font, <ready;
 	var collapsed;
 
-	*new {arg index, target, addAction=\addAfter, outbus=0, ws=4096, hop=0.125, channels=2, parent, bounds=300@20, args, controlSpecs, font=Font("Helvetica", 9), collapsed=false;
-		^super.new.init(index,target, addAction, outbus, ws, hop, channels, parent, bounds, args, controlSpecs, font, collapsed)
+	*new {arg index, target, addAction=\addAfter, outbus=0, ws=4096, hop=0.125, channels=2, parent, bounds=300@20, args, controlSpecs, font=Font("Helvetica", 9), collapsed=false, action;
+		^super.new.init(index,target, addAction, outbus, ws, hop, channels, parent, bounds, args, controlSpecs, font, collapsed, action)
 	}
 
-	init {arg argindex, argtarget, argaddAction, argoutbus, argws, arghop, argchannels, argparent, argbounds, argargs, argcontrolSpecs, argFont, argcollapsed;
+	init {arg argindex, argtarget, argaddAction, argoutbus, argws, arghop, argchannels, argparent, argbounds, argargs, argcontrolSpecs, argFont, argcollapsed, argaction;
 		server=Server.default;
 		index=argindex;
 		ready=false;
@@ -38,11 +38,25 @@ Freezer {
 		ff=0;
 		synthFreeze=[nil,nil];
 
-		p=(pitchDev: 0.005, magAbove:0.0, fadeIn:1.0, fadeOut:1.0, gate:1, timeDev:0.1, rate:1.0, amp:1.0, spread:1.0, az:0.0, preLevel:0.0, lpIn:19000, hpIn:200, lpOut:19000, hpOut:20, normalizer:1.0, windowSize:1.0, shiftDepth:0.0);
+		p=(
+			//pitchDev: 0.005, timeDev:0.1, rate:1.0, windowSize:1.0
+			magAbove:0.0, fadeIn:1.0, fadeOut:1.0, gate:1
+			, amp:1.0
+			//, spread:1.0, az:0.0
+			, preLevel:0.0, lpIn:19000, hpIn:200, lpOut:19000, hpOut:20, normalizer:1.0
+			, shiftDepth:0.0
+		);
 
 		if (argargs!=nil, {argargs.keysValuesDo({|key,val| p[key]=val})});
+
 		//stop die cs in de metadata van de synthdef
-		cs=(magAbove: ControlSpec(0.1,1200,\exp), pitchDev: ControlSpec(0.0001, 1.0, \exp), timeDev: ControlSpec(0.0001, 1.0, \exp), az: \bipolar.asSpec, amp: \amp.asSpec, fadeIn: ControlSpec(0.1, 30.0,\exp), fadeOut: ControlSpec(0.1, 30.0,\exp), shiftDepth: \unipolar.asSpec, normalizer: \amp.asSpec, spread: ControlSpec(0.1,1.0), windowSize: ControlSpec(0.01,1.0,\exp), lpIn: \freq.asSpec, hpIn: \freq.asSpec, lpOut: \freq.asSpec, hpOut: \freq.asSpec, rate: ControlSpec(0.125, 4.0, \exp));
+		cs=(
+			magAbove: ControlSpec(0.1,1200,\exp)
+			//, pitchDev: ControlSpec(0.0001, 1.0, \exp), timeDev: ControlSpec(0.0001, 1.0, \exp), rate: ControlSpec(0.125, 4.0, \exp), windowSize: ControlSpec(0.01,1.0,\exp)
+			, amp: \amp.asSpec, fadeIn: ControlSpec(0.1, 30.0,\exp), fadeOut: ControlSpec(0.1, 30.0,\exp), shiftDepth: \unipolar.asSpec, normalizer: \amp.asSpec
+			//, az: \bipolar.asSpec, spread: ControlSpec(0.1,1.0)
+			, lpIn: \freq.asSpec, hpIn: \freq.asSpec, lpOut: \freq.asSpec, hpOut: \freq.asSpec
+		);
 		if (argcontrolSpecs!=nil, {argcontrolSpecs.keysValuesDo({|key,val| cs[key]=val})});
 
 		//laat die aparte SoundIn weg, stop 'm in de freeze synthdef met een if statement
@@ -89,6 +103,7 @@ Freezer {
 		{
 			this.gui;
 			ready=true;
+			argaction.value;
 		}.defer;
 	}
 

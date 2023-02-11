@@ -4,14 +4,14 @@ EventGUIJT : GUIJT {
 
 	*new {arg event, parent, bounds=350@20, name, controlSpecs, onClose=true, canFocus=true
 		, labelWidth
-		, gap=4@4, margin=4@4, actions, excludeKeys;
+		, gap=4@4, margin=4@4, actions, excludeKeys, scroll=false;
 		^super.new.init(event, parent, bounds, name, controlSpecs, onClose, canFocus
 			, labelWidth
-			, gap, margin, actions, excludeKeys);
+			, gap, margin, actions, excludeKeys, scroll);
 	}
 
 	init {arg argevent, argparent, argbounds, argname, argcontrolSpecs, argonClose
-		, argcanFocus, arglabelWidth, arggap, argmargin, argactions, argexcludeKeys;
+		, argcanFocus, arglabelWidth, arggap, argmargin, argactions, argexcludeKeys, argScroll;
 		//var drawName=false;
 		event=argevent;
 		parent=argparent;
@@ -25,6 +25,7 @@ EventGUIJT : GUIJT {
 		gap=arggap;
 		margin=argmargin;
 		argexcludeKeys=argexcludeKeys??{[]};
+		scroll=argScroll;
 
 		//argexcludeKeys=argexcludeKeys.addAll([\method_CuesJT, \durations_CuesJT, \extras_CuesJT]);
 
@@ -52,9 +53,6 @@ EventGUIJT : GUIJT {
 					})
 				});
 				if ((cs==nil) && (controlSpecs[key]==nil), {if (val.size==0, {cs=controlSpecs[key].asSpec})});
-				//cs=cs??{controlSpecs[key].asSpec??{if (val.size==0, {ControlSpec(val*0.5, val*2)}, {nil})}};
-				//cs=cs??{controlSpecs[key].asSpec??{[val, val.size].postln; if (val.size==0, {ControlSpec(val*0.5, val*2)}, {nil})}};
-				//[key, val, cs, \after].postln;
 				action=actions[key]??{{|ez|
 					event[key]=ez.value}};
 				views[key]=this.makeEZGUI(bounds, key

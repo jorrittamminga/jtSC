@@ -16,7 +16,7 @@ JTmulti : JT {
 	makeJTsingles {
 		singles=();
 		label.asArray.do{|label,i|
-			singles[label]=JTSingle(busPerFlatIndex[i], synthPerFlatIndex[i], label);
+			singles[label]=JTSingle(busPerFlatIndex[i], synthPerFlatIndex[i], label, i);
 		}
 
 	}
@@ -42,6 +42,8 @@ JTmulti : JT {
 }
 
 IOJT : JTmulti {
+
+	var <gains, hasInputGains;
 
 	initFunc {arg arginBus, argtarget, arglabel, argaddAction, makeNewBus=true;
 		inBus=arginBus;//.asArray

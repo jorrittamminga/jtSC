@@ -71,7 +71,7 @@ OutJT : IOJT {
 			, \Meter, {{arg target, updateFreq=20;
 				//this.optimizeSynthAndBusForMeter;
 				target=target??{group};
-				MeterJT(busIndexPerServer, target, updateFreq);
+				MeterJT(busIndexPerServer, target, updateFreq, 3.0, this);
 			}}
 			, \MasterFader, {{
 				true

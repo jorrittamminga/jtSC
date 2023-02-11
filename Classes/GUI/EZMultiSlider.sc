@@ -187,13 +187,14 @@ EZMultiSlider : EZGui {
 			numberView.typingColor_(numTypingColor);};
 		numStringColor.notNil.if{
 			numberView.stringColor_(numStringColor);};
-		//			sliderBackground.notNil.if{
-		//				sliderView.background_(sliderBackground);};
-		//			knobColor.notNil.if{
-		//				sliderView.knobColor_(knobColor);};
+		sliderBackground.notNil.if{
+			sliderView.fillColor_(sliderBackground);};
+		knobColor.notNil.if{
+			sliderView.strokeColor_(knobColor);};
 		background.notNil.if{
 			view.background=background;};
 		numberView.refresh;
+		sliderView.refresh;
 	}
 
 	font_{ arg font;

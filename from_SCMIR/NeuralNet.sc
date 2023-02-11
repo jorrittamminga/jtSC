@@ -312,7 +312,10 @@ NeuralNetJT {
 		cmdFile.close;
 
 		//pipe the script to the NeuralNet binary
+		"pathToNeuralNetBinary ".post; pathToNeuralNetBinary.postln;
 		pipeCmd = format("cat % | %NeuralNet", cmdFileName, pathToNeuralNetBinary);
+
+		pipeCmd.postln;
 
 		//post the results
 		pipe = Pipe.new(pipeCmd, "r");

@@ -5,19 +5,23 @@ het lijkt alsof er soms te hoge dB waardes worden doorgegeven
 MeterJT : JT {
 	var <peakLag;
 	var <numberOfMeters, <numberOfMetersPerServer, <sumMeters;
+	var <gains, <inJT;
 
 	//	var <servers, <server, <inBus, id;
 	//	var <synth, <gui, <target;
 
-	*new {arg inBus, target, updateFreq=20, peakLag=3.0;
-		^super.new.init(inBus, target, updateFreq, peakLag);
+	*new {arg inBus, target, updateFreq=20, peakLag=3.0, inJT;
+		^super.new.init(inBus, target, updateFreq, peakLag, inJT);
 	}
 
-	init {arg arginBus, argtarget, argupdateFreq, argpeakLag;
+	init {arg arginBus, argtarget, argupdateFreq, argpeakLag, argInJT;
 		updateFreq=argupdateFreq;
 		peakLag=argpeakLag;
 		numberOfMeters=0;
 		id=UniqueID.next;
+		inJT=argInJT;
+
+		gains=inJT.gains;
 
 		if (this.isThreaded, {
 			this.initFunc(arginBus, argtarget)
@@ -92,10 +96,10 @@ MeterJT : JT {
 		if (sumMeters, {numberOfMeters=numberOfMetersPerServer[0]});
 		^synth
 	}
-
-	makeGUI {arg parent, bounds=20@150, margin=0@0, gap=0@0, font, orderOfMeters;
+	//, font, layout=\vert, showBus=false, orderOfMeters, gains
+	makeGUI {arg parent, bounds=20@150, labels, margin=0@0, gap=0@0, font, layout=\vert, showBus=false, orderOfMeters;
 		{
-		gui=MeterJTGUI(this, parent, bounds, margin, gap, font, orderOfMeters)
+			gui=MeterJTGUI(this, parent, bounds, labels, margin, gap, font, layout, showBus, orderOfMeters)
 		}.defer
 	}
 }

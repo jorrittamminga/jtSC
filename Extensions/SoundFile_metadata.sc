@@ -70,6 +70,7 @@
 			})
 		};
 		string=string++this.path.unixPath;
+		string.postcs;
 		//^string.runInTerminal
 		^string.unixCmd(action)
 	}

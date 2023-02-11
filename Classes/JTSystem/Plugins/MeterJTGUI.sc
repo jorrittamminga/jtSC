@@ -58,8 +58,13 @@ MeterJTGUI {
 					//valuedB=valueSum[i].sqrt.sum.ampdb;
 					valuedB=valueSum[i].sum.ampdb;
 					peakdB=peakSum[i].sum.ampdb;
+
 					guis[0][i].value_( valuedB.linlin(dBLow, 0, 0, 1) );//.sum
 					guis[0][i].peakLevel_( peakdB.linlin(dBLow, 0, 0, 1, \min) );//sum
+
+					//guis[0][i].value_( valuedB.lincurve(dBLow, 0, 0, 1, -0.618) );//.sum
+					//guis[0][i].peakLevel_( peakdB.lincurve(dBLow, 0, 0, 1, -0.618, \min) );//sum
+
 					guis[1][i].value_( peakdB );//sum
 				}.defer
 				}
@@ -77,13 +82,15 @@ MeterJTGUI {
 		};
 	}
 
-	init {arg argmeter, argparent, argbounds, arglabel, margin, gap, argfont
-		, arglayout, showBus, argorderOfMeters;
-		var c;
+	init {arg argmeter, argparent, argbounds, arglabels, margin, gap, argfont
+		, arglayout, showBus, argorderOfMeters, arggains;
+		var c, hasInputGains=false;
 		reorderFlag=true;
 
 		meter=argmeter;
 		bounds=argbounds;
+		hasInputGains=meter.gains.isNil.not;
+
 		parent=argparent??{
 			window=Window("meters"
 				, (meter.numberOfMeters*(bounds.x+gap.x)+margin.x+margin.x)
@@ -100,27 +107,57 @@ MeterJTGUI {
 		};
 		//labels=arglabel??{orderOfMeters};
 		layout=arglayout;
-		dBLow= -80;
+		dBLow= -80;//dBLow=dBLow??{ -80 };
 		//font=argfont??{this.initFont(argbounds)};
 		oscGUI=[];
-		guis=[0,1];
+		guis=();//[0,1];
 		numberOfMeters=meter.numberOfMeters;
 		numberOfMetersPerServer=meter.numberOfMetersPerServer;
 		guis[0]=Array.newClear(numberOfMeters);
 		guis[1]=Array.newClear(numberOfMeters);
+		if (hasInputGains, {guis[\gainSlider]=()});
 
 		compositeviews=numberOfMeters.collect{|i|
 			var c=CompositeView(parent.asArray.wrapAt(i), bounds.x@(bounds.y+bounds.x));
 			var heights=[0.9, 0.1].normalizeSum*bounds.y;
-			var index=orderOfMeters[i];
+			var index=orderOfMeters[i], label=arglabels[i];
+			var mouseClickTime=Main.elapsedTime;
+
 			if (showBus, {heights=[0.9, 0.1,0.1].normalizeSum*bounds.y;});
 			c.addFlowLayout(0@0, 0@0);
 			guis[1][index]=NumberBox(c, bounds.x@(heights[1]))
 			.font_(Font(Font.defaultMonoFace, heights[1]*0.5)).canFocus_(false);
-			guis[0][index]=LevelIndicator(c, bounds.x@heights[0])
+
+			guis[0][index]=LevelIndicator(c, (bounds.x*[1.0, 0.6][hasInputGains.binaryValue])@heights[0])
 			.warning_(0.9).critical_(1.0).drawsPeak_(true);
 			//.numTicks_(9)
 			//.numMajorTicks_(3);
+			if (hasInputGains, {
+				var slider=EZSlider(c, (bounds.x*0.4)@heights[0], nil, [-inf, 6, \db, 1.0].asSpec, {|ez|
+					var gain=ez.value.dbamp;
+					meter.inJT.at(label).gain_(gain);
+				}, 0, labelHeight: heights[0]*0.05, layout: \vert, gap: 0@0, margin: 0@0)
+				.font_(Font("Monaco", heights[0]*0.025));
+				//.font_(Font(Font.defaultMonoFace, heights[2]*0.5));
+				slider.sliderView.canFocus_(false).thumbSize_(4).knobColor_(Color.green(1.5));
+				slider.sliderView.mouseMoveAction_{arg action;
+					if (slider.value!=0.0, {
+						slider.sliderView.knobColor_(Color.red(1.0))
+					},{
+						slider.sliderView.knobColor_(Color.green(1.5))
+					});
+				};
+				guis[0][index].mouseDownAction_{arg action;
+					var now=Main.elapsedTime, tmpAction;
+					if (now-mouseClickTime<0.5, {
+						slider.valueAction_(0);
+						slider.sliderView.knobColor_(Color.green(1.5));
+					});
+					mouseClickTime=now;
+				};//mouseDblClickEvent
+				slider.numberView.canFocus_(false);
+				guis[\gainSlider][label]=slider;
+			});
 			if (showBus, {
 				StaticText(c, bounds.x@heights[2]).string_(
 					if (meter.inBusFlat[i].class==Bus, {meter.inBusFlat[i].index},{

@@ -25,7 +25,7 @@ bij meerdere voices gaat het niet goed met playbuf buffer!
 Looper {
 	var timesPlay;
 	var <ready;
-	var <>info, <>synth, <bus, <buf, <server, maxRecTime, <voices, preDelay, postDelay, tempo, makeMixer;
+	var <>info, <>synth, <bus, <buf, <server, <maxRecTime, <voices, preDelay, postDelay, tempo, makeMixer;
 	var inBus, target, addAction, outBus, sync, <parent, bounds, mode;
 	var <w, <>guis, <>controlSpecs;
 	var <numChans, <group, h, <>parameters;
@@ -38,11 +38,11 @@ Looper {
 		, ws: ControlSpec(0.05, 1.0, \exp), tDev: ControlSpec(0.0001, 1.0, \exp)
 		, wsDev: ControlSpec(0.0, 1.0), overlap: ControlSpec(0.1, 8, \exp)
 		, rate: ControlSpec(0.1, 10.0, \exp), freqScale: ControlSpec(0.125, 8.0, \exp), amp: \amp.asSpec
-		, az: \bipolar.asSpec);
-	^super.new.init(inBus, target, addAction, outBus, voices, sync, mode, maxRecTime, parameters, parent, bounds, controlSpecs)
+		, az: \bipolar.asSpec), action;
+	^super.new.init(inBus, target, addAction, outBus, voices, sync, mode, maxRecTime, parameters, parent, bounds, controlSpecs, action)
 	}
 
-	init {arg arginBus, argtarget, argaddAction, argoutBus, argvoices, argsync, argmode, argmaxRecTime, argparameters, argparent, argbounds, argcontrolSpecs;
+	init {arg arginBus, argtarget, argaddAction, argoutBus, argvoices, argsync, argmode, argmaxRecTime, argparameters, argparent, argbounds, argcontrolSpecs, argaction;
 		var azs, tmpcs;
 		ready=false;
 		inBus=arginBus;
@@ -173,10 +173,32 @@ Looper {
 				h=bounds.y;
 				this.gui;
 				ready=true;
+				argaction.value
 			}.defer;
 		}.fork;
 	}
 
+	maxRecTime_ {arg duration=1.0, voice=0;
+		"maxRecTime ".post;
+		if ( (maxRecTime[voice]-duration).abs>0.0001, {
+			maxRecTime[voice]=duration;
+			"changed to ".post; duration.postln;
+			{
+				buf[voice]={var b=Buffer.alloc(server, server.sampleRate*maxRecTime[voice]); server.sync; b}!2;
+
+				voices.do{|voice|
+					info[\buf][voice][\bufnums]=buf[voice];
+					info[\buf][voice][\bufnumRecord]=buf[voice][0].bufnum;
+					info[\buf][voice][\bufnumPlayback]=buf[voice][1].bufnum;
+					info[\buf][voice][\voices]=voice.asArray;
+					info[\playback][voice][\bufnum]=info[\buf][voice][\bufnumPlayback];
+					info[\record][voice][\bufnum]=info[\buf][voice][\bufnumRecord];
+				};
+			}.fork;
+		}, {
+			"stays at ".post; duration.postln;
+		})
+	}
 
 	play {arg gate=1, voice=0, sync, mode;//mode 0=classic, 1=timewarp
 		var synthDef=\PlayBufFree, deltaTime, flag=true;
@@ -330,18 +352,20 @@ Looper {
 		}).add;
 
 		SynthDef(\RecordBufFree, {arg inBus, bufnum, gate=1.0, preDelay=0.1, postDelay=1.0
-			, overDub=0, eraseFirst=1, loop=0, fadeOut=1.0;
+			, overDub=0, eraseFirst=1, loop=0, fadeOut=1.0, reduceDB= -1.5;
 			var in=In.ar(inBus);
 			var env2;
 			var env=EnvGen.kr(Env.asr(0, 1, postDelay), gate, doneAction:2);
+			var reducer;
 			loop=(overDub+loop).min(1);
 			env2=EnvGen.kr(Env.linen(0,BufDur.ir(bufnum)-fadeOut,fadeOut), 1, 1-loop, loop);
-			//eraseFirst=EnvGen.kr(Env.dadsr(eraseFirst*BufDur.ir(bufnum),0.1, 1, 1), gate);
 			eraseFirst=EnvGen.kr(Env.new([0,0,1,1],[eraseFirst*BufDur.ir(bufnum),0.1,1], 'lin', 2),gate);
-			//(eraseFirst*overDub).poll(1);
-			//[env2, eraseFirst*overDub].poll(10);
+
+			//reducer=(Sweep.kr(1,BufDur.ir(bufnum).reciprocal)*reduceDB).dbamp;
+			//reducer=reducer*overDub + (1-overDub);
+			//RecordBuf.ar(in*env2*reducer, bufnum, 0, 1, eraseFirst*overDub*reducer, loop: loop, doneAction:2);
 			RecordBuf.ar(in*env2, bufnum, 0, 1, eraseFirst*overDub, loop: loop, doneAction:2);
-			//RecordBuf.ar(in, bufnum, 0, 1, loop:0, doneAction:2);
+
 		}).add;
 
 		SynthDef(\PlayBufFree, {arg outBus, bufnum, rate=1, start=0.0, end=1.0, lagTime=0.1, gate=1.0, fadeIn=0.1, fadeOut=0.1, pitch=0.0;

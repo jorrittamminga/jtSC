@@ -74,7 +74,7 @@ render alle path dingen .unixPath maken
 
 	*render {arg score, path, numberOfChannels=2, sampleRate, headerFormat ="AIFF"
 		, sampleFormat = "int24", action, open=false, normalize=false, condition
-		, deleteOSCfile=true, options;
+		, deleteOSCfile=true, options, clock;
 		var o, extension;
 		var tmpSampleFormat=sampleFormat, tmpPath;
 		var oscFilePath;
@@ -132,7 +132,6 @@ render alle path dingen .unixPath maken
 					, threaded: true, actionWhenReady: action
 				);
 				cond.hang;
-
 				/*
 				SoundFile.normalizeNRT(tmpPath, path
 					, headerFormat, sampleFormat
@@ -154,7 +153,7 @@ render alle path dingen .unixPath maken
 			});
 			"".postln;
 			//action.value
-		}.fork
+		}.fork(clock)
 	}
 
 
