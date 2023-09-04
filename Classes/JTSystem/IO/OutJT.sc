@@ -49,6 +49,11 @@ OutJT : IOJT {
 				in=in*amp.lag(0.1);
 				*/
 				in=in*amp.lag(lagTime);
+
+				CheckBadValues.ar(in, 0, 2);
+				in=Sanitize.ar(in);
+
+
 				busIndexPerServer[serverIndex].collect{|bus,i|
 					ReplaceOut.ar(bus, in[i])
 				};

@@ -1,4 +1,10 @@
 +String {
+
+	//calculate fontSize for Font.monospace
+	fontSize {arg bounds=100@20, factor=0.608;
+		^if (this.size*factor>(bounds.x/bounds.y), {bounds.x/(this.size*factor)},{bounds.y})
+	}
+
 	movedirlevel {arg levels=1;
 		var array, in=this.copy;
 		if (in.last==$/, {in=in.copyRange(0, in.size-2)});

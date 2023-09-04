@@ -39,6 +39,7 @@ PresetsFileJT : Numbered {
 		);
 		removeKeyWhenSave=[\routinesJT];
 		enviroment=();
+		actionArray=[];//is nieuw, is dit ok????
 		selectActionArray=();
 		selectColor=Color();
 		//----------------------------------------------------------------------------- OBJECT inits
@@ -287,13 +288,18 @@ PresetsFileJT : Numbered {
 		this.prRestore;
 	}
 	prRestore {
-		var preset=array[index];
-		actionArray[index].value;
+		var preset;
+		preset=array[index];
+		if (actionArray!=nil, {
+			actionArray[index].value;
+		});
 		value=preset;//was not here before, is this usefull?
 		//---------------------------------------------------------------------- (DE)SELECT related
 		selectActionArray[index].value;
+
 		//----------------------------------------------------------------------
 		funcs[\restore].value(index);
+
 		^preset
 	}
 	put {arg i, val;

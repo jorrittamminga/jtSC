@@ -69,7 +69,7 @@ CueListJT {
 							cue.restore(i);
 						})
 					});
-				}
+				};
 			});
 			prevIndex=index;
 		});
@@ -222,19 +222,24 @@ CueListJT {
 
 CueListGUI {
 	var <cueList;
-	var <views, <parent, <bounds;
+	var <views, <parent, <bounds, <compositeView;
 	*new {arg cueList, parent, bounds, boundsList;
 		^super.newCopyArgs(cueList).init(parent, bounds, boundsList)
 	}
 	init {arg argparent, argbounds, argboundsList;
-		var c;
 		views=();
 		parent=argparent;
 		bounds=argbounds;
 		//c=CompositeView(parent, bounds.x@(bounds.x+bounds.y));
-		c=CompositeView(parent, argboundsList??{bounds.x@bounds.x});
-		c.addFlowLayout(0@0,0@0);
-		views[\PathNameNumbered]=PathNameNumberedGUI(cueList.pathNameNumberedManager, c
+		if (parent==nil, {
+			parent=Window("CueList", Rect(0, 0, bounds.x+16, bounds.x+16)).front;
+			parent.addFlowLayout;
+			parent.alwaysOnTop_(true);
+		});
+
+		compositeView=CompositeView(parent, argboundsList??{bounds.x@bounds.x});
+		compositeView.addFlowLayout(0@0,0@0);
+		views[\PathNameNumbered]=PathNameNumberedGUI(cueList.pathNameNumberedManager, compositeView
 			, argboundsList??{bounds.x@bounds.x});
 	}
 }

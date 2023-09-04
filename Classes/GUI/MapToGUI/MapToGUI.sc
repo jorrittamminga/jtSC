@@ -130,7 +130,6 @@ MapToGUI {
 			(controlSpec.class==SegWarp), {
 			controlSpecIn=controlSpec;
 		});
-
 		if (controlSpec!=nil, {
 			switch(controlSpec.class, ControlSpec, {
 				minval=controlSpec.minval;

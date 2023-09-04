@@ -27,7 +27,6 @@ PresetsNNJT : PresetsJT {
 		if (value==nil, {value=(trainingSet:())});
 		input={0}!nin;
 
-
 		nout=if (presetsJT.array==nil, {
 			nin
 		},{
@@ -41,15 +40,25 @@ PresetsNNJT : PresetsJT {
 		});
 		nhidden=nout.max(nin);
 		neuralNet=NeuralNetJT(nin, nhidden, nout);
-
 		//----------------------------------------------------------- funcs
 		funcs[\restore]=funcs[\restore].addFunc{
-			var tmp, presets;
+			var tmp, presets, tmp2=[];
 			if (value!=nil, {
 				if (value[\trainingSet]!=nil, {
 					//this.input=value[\trainingSet][value[\trainingSet].keys.asArray.sort[0]];//???
 					presets=value[\trainingSet].keys.asArray.sort;
-					deselectedKeys=presets.collect{|i| presetsJT.array[i][\deselectedKeysJT]}.flat.asSet.asArray.sort;
+					//------------------------------------------- ERROR!!!
+					presets.do{|i|
+						var keys;
+						keys=presetsJT.array[i][\deselectedKeysJT];
+						if (keys!=nil, {
+							tmp2=tmp2.add(keys);
+						})
+					};
+					//tmp2.removeAllSuchThat({|i| i.isNil});
+					if (tmp2.size>0, {
+						deselectedKeys=tmp2.flat.asSet.asArray.sort;
+					});
 					this.nin_(value[\trainingSet].values.collect{|i| i.size}.maxItem);
 					if (mode==0, {
 						input=value[\trainingSet][value[\trainingSet].keys.asArray.sort[0]];//???

@@ -155,16 +155,20 @@ Freezer {
 		parent.addFlowLayout;
 		//parent.background_(Color.grey);
 		button=Button; slider=EZSlider;
-		guiO2.freezer=button.new(parent, (bounds.x*0.5-4)@bounds.y).states_([["freeze"]]).canFocus_(false).action_({|b|
-			this.freeze_(1.0)
+		guiO2.freezer=button.new(parent, (bounds.x*0.5-4)@bounds.y).states_([["freeze", Color.black, Color.white]]).canFocus_(false).action_({|b|
+			this.freeze_(1.0);
+			{guiO2.freezer.states_([ ["freeze", Color.white, Color.red] ])}.defer;
 		}).font_(font);
-		guiO2.unfreezer=button.new(parent, (bounds.x*0.5-4)@bounds.y).states_([["unfreeze"]]).canFocus_(false).action_({|b| this.freeze_(0.0)}).font_(font);
+		guiO2.unfreezer=button.new(parent, (bounds.x*0.5-4)@bounds.y).states_([["unfreeze"]]).canFocus_(false).action_({|b|
+			this.freeze_(0.0);
+			{
+				guiO2.freezer.states_([ ["freeze", Color.black, Color.white] ])
+			}.defer
+		}).font_(font);
 		cs.keys.asArray.sort.do({|key| var val=cs[key];
 			//		cs.keysValuesDo({|key,val|
 			guiO[key]=slider.new(parent,bounds,key,val,{|ez| p[key]=ez.value; if (synthFreeze[ff].isPlaying, {synthFreeze[ff].set(key,ez.value)}) },p[key], false, labelWidth ).font_(font);
 			guiO[key].sliderView.canFocus_(false);	guiO[key].numberView.canFocus_(false);
-
-
 		});
 		if (collapsed, {parent.collapse});
 

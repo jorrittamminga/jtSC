@@ -72,12 +72,11 @@ PresetsBlenderJT
 			value=value??{0};
 			if (controlSpec.size>0, {controlSpec=controlSpec[0]});
 			value=controlSpec.unmap(value.asArray)[0];
-			controlSpec=ControlSpec(0, presets.presetsCollection.size-('clipAt': 1, 'wrapAt':0)[method]).warp;
+			controlSpec=ControlSpec(0, (presets.presetsCollection.size-('clipAt': 1, 'wrapAt':0)[method]).max(1)).warp;
 			value=controlSpec.map(value);
 		},{
 			controlSpec=controlSpec??{[0,1].asSpec};
 			value=value??{0};
-
 			value=if (controlSpec.size>0, {
 				controlSpec.collect{|cs,i| cs.map(value.asArray.wrapAt(i))};
 			},{
@@ -153,7 +152,6 @@ PresetsBlenderGUIJT {
 		rank=presetsBlender.presets.presetsCollection.rank;
 		cv.removeAll;
 		cv.decorator.reset;
-
 		val=presetsBlender.value??{0};
 		cs=presetsBlender.controlSpec;
 
@@ -170,6 +168,7 @@ PresetsBlenderGUIJT {
 			, val.asArray.collect{|v,i| cs[i].unmap(v)}
 			, false, cv.bounds.width*0.05).decimals_(8).font_(font);
 		});
+
 		presetsBlender.presets.object[\value].sliderView.indexIsHorizontal = false;
 		presetsBlender.presets.object[\value].sliderView.isFilled=true;
 		views[\blender]=presetsBlender.presets.object[\value];

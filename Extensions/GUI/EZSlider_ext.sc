@@ -82,6 +82,14 @@
 	controlSpec_ {arg items;
 		this.items_(items)
 	}
+	mouseDownAction_ {arg f;
+		this.widget.mouseDownAction_(f);
+		this.labelView.mouseDownAction_(f);
+	}
+	mouseDownAction {
+		var out=[this.widget, this.labelView];
+		^if (out.count({|i| i.mouseDownAction==nil})==out.size, {nil},{out})
+	}
 }
 
 + EZKnob {

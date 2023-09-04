@@ -182,6 +182,8 @@ TODO:
 		font=Font("Helvetica", knobBounds.y*0.75);
 		if (guiType==1, {bounds.y=bounds.y*5});
 
+		//this.folderName.post; parent.postln;
+
 		cv=CompositeView(parent,
 			(bounds.x)//+8
 			@(bounds.y));

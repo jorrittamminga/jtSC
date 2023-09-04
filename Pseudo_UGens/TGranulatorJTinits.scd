@@ -1,14 +1,14 @@
-GrainInJT {
+TGrainInJT {
 
-	*inits {arg in=0.0, dur=0.10, rate=1.0, rOverLap=0.25, maxdelaytime=5, delayTime=0.005, run=1.0, rateScaling= -0.85
-		, timeJitter=0.005, mul=1.0, fb=0.0, rOverLapScaling=0.5, rateMin=1.0, rOverLapIsImpulse=false;//type=\TGrains
+	*inits {arg in=0.0, trigger=1, dur=0.10, rate=1.0, maxdelaytime=5, delayTime=0.005, run=1.0, rateScaling= -0.85
+		, timeJitter=0.005, mul=1.0, fb=0.0, rateMin=1.0;//type=\TGrains
 
-		var buf, impulse, pos=WhiteNoise.ar(1.0);
+		var buf, impulse=trigger, pos=WhiteNoise.ar(1.0);
 		var isRunning, phase, input, output, bdR, bsR, jitterR, rate2, rates;
 		var deviation=0, phaseTmp, maxDur, method=\ir, includesAudioRate=false;
 		var tmp1, tmp2;
 
-		rates=[dur, rate, rOverLap, maxdelaytime, delayTime, run, rateScaling, timeJitter, mul, fb, rOverLapScaling].collect{|key| key.rate};
+		rates=[trigger, dur, rate, maxdelaytime, delayTime, run, rateScaling, timeJitter, mul, fb].collect{|key| key.rate};
 		includesAudioRate=rates.includesAny(\audio);
 
 		buf=LocalBuf(SampleRate.ir*maxdelaytime).clear;
@@ -16,38 +16,30 @@ GrainInJT {
 		bsR=BufSampleRate.ir(buf).reciprocal;
 
 		if (rate.rate==\demand, {rate=Ddup(2, rate)});
+		//if (rOverLap.rate==\demand, {rOverLap=Ddup(2, rOverLap)});
 
-		if (rOverLap.isUGen, {
-			if (["Dust", "Impulse", "TDuty", "Onsets"].includesEqual(rOverLap.name), {
-				rOverLapIsImpulse=true;
-			});
-		});
-		if (rOverLapIsImpulse, {
-			impulse=rOverLap;
-		},{
-			if (rOverLap.rate==\demand, {rOverLap=Ddup(2, rOverLap)});
-		});
 		dur=rate.abs.max(rateMin).pow(rateScaling)*dur;//scale the dur according to the pitch/rate, maybe get rid off the .min
 		//dur=rate.abs.pow(rateScaling)*dur;//scale the dur according to the pitch/rate, maybe get rid off the .min
+
 		switch ( dur.rate,
 			\audio, {
-				if (rOverLapIsImpulse.not, {impulse=TDuty.ar(dur*rOverLap)});
+				//impulse=TDuty.ar(dur*rOverLap);
 				maxDur = Slew.ar(dur, SampleRate.ir, 1.0);
 			}, \control, {
-				if (rOverLapIsImpulse.not, {impulse=TDuty.kr(dur*rOverLap);});
+				//impulse=TDuty.kr(dur*rOverLap);
 				maxDur = Slew.kr(dur, SampleRate.ir, 1.0);
 			}, \demand, {
 				dur=Ddup(3, dur);
-				if (rOverLapIsImpulse.not, {impulse=TDuty.ar(dur*rOverLap)});
+				//impulse=TDuty.ar(dur*rOverLap);
 				maxDur = Slew.ar(Demand.ar(impulse, 0, dur), SampleRate.ir, 1.0);
 			}, {
 				maxDur = dur;
 				if (includesAudioRate, {
 					dur=DC.ar(dur);
-					if (rOverLapIsImpulse.not, {impulse=TDuty.ar(dur*rOverLap);})
+					//impulse=TDuty.ar(dur*rOverLap);
 				},{
 					dur=DC.kr(dur);
-					if (rOverLapIsImpulse.not, {impulse=TDuty.kr(dur*rOverLap);})
+					//impulse=TDuty.kr(dur*rOverLap);
 				});
 		});
 
@@ -68,12 +60,12 @@ GrainInJT {
 			//delayTime=Demand.ar(impulse, 0, delayTime);
 			delayTime=Demand.multiNewList([impulse.rate, impulse, 0] ++ delayTime.asArray);
 		});
-		if (rOverLapIsImpulse.not, {
-			if (rOverLap.rate==\demand, {
-				//rOverLap=Demand.ar(impulse, 0, rOverLap);
-				rOverLap=Demand.multiNewList([impulse.rate, impulse, 0] ++ rOverLap.asArray);
-			});
+		/*
+		if (rOverLap.rate==\demand, {
+			//rOverLap=Demand.ar(impulse, 0, rOverLap);
+			rOverLap=Demand.multiNewList([impulse.rate, impulse, 0] ++ rOverLap.asArray);
 		});
+		*/
 		//timeJitter=Demand.multiNewList([dur.rate, impulse, 0] ++ [Dwhite(0, timeJitter)]);
 		if (impulse.rate==\audio, {
 			timeJitter=Demand.ar(impulse, 0, Dwhite(0, timeJitter));
@@ -86,7 +78,6 @@ GrainInJT {
 		input=(fb*BufRd.ar(1,buf,phase,1))+((in*run.lag(maxDur)));
 		BufWr.ar( input, buf, phase, 1);
 		phase=Gate.ar(phase, run-0.1);
-
 		if (rate.rate==\scalar, {
 			if (rate<0, {
 				delayTime=delayTime-(rate.abs*dur)
@@ -101,14 +92,9 @@ GrainInJT {
 		deviation=deviation.max(0);
 
 		pos=(phase*bsR-deviation)*bdR;
-
 		dur=dur.min(maxdelaytime);
-		if (rOverLapIsImpulse.not, {
-			mul=rOverLap.min(1).pow(rOverLapScaling)*mul;
-		},{
-			//rOverLap=
+		//mul=rOverLap.min(1).pow(rOverLapScaling)*mul;
 
-		});
 		/*
 		tmp1=(dur*SampleRate.ir)+phase;
 		tmp2=(pos*BufFrames.ir(buf))+(dur*SampleRate.ir*rate);

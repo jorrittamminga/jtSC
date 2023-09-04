@@ -43,10 +43,14 @@ PathNameNumberedManager : Numbered {
 		deepFoldersRelative=deepFolders.collect{|p| p.replace(rootPath, "/")};
 		deepFilesPathName=deepFoldersPathName.collect{|p| p.entries};
 		deepFiles=deepFilesPathName.collect{|p| p.collect(_.fullPath)};
-		deepKeys=deepFilesPathName.collect{|p| p.collect{|p|
-			p.fileNameWithoutExtension.split($_).copyToEnd(1).join($_).asSymbol}};
+		deepKeys=deepFilesPathName.collect{|p|
+			p.collect{|p|
+				p.fileNameWithoutExtension.split($_).copyToEnd(1).join($_).asSymbol
+			}
+		};
 		this.analyzeFolderStructure;
 		updateAction.value(this, updateActionArgs);
+
 		if (index.class==String, {
 			this.folderIDfromPath_(index, actionArgs, method)
 		},{
@@ -136,14 +140,14 @@ PathNameNumberedManager : Numbered {
 				{
 					NumberedFile.delete(pathname);
 					//this.prDeleteFile(pathname, action)
-					this.updatePaths;
+					this.updatePaths(actionArgs:false);
 					action.value(this);
 				}.fork
 			},{
-				//this.prDeleteFolder(pathname, action)
+				//huh, dit is toch hetzelfde????
 				{
 					NumberedFolder.delete(pathname);
-					this.updatePaths;
+					this.updatePaths(actionArgs:false);
 					action.value(this);
 				}.fork
 			});
@@ -155,7 +159,7 @@ PathNameNumberedManager : Numbered {
 		{
 			var folder;
 			folder=NumberedFolder(folderName, target.asPathName, addAction, numDigits, \allFiles);
-			this.updatePaths(folder.pathName);
+			this.updatePaths(folder.pathName, actionArgs:false);
 			action.value(this);
 		}.fork;
 	}
@@ -163,7 +167,7 @@ PathNameNumberedManager : Numbered {
 		folderName=folderName??{Date.localtime.stamp};
 		{
 			NumberedFolder.groupNumbered(folderName, targets, addAction, numDigits);
-			this.updatePaths;
+			this.updatePaths(actionArgs:false);
 			action.value(this);
 		}.fork;
 	}
@@ -171,7 +175,7 @@ PathNameNumberedManager : Numbered {
 	renameFolder {arg folderName="test", pathName, action;
 		{
 			NumberedFolder.rename(folderName, pathName);
-			this.updatePaths(method: \renameFolder);
+			this.updatePaths(method: \renameFolder, actionArgs:false);
 			action.value(this);
 		}.fork
 	}
@@ -245,8 +249,10 @@ PathNameNumberedGUI {
 		fontButton=Font("Monaco", 10);
 		c=CompositeView(parent, bounds); c.addFlowLayout(0@0, 0@0);
 		action=action.addFunc({arg l;
-			{views[\name].string_(entriesWithoutNumbers[l.value])}.defer
-
+			//var value=l.value.deepCopy;
+			{
+				views[\name].string_(entriesWithoutNumbers[l.value]);
+			}.defer
 		});
 		views[\listView]=ListView(c, bounds.x@(bounds.y- (2*bb.min(20)) )).items_(
 			entriesWithoutNumbers
@@ -260,13 +266,15 @@ PathNameNumberedGUI {
 		[[\addBefore,"±"],[\addAfter,"+"],[\addToHead,"<"],[\addToTail,">"]].do{arg i;
 			var key=i[0], icon=i[1];
 			views[key]=Button(c, bb).states_([[ icon ]]).font_(fontButton).action_{
-				pathNameNumbered.addFolder(nil, this.getCurrentFolder(depth), key )
+				pathNameNumbered.addFolder(nil, this.getCurrentFolder(depth), key );
 			}.canFocus_(false);
 		};
 		views[\delete]=Button(c, bb).states_([ ["-"] ]).font_(fontButton).action_{
-			var selection=views[\listView].selection.sort;
+			var selection;
+			selection=views[\listView].selection.sort;
 			if (views[\listView].selection.size>1, {
-				var folder=this.getCurrentFolder(depth-1);
+				var folder;
+				folder=this.getCurrentFolder(depth-1);
 				pathNameNumbered.delete( selection.collect{|i| folder++entries[i]++"/"};)
 			},{
 				pathNameNumbered.delete( this.getCurrentFolder(depth) )
@@ -283,8 +291,9 @@ PathNameNumberedGUI {
 		^views[\listView]
 	}
 	init {arg argparent, argbounds;
+		//var values={0}!2048;//
 		hiliteColor=Color.green(0.4);
-		font=Font("Monaco", 10);
+		font=Font("Monaco", 15);
 		views=();
 		indices=[0];
 		bounds=argbounds.copy;
@@ -302,15 +311,13 @@ PathNameNumberedGUI {
 		}.font_(font).canFocus_(false);
 		views[\currentPath]=StaticText(cMain, (bounds.x-(font.size*5.5))@(font.size*2.75))
 		.string_(
-
 			pathNameNumbered.deepFoldersRelative[pathNameNumbered.folderID]
-
 		).align_(\center)
 		.font_(Font(font.name, font.size*2)).stringColor_(Color.white).background_(hiliteColor);
 		views[\nextB]=Button(cMain, (font.size*2.75).floor@(font.size*2.75).floor).states_([ [">"] ]).action_{
 			pathNameNumbered.next
 		}.font_(font).canFocus_(false);
-		views[\previous]=StaticText(cMain, (bounds.x*0.5-10).floor.asInteger@20).string_("").align_(\left).font_
+		views[\previous]=StaticText(cMain, (bounds.x*0.5-10).floor.asInteger@(font.size*1.5)).string_("").align_(\left).font_(font)
 		.stringColor_(Color.white);
 		views[\bypass]=Button(cMain, 20@20).states_([ [\I],[\I, Color.black, Color.green] ]).action_{|b|
 			var bypass=(b.value>0).not;
@@ -318,16 +325,18 @@ PathNameNumberedGUI {
 				cue.bypass_(bypass);
 			};
 		}.value_(1).canFocus_(false);
-		views[\upcoming]=StaticText(cMain, (bounds.x*0.5-10).floor.asInteger@20).string_("").align_(\right).font_(font)
+		views[\upcoming]=StaticText(cMain, (bounds.x*0.5-10).floor.asInteger@(font.size*1.5)).string_("").align_(\right).font_(font)
 		.stringColor_(Color.white);
 		cMain.decorator.nextLine;
 		cListViews=CompositeView(cMain, bounds.x@(bounds.y-cMain.decorator.top));
 		cListViews.addFlowLayout(0@0, 0@0);
 		cListViews.background_(Color.grey);
 		pathNameNumbered.action=pathNameNumbered.action.addFunc({arg index, p;
-			var folderInfo=p.deepFolderNamesWithoutNumbers[index];
+			var folderInfo;
+			folderInfo=p.deepFolderNamesWithoutNumbers[index];
 			{
 				var boundsPathNames=(bounds.x/folderInfo.size).floor@cListViews.bounds.height;
+				//"GUI func start".postln;
 				cListViews.removeAll;
 				cListViews.decorator.reset;
 				views[\pathNames]=folderInfo.collect{arg folderInfo, depth;
@@ -339,12 +348,29 @@ PathNameNumberedGUI {
 						})
 					}, folderInfo[1], depth, folderInfo[3]);
 				};
-				[\previous, \currentPath, \upcoming].do{|key,i|
+				//views[\pathNames].postln;
+				//[\previous, \currentPath, \upcoming]
+				[\previous, \upcoming, \currentPath]
+				.do{|key,i|
 					views[key].string_(
 						//this.makePathNameWithoutNumbers(p.deepFoldersRelative.clipAt(index+i-1))
 						this.makeDeepestPathNameWithoutNumbers(p.deepFoldersRelative.clipAt(index+i-1))
 					);
 				};
+				/*
+				views[\pathNames].do{|l,depth|
+				var value=l.value;
+				if (value!=values[depth], {
+				if (l.items.size-1>l.value, {
+				l.value_(value+1);
+				});
+				if (l.value>0, {
+				l.value_(value-1);
+				});
+				});
+				values[depth]=value;
+				};
+				*/
 			}.defer;
 		});
 		pathNameNumbered.folderID_(pathNameNumbered.folderID);

@@ -73,10 +73,13 @@ PresetsCollectionJT : PresetsJT {
 	}
 	//initEntriesAction;
 	initPathName {
+		var dir;
 		basename=\empty;
 		//presetsJT.folderID=presetsJT.folderID??{0};
 		//presetsJT.folderID=presetsJT.folderID+1;
-		pathName=(presetsJT.directory.fullPath++("Collections/")).asPathName;//++numberOfFolders
+		dir=presetsJT.directory.fullPath;
+		if (dir.last!=$/, {dir=dir++"/"});
+		pathName=(dir++("Collections/")).asPathName;//++numberOfFolders
 		directory=pathName;
 		if (File.exists(directory.fullPath).not, {File.mkdir(directory.fullPath)});
 		this.update;

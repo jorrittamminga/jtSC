@@ -70,7 +70,7 @@
 			})
 		};
 		string=string++this.path.unixPath;
-		string.postcs;
+		//string.postcs;
 		//^string.runInTerminal
 		^string.unixCmd(action)
 	}
@@ -94,7 +94,7 @@
 		cmd=("/usr/local/bin/ffmpeg -y -i "++this.path.unixPath++" -codec:a libmp3lame -qscale:a "++quality++" ");
 		metadata.sortedKeysValuesDo{|key, val| cmd=cmd++"-metadata "++key.asString++"=\""++val++"\" "};
 		cmd=cmd++ pathName.unixPath;
-		cmd.postln;
+		//cmd.postln;
 		^cmd.unixCmd(action)
 	}
 

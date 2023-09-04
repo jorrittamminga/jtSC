@@ -52,7 +52,7 @@ SynthGUIJT : GUIJT {
 			this.initSettings(argserver)
 		},{
 			{this.initSettings(argserver)}.fork
-		})
+		});
 	}
 
 	initSettings {arg argserver;

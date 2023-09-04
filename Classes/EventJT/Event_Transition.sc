@@ -51,6 +51,7 @@ Button zeker bij twee states niet laten interpoleren!
 		//====================================================================== INIT
 		var newKeys=newEvent.keys.asArray;
 		var keyz=this.keys.asArray, routines;
+
 		//durations[\common], curves[\common], delayTimes[\common]
 		resolution=resolution??{10};
 		nrt=nrt??{false};
@@ -113,6 +114,9 @@ Button zeker bij twee states niet laten interpoleren!
 			if (this[key].respondsTo(\states), {
 				durations[key]=0;
 			});
+			if ([TextField].includesEqual(this[key].class), {
+				durations[key]=0;
+			});
 			actions[key]=actions[key]??{
 				if (this[key].respondsTo(\action), {
 					if (nrt, {
@@ -156,6 +160,7 @@ Button zeker bij twee states niet laten interpoleren!
 				var env, action;
 				startValue=this[key].value??{value};
 				duration=durations[key]??{durations[\common]??{0}};
+
 				if ((value==startValue) || (duration<waitTime), {
 					//hier ook nog een nrt versie maken!
 					if (delayTime<=0.0, {

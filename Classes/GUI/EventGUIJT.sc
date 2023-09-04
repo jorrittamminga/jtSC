@@ -27,7 +27,7 @@ EventGUIJT : GUIJT {
 		argexcludeKeys=argexcludeKeys??{[]};
 		scroll=argScroll;
 
-		//argexcludeKeys=argexcludeKeys.addAll([\method_CuesJT, \durations_CuesJT, \extras_CuesJT]);
+		argexcludeKeys=argexcludeKeys.addAll([\method_CuesJT, \durations_CuesJT, \extras_CuesJT]);
 
 		this.initVars;
 		this.initGUI;

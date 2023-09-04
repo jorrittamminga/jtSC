@@ -40,20 +40,30 @@ JTSingle : JT {
 		//gains[index]=gain;
 	}
 	mute_ {arg value=true;
-		var synthDef=(\mute++label).asSymbol;
-		mute=value;
+		var synthDef=(\mute++label).asSymbol, makeFlag=false;
+		if (value!=mute, {
+			if (value, {
+				//"isPlaying ".post; muteSynth.asArray.collect{|synth| synth.postln; synth.isPlaying.binaryValue.postln}.sum.asBoolean;
+				if ( muteSynth==nil, {
+					muteSynth=server.asArray.collect{|server, serverIndex|
+						SynthDef((synthDef++serverIndex).asSymbol, {
+							ReplaceOut.ar(bus.asArray[serverIndex], DC.ar(0.0))})
+						.play(synth.asArray[serverIndex], [], \addAfter).register
+					}.unbubble;
+				},{
 
-		if (mute, {
-			muteSynth=server.asArray.collect{|server, serverIndex|
-				SynthDef((synthDef++serverIndex).asSymbol, {
-					ReplaceOut.ar(bus.asArray[serverIndex], DC.ar(0.0))})
-				.play(synth.asArray[serverIndex], [], \addAfter).register
-			}.unbubble;
-		},{
-			muteSynth.asArray.do({arg synth;
-				if (synth.isPlaying, {synth.free})
+				})
+			},{
+				muteSynth.asArray.do({arg synth;
+					if (synth.isPlaying, {
+						synth.free;
+						//muteSynth=nil;
+					})
+				});
+				muteSynth=nil
 			});
-		})
+		});
+		mute=value;
 	}
 
 	addPlugin {arg type=\Compressor, args=[];
@@ -76,10 +86,10 @@ JTSingle : JT {
 				BufWrJT(bus.asArray[0], synth.asArray[0]
 					, 60, false, false, true, true, true, false)
 			}}
-			, \Player, {{arg path, monitorBus=0, monitorChannels=2, monitorServerID=0;
+			, \Player, {{arg path, monitorBus=0, monitorChannels=2, monitorServerID=0, serverID=0;
 				var player;
 				replaceSynth=false;
-				player=PlayerJT(bus.asArray[0], group.asArray[0], path, \addToHead);
+				player=PlayerJT(bus.asArray[serverID], group.asArray[serverID], path, \addToHead);
 				player.addMonitor(monitorBus, monitorChannels, 0, monitorServerID);
 				player.startPlayingFunc=player.startPlayingFunc.addFunc({
 					synth.asArray.do{|syn| syn.run(false)};
@@ -93,12 +103,12 @@ JTSingle : JT {
 			}}
 			, \Dry, {{arg settings=(outBus: Bus.new(\audio, 0, 2, Server.default), amp:0
 				, az:0), serverID=0;
-				DryJT(bus.asArray[serverID], synth.asArray[0].group, \addToTail, settings);
+			DryJT(bus.asArray[serverID], synth.asArray[0].group, \addToTail, settings);
 			}}
 
 			, \Analyzer, {{arg descriptors=[\onsets, \loudness], settings=()
-			, metadataSpecs=(), outFlag=true, sendreplyFlag=true, outFFTFlag=true
-			, fftsizes=(), hopsizes=(), updateFreq, normalized=false;
+				, metadataSpecs=(), outFlag=true, sendreplyFlag=true, outFFTFlag=true
+				, fftsizes=(), hopsizes=(), updateFreq, normalized=false;
 				var analyzer;
 				analyzer=AnalyzerJT(bus, synth, descriptors, settings, metadataSpecs
 					, outFlag, sendreplyFlag, outFFTFlag, fftsizes, hopsizes, updateFreq
@@ -117,7 +127,7 @@ JTSingle : JT {
 			}.fork
 		},{
 			plugIn=func.value(*args);
-				plugIn.name=(type++"-"++label).asString;
+			plugIn.name=(type++"-"++label).asString;
 			this.addPlugins(type, plugIn, replaceSynth);
 		});
 		^plugIn

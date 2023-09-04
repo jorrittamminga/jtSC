@@ -210,8 +210,9 @@
 		^if ((this-prev)<(next-this), {prev},{next})
 	}
 
-	cpsbin {arg bufferSize=2048;
-		var sampleRate=Server.default.sampleRate?44100;
+	cpsbin {arg bufferSize=2048, sr;
+		var sampleRate;
+		sampleRate=sr??{Server.default.sampleRate?44100};
 		^((this/(sampleRate*0.5)*(bufferSize)).clip(0,bufferSize-1))
 	}
 
@@ -385,7 +386,20 @@
 				//x.postln;
 			};
 		},{
-
+			(iterations-1).do{|depth|
+				var index=0;
+				var bins;
+				ratio=ratio.reverse;
+				depth=depth+1;
+				bins=(depth%2).binaryIterations(depth);
+				x=x.deepCollect(depth+1, {|item,i,r|
+					var ratios=ratio.copy;
+					//if (bins[index]==1, {ratios=ratios.reverse});
+					index=index+1;
+					item*ratios
+				});
+				//x.postln;
+			};
 
 		});
 		^x

@@ -6,8 +6,8 @@
 			if (name.asString!="?", {
 				event[name.asSymbol]=1;
 				key=name.asSymbol;
-				},{
-					event[key]=event[key]+1;
+			},{
+				event[key]=event[key]+1;
 			})
 		});
 		^event
@@ -23,8 +23,8 @@
 
 		if (keysAndSizes[key]<2, {
 			this.get(key, action);
-			},{
-				this.getn(key, count, action);
+		},{
+			this.getn(key, count, action);
 		})
 	}
 
@@ -42,12 +42,11 @@
 		if (specsFlag, {
 			controlNames=this.specs.keys;
 		});
-
 		controlNames.do{|key|
 			if (keysAndSizes[key]<2, {
 				this.get(key, {|val| out[key]=val}); server.sync;
-				},{
-					this.getn(key, keysAndSizes[key], {|val| out[key]=val}); server.sync;
+			},{
+				this.getn(key, keysAndSizes[key], {|val| out[key]=val}); server.sync;
 			})
 		};
 		^out

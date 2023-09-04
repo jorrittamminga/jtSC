@@ -156,7 +156,9 @@ CuesJT : PresetsFileJT {
 		bypass=flag;
 		this.restore;
 		if (gui!=nil, {
-			{gui.views[\bypass].value_(flag.not.binaryValue) }.defer;
+			{
+				gui.views[\bypass].value_(flag.not.binaryValue);
+			}.defer;
 		});
 	}
 	cueName {^basename}

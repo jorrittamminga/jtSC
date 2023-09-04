@@ -17,9 +17,9 @@
 		^scopeWindow
 	}
 
-	freqscope {arg alwaysOnTop=true;
+	freqscope {arg busNum=0, alwaysOnTop=true;
 		var fs;
-		fs=FreqScope.new(server: this);
+		fs=FreqScope.new(busNum: busNum, server: this);
 		fs.window.alwaysOnTop_(alwaysOnTop);
 		^fs
 	}

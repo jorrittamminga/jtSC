@@ -56,7 +56,6 @@ NumberedFile : Numbered {
 	}
 	writeAsCompileString {arg item, close=true;
 		var file;
-		//"write in new File with path ".post; pathName.fullPath.postln;
 		file=File(pathName.fullPath, "w");
 		file.write(item.asCompileString);
 		if (close, {file.close});
@@ -326,7 +325,10 @@ NumberedFolder : Numbered {
 	}
 
 	numberedPath{arg directory="", number=0, numDigits=4;
-		^(directory.asPathName.fullPath++number.asDigits(10, numDigits).join++"_"++this)
+		var dir;
+		dir=directory.asPathName.fullPath;
+		if (dir.last!=$/, {dir=dir++"/"});
+		^(dir++number.asDigits(10, numDigits).join++"_"++this)
 	}
 	renameNumbered {arg name, numDigits=4;
 		^PathName(this).renameNumbered(name, numDigits).fullPath

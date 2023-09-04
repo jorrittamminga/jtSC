@@ -347,6 +347,84 @@ GranulatorIBF {
 	}
 }
 
+
+BufGranulatorIBF {
+
+	*ar {arg buf, in=0.0, rate=1.0, dur=0.10, overLap=4.0, maxdelaytime=5, delayTime=0.005, interp=2, az=0.0, elevation=0.0, rho=1.0, envbufnum1= -1, envbufnum2= -1, ifac=0.0
+		, rateScaling= -0.85, timeJitter=0.005, wComp=0, mul=1.0, add=0.0, fb=0.0, run=1.0, lagTime=0.2, tr=0.0001, overLapScaling=0.5.neg, overLapScalingDepth=1.0;
+		var isRunning;
+		var phase,pos,input,output, bdR=BufDur.ir(buf).reciprocal, bsR=BufSampleRate.ir(buf).reciprocal, jitterR;
+		var deviation, impulse, phaseTmp;
+		var maxDur;
+
+		switch ( dur.rate,
+			\audio, {maxDur = Slew.ar(dur, SampleRate.ir, 1.0)},
+			\control, {maxDur = Slew.kr(dur, SampleRate.ir, 1.0)},
+			/*
+			\demand, {
+			trigger = TDuty.ar( trigger ); // audio rate precision for demand ugens
+			index = Stepper.ar( trigger, 0, 0, n-1 );
+			},
+			*/
+			{ 	maxDur = dur });
+
+		rate=rate*DC.ar(1);
+		phase=Phasor.ar(0, (run.lag(0, maxDur)>0.0001), 0, BufFrames.ir(buf),0);
+		//phaseTmp=phase;
+		input=(fb*BufRd.ar(1,buf,phase,1))+((in*run.lag(dur)));
+		BufWr.ar( input,buf,phase,1);
+		phase=Gate.ar(phase, run-0.1);
+		dur=rate.abs.pow(rateScaling).min(1.0)*dur;
+		delayTime=delayTime-((rate<0)*rate.abs*dur);
+
+		deviation=0
+		- ((rate.abs-1).max(0)*dur)
+		- delayTime
+		- WhiteNoise.ar(timeJitter,timeJitter)//maak deze demand rate
+		- ControlRate.ir.reciprocal
+		//- ((1-run.lag(dur))*((dur).clip(dur, maxdelaytime-0.1)))
+		//- ((1-isRunning)*(dur.min(maxdelaytime-0.1)))
+		;
+		//deviation=deviation*run + ((1-run)*dur.neg);
+		deviation=deviation + ((1-run)*dur.neg);
+		deviation=deviation.min(0);
+		pos=(phase*bsR+deviation)*bdR;
+		impulse=Impulse.ar(dur.reciprocal*overLap);
+		/*
+		[K2A.ar(run), phase
+		, phaseTmp
+		, pos*BufFrames.ir(buf)+(dur*SampleRate.ir)].poll(impulse);
+		pos=(
+		phase*bsR
+		-((rate.abs-1).max(0)*dur)
+		- delayTime.max(0)
+		- WhiteNoise.ar(timeJitter,timeJitter)//maak deze demand rate
+		- ControlRate.ir.reciprocal
+		- ((1-run.lag(dur))*((dur*2).clip(dur, maxdelaytime-0.1   )))
+		)*bdR;
+		pos.poll(10);
+		*/
+
+		^BufGrainIBF.ar(
+			impulse
+			, dur
+			, buf
+			, rate
+			, pos
+			, envbufnum1
+			, envbufnum2
+			, ifac
+			, az, elevation, rho, interp
+			, wComp
+			//, overLap.max(1).reciprocal.sqrt*mul
+			, (overLap.max(1).pow(overLapScaling)*overLapScalingDepth+(1-overLapScalingDepth))*mul
+			, add);
+
+	}
+}
+
+
+
 TGrainsDelay {
 
 	*ar {arg in=0.0, numChannels=2, buf, rate=1.0, pos=0.005, dur=0.10, az=0.0, mul=1.0, interp=2, overLap=4.0, maxdelaytime=10.0, rateBuf, timeBuf, azBuf, ampBuf, rateScaling= -0.85;

@@ -9,6 +9,13 @@ IOJTGUI : GUIJT {
 	close {
 
 	}
+	*bounds {arg bounds=30@20, margin=4@4, gap=4@4, inputs=2, outputs=2;
+		^(
+			( (inputs+outputs)*(bounds.x+(gap.x))+(margin.x*4 + (gap.x*8) + 2 ))
+			@
+			200//moet ik nog doen....
+		)
+	}
 	init {arg argin, argparent, argbounds, argmargin, arggap, argparentMargin
 		, argparentGap, argmeterHeight;
 		var meterViews, channelbounds, meterbounds, channelFont, recplaybounds;
@@ -39,7 +46,7 @@ IOJTGUI : GUIJT {
 		});
 		*/
 		if (in.plugins==nil, {
-				in.addPlugin(\Meter);
+			in.addPlugin(\Meter);
 		},{
 			if (in.plugins.keys.includes(\Meter).not, {
 				in.addPlugin(\Meter);
