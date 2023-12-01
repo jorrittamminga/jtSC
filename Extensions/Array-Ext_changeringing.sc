@@ -37,4 +37,43 @@
 		tmpPairs=tmpPairs.collect{|i| [i-1, i]};
 		tmpPairs.do{|pair| this.swap(pair[0],pair[1])};
 	}
+
+	plainhunting {arg max=1024;
+		var count=0;
+		var array=[this.deepCopy];
+		var that=this.copy, flag=true;
+
+		while({(flag)&&(count<max)},{
+			if (count.even, {
+				that=that.copy.swapOdd;
+			},{
+				that=that.copy.swapEven;
+			});
+			array=array.add(that);
+			count=count+1;
+			flag=(that==this).not;
+		});
+		^array
+	}
+	plainbob {arg max=1024;
+		var count=0;
+		var array=[this.deepCopy];
+		var that=this.copy, flag=true;
+
+		while({(flag)&&(count<max)},{
+			if (count.even, {
+				that=that.copy.swapOdd;
+			},{
+				if (count+1%8==0, {
+					that=that.copy.swap(this.size-2, this.size-1)
+				},{
+					that=that.copy.swapEven;
+				})
+			});
+			array=array.add(that);
+			count=count+1;
+			flag=(that==this).not;
+		});
+		^array
+	}
 }

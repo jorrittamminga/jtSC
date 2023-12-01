@@ -2,7 +2,8 @@
 
 	//calculate fontSize for Font.monospace
 	fontSize {arg bounds=100@20, factor=0.608;
-		^if (this.size*factor>(bounds.x/bounds.y), {bounds.x/(this.size*factor)},{bounds.y})
+		^(this.size.fontSize(bounds, factor))
+		//^if (this.size*factor>(bounds.x/bounds.y), {bounds.x/(this.size*factor)},{bounds.y})
 	}
 
 	movedirlevel {arg levels=1;

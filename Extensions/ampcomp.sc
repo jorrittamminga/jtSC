@@ -77,13 +77,20 @@
 	}
 
 	//decaytime.ringzamp
+	ringzamp {arg power=0.5;
+		var sr;
+		//server=server??{Server.default};
+		sr=SampleRate.ir;
+		^(((SampleRate.ir/this.max(SampleDur.ir)).pow(power)*SampleDur.ir).min(0.5))
+	}
+	/*
 	ringzamp {arg power=0.5, server;
 		var sr;
 		server=server??{Server.default};
 		sr=server.sampleRate??{44100};
 		^(((sr/this.max(sr.reciprocal)).pow(power)*sr.reciprocal).min(0.5))
 	}
-
+	*/
 	//freq.resonzamp(rq)
 	resonzamp {arg rq=1.0, power= -0.5, freqPow= -0.5, root=50;
 		^(rq.pow(power)*((this.max(root)/root).pow(freqPow))*7)

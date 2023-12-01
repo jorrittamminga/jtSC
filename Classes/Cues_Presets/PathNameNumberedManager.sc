@@ -310,7 +310,9 @@ PathNameNumberedGUI {
 			pathNameNumbered.prev;
 		}.font_(font).canFocus_(false);
 		views[\currentPath]=StaticText(cMain, (bounds.x-(font.size*5.5))@(font.size*2.75))
-		.string_(
+		//.string_
+		.stringFit_
+		(
 			pathNameNumbered.deepFoldersRelative[pathNameNumbered.folderID]
 		).align_(\center)
 		.font_(Font(font.name, font.size*2)).stringColor_(Color.white).background_(hiliteColor);
@@ -352,7 +354,7 @@ PathNameNumberedGUI {
 				//[\previous, \currentPath, \upcoming]
 				[\previous, \upcoming, \currentPath]
 				.do{|key,i|
-					views[key].string_(
+					views[key].stringFit_(
 						//this.makePathNameWithoutNumbers(p.deepFoldersRelative.clipAt(index+i-1))
 						this.makeDeepestPathNameWithoutNumbers(p.deepFoldersRelative.clipAt(index+i-1))
 					);

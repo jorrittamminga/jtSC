@@ -1,4 +1,5 @@
 + Dictionary {
+
 	keysValues {
 		^this.collect{|i,j| i.value}
 	}

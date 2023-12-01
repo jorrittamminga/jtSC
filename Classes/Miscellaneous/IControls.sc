@@ -28,7 +28,7 @@ IControlsView {
 			(((bounds.y+gap.y)*layers.size+(2*margin.y-gap.y)))
 		);
 		compositeView.addFlowLayout(margin, gap);
-		compositeView.background_(Color.rand);
+		compositeView.background_(Color.grey(0.25));
 
 		boundz[\label]=if (labelHeight==nil, {0@0}, {bounds.x@labelHeight});
 		boundz[\fader]=(bounds.x*0.5)@((bounds.y-boundz[\label].y)/2);
@@ -39,30 +39,36 @@ IControlsView {
 				var cv, out=(compositeView: ());
 				cv=CompositeView(compositeView, bounds);
 				cv.addFlowLayout(0@0,0@0);
-				cv.background_(Color.rand);
+				//cv.background_(Color.rand);
 				[\label, \buttonUp, \knob, \buttonDown, \fader].do{|key|
 					var c, bounds=boundz[key], view, string;
 					c=CompositeView(cv, bounds);
 					c.addFlowLayout(0@0,0@0);
-					c.background_(Color.rand);
-					out[key]=switch (key, \label, {
-						string=layer.asString++"_"++bread.asString;
-						view=StaticText(c, bounds).string_(string)
-						.background_(Color.black).stringColor_(Color.white).font_(Font.monospace(string.fontSize(bounds))).align_(\center);
-						view
-					}, \knob, {
-						view=EZNumber(c, bounds, bread, [0, 1.0], {}, 0, false, bounds.x, bounds.x, 0, bounds.y*0.5, \line2, 0@0, 0@0);
-						view.numberView.font_(Font.monospace(bounds.y*0.4)).decimals_(3);
-						view.labelView.font_(Font.monospace(bounds.y*0.5)).align_(\right);
-						view
-					}, \fader, {
-						view=EZNumber(c, bounds, bread, [0, 1.0], {}, 0, false, bounds.x, bounds.x, 0, bounds.y*0.5, \line2, 0@0, 0@0);
-						view.numberView.font_(Font.monospace(bounds.y*0.4)).decimals_(3);
-						view.labelView.font_(Font.monospace(bounds.y*0.5)).align_(\right);
-						view
-					}, {
-						view=Button(c, bounds).states_([ [bread],[bread,Color.black,Color.green] ]).font_(Font.monospace(bounds.y));
-						view
+					//c.background_(Color.rand);
+					out[key]=switch (key
+						, \label, {
+							string=layer.asString++"_"++bread.asString;
+							view=StaticText(c, bounds).string_(string)
+							.background_(Color.black)
+							.stringColor_(Color.white)
+							.font_(Font.monospace(string.fontSize(bounds))).align_(\center);
+							view
+						}, \knob, {
+							view=EZNumber(c, bounds, bread, [0, 1.0], {}, 0, false
+								, bounds.x, bounds.x, 0, bounds.y*0.5, \line2, 0@0, 0@0);
+							view.numberView.font_(Font.monospace(bounds.y*0.4)).decimals_(3);
+							view.labelView.font_(Font.monospace(bounds.y*0.5)).align_(\right).stringColor_(Color.white);
+							view
+						}, \fader, {
+							view=EZNumber(c, bounds, bread, [0, 1.0], {}, 0, false
+								, bounds.x, bounds.x, 0, bounds.y*0.5, \line2, 0@0, 0@0);
+							view.numberView.font_(Font.monospace(bounds.y*0.4)).decimals_(3);
+							view.labelView.font_(Font.monospace(bounds.y*0.5)).align_(\right).stringColor_(Color.white);
+							view
+						}, {
+							view=Button(c, bounds).states_([ [bread],[bread,Color.black,Color.green] ])
+							.font_(Font.monospace(bounds.y));
+							view
 					});
 					out[\compositeView][key]=c
 				};

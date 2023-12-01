@@ -1,5 +1,8 @@
 +SimpleNumber {
 
+	fontSize {arg bounds=100@20, factor=0.608;
+		^if (this*factor>(bounds.x/bounds.y), {bounds.x/(this*factor)},{bounds.y})
+	}
 	//after Vassilakis, 2001 & 2005 http://www.acousticslab.org/learnmoresra/moremodel.html
 	//value between 0.0 and 0.090387257747353
 	roughness {arg item2=440, weight1=1.0, weight2=1.0, normalize=true;
@@ -246,6 +249,13 @@
 		^list[(list%modulo).indicesOfEqual(this%modulo).choose]
 	}
 
+	azpan2 {
+		^(this.fold2(0.5)*2)
+	}
+
+	pan2az {
+		^(this.wrap2(2.0)*0.5)
+	}
 
 	azToIndex {arg numChannels=2;
 		^(this+numChannels.reciprocal*(numChannels/2))%numChannels
