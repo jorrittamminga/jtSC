@@ -1,5 +1,5 @@
 AudioSetupWindowJT {
-	var inDevices, outDevices, inDevice, outDevice, window, views, <>server, <>dict, <path;
+	var inDevices, outDevices, inDevice, outDevice, <window, views, <>server, <>dict, <path;
 
 	*new {arg server, inDevice, outDevice, path, fontSize=12, action;
 		^super.new.init(server, inDevice, outDevice, path, fontSize, action)

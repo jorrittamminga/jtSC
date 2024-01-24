@@ -1,19 +1,19 @@
 MIDISetupWindowJT {
 	var <views, <window;
-	var <inports, <outports, <>path, <>dict, <midiOut;
+	var <inports, <outports, <>path, <>dict, <midiOut, <fontSize;
 	//midiIn: MIDIEndPoint("iCON iControl V1.01", "Port 1"),
 	//midiOut: MIDIEndPoint("IAC Driver", "Bus 1"),
 	//MIDIEndPoint
 	*new {arg inports, outports, path, fontSize=12;
 		^super.new.init(inports, outports, path, fontSize)
 	}
-	init {arg arginports, argoutports, argpath, fontSize;
+	init {arg arginports, argoutports, argpath, argFontSize, reinit=false;
 		var file, tmp, width, height;
 		views=();
 		dict=();
 
 		MIDIClient.init;
-
+		fontSize=argFontSize??{12};
 		width=((21*fontSize+8+4));
 		height=(MIDIClient.externalSources.size+MIDIClient.externalDestinations.size+3)*(fontSize+4)+8;
 
@@ -87,6 +87,12 @@ MIDISetupWindowJT {
 				if ((src.device==midi[0])&&(src.name==midi[1])) {but.valueAction_(1)};
 			};
 		};
+
+		/*
+		Button(window, (21*fontSize+4)@(fontSize*1.5)).states_([ ["init MIDI"] ]).font_(Font(Font.defaultMonoFace, fontSize)).action_{
+			this.init(argpath:path, argFontSize:fontSize, reinit:true);
+		};
+		*/
 		window.rebounds;
 	}
 	write {

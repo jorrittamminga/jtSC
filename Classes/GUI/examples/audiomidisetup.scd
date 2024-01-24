@@ -1,5 +1,8 @@
-m=MIDISetupWindowJT.new
-{AudioSetupWindowJT.new; s.boot}.fork
+m=MIDISetupWindowJT.new;//
+
+{AudioSetupWindowJT.new; s.boot}.fork//
+
+//or
 
 (
 var c=Condition.new;
@@ -10,19 +13,6 @@ var c=Condition.new;
 }.fork
 )
 
+/*
 m.midiOut
-
-MIDIEndPoint("IAC Driver", "Bus 1").
-
-nil.asArray
-
-Recorder
-
-ServerOptions.inDevices
-ServerOptions.outDevices
-
-s.options.inDevices
-
-InJT
-
-
+*/
