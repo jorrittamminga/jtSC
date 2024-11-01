@@ -80,6 +80,27 @@
 
 	}
 	*/
+	beatsToBar {arg timeSignature=[4,4], offset=1;
+		var tmp, bar;
+		tmp=this*4/timeSignature[1] / timeSignature[0] + offset;
+		//bar=(tmp/timeSignature[0]).floor;
+
+		^tmp
+	}
+	beatsToBarNr {arg  timeSignature=[4,4], resolution=256;
+		var barNr, beat, sub=0, rest=0, tmp, beatTmp, subTmp;
+		//x=202/4;// 6 * unit
+		tmp=(this)/timeSignature[0]/(timeSignature[1]/4);
+		barNr=tmp.asInteger;
+		beatTmp=tmp.frac*timeSignature[0];
+		beat=beatTmp.floor.asInteger;
+
+		subTmp=beatTmp.frac;
+		sub=(subTmp*timeSignature[1]).asInteger;
+		rest=((subTmp - (sub/timeSignature[1]))*resolution).round(1.0).asInteger;
+
+		^[barNr, beat, sub, rest]+1
+	}
 	asBeats {arg beats=4, division=4, subdivision=4, resolution=128, beatsOffset=0;
 		var bar=1, beat=1, sub=1, rest=1, frac;
 		bar=(this/beats).floor.asInteger+1;

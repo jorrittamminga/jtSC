@@ -29,4 +29,10 @@ PluginJT : JT {
 		};
 		this.metaAddPresetSystem(path, folderName, index, func)
 	}
+	/*
+	addToCueList {
+
+
+	}
+	*/
 }

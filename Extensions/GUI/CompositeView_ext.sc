@@ -1,5 +1,5 @@
 + CompositeView {
-	rebounds {//arg nextLine=true;
+	rebounds {arg shift;
 		var decoratorBounds, pparent, heightBefore, heightAfter;
 		var widthBefore, widthAfter;
 		if (this.decorator!=nil, {
@@ -13,7 +13,7 @@
 
 				if (this.parent.decorator.owner==nil, {
 					this.parent.decorator.owner=[
-						this.bounds.height
+						(this.bounds.height)
 					];
 				},{
 					this.parent.decorator.owner=this.parent.decorator.owner.add(
@@ -30,7 +30,11 @@
 					,0//c.bounds.width-w.view.decorator.left//or 0
 					//, this.decorator.margin.y
 				);
-			})
+			});
+
+			if (shift!=nil) {
+				this.parent.decorator.owner=[0,shift];//owner.maxItem-top
+			}
 
 		});
 	}

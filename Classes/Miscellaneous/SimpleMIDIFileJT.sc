@@ -1,10 +1,15 @@
 SimpleMIDIFileJT : SimpleMIDIFile {
 	var <timeBarEnv, <timeSignatures;
+	var <bpmMap, <bpmMapFlopped;
 
 	*read { arg pathName; ^SimpleMIDIFileJT( pathName ).read; }
 
 	getTempo {
 		this.makeTimeBarEnv;
+		this.timeMode=\seconds;
+		bpmMap=this.tempoMap;
+		bpmMapFlopped=bpmMap.flop;
+		this.timeMode=\ticks;
 		^tempo =
 		if( this.tempi.notNil )
 		{ this.tempi[0]  ? tempo; }
@@ -74,10 +79,16 @@ SimpleMIDIFileJT : SimpleMIDIFile {
 		};
 	}
 	barTimeSignature {arg bar;
-		^[]
+		^timeSignatures.at(bar)
 	}
 	barTime {arg bar=1, numberOfBars=1;
 		^[timeBarEnv.at(bar), timeBarEnv.at(bar+numberOfBars)-timeBarEnv.at(bar)]
 	}
-
+	bpmAtTime {arg time=0.0;
+		var index=bpmMapFlopped[0].indexInBetween(time).floor.asInteger;
+		^bpmMapFlopped[1][index]
+	}
+	bpmAtBar {arg bar=1.0;
+		^this.bpmAtTime(this.barTime(bar,1)[0])
+	}
 }

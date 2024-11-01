@@ -50,7 +50,7 @@ Button zeker bij twee states niet laten interpoleren!
 		var steps=(), stepSizes=();
 		//====================================================================== INIT
 		var newKeys=newEvent.keys.asArray;
-		var keyz=this.keys.asArray, routines;
+		var keyz=this.keys.asArray, routines, defers=();
 
 		//durations[\common], curves[\common], delayTimes[\common]
 		resolution=resolution??{10};
@@ -157,72 +157,83 @@ Button zeker bij twee states niet laten interpoleren!
 			newKeys.do{arg key;
 				var value=newEvent[key];
 				var startValue, func, cs, rico, start, end, step, stepSize, duration, delayTime=delayTimes[key]??{0}, val;
-				var env, action;
-				startValue=this[key].value??{value};
-				duration=durations[key]??{durations[\common]??{0}};
+				var env, action, doFunc, defer=false;
 
-				if ((value==startValue) || (duration<waitTime), {
-					//hier ook nog een nrt versie maken!
-					if (delayTime<=0.0, {
-						//if (nrt, {},{});
-						actions[key].value(value)
+				//[key, this[key], this[key].class].postln;
+				defer=([Button, PopUpMenu, EZPopUpMenu, EZListView, ListView].includes(this[key].class));
+
+				doFunc={
+					startValue=this[key].value??{value};//changed, doest this break the code???
+					duration=durations[key]??{durations[\common]??{0}};
+					if ((value==startValue) || (duration<waitTime), {
+						//hier ook nog een nrt versie maken!
+						if (delayTime<=0.0, {
+							//if (nrt, {},{});
+							actions[key].value(value)
+						},{
+							if (nrt, {
+								//ws hoeft hier helemaal geen delayTime wait!
+								this[\routinesJT][key]={arg time;
+									actions[key].value(value)
+									//func.value((time-delayTime).clip(0, duration+delayTime)*resolution)
+								};
+							},{
+								this[\routinesJT][key]={
+									delayTime.wait;
+									actions[key].value(value)
+								}.fork;
+							});
+						})
 					},{
+						//====================================================================== FORKS
+						cs=specs[key];
+						step=steps[key]??{steps[\common]};
+						stepSize=stepSizes[key]??{stepSizes[\common]};
+						action=actions[key];
+
+						func=if (cs==nil
+							, {
+								rico=(value-startValue)*stepSize;
+								{|i|
+									val=rico*i+startValue;
+									//this.keyValueAction(key, val);
+									action.value(val)
+								}
+							},{
+								start=cs.unmap(startValue);
+								end=cs.unmap(value);
+								rico=(end-start)*stepSize;
+								if (cs.step==0.0, {cs=cs.warp});
+								{|i|
+									val=cs.map(rico*i+start);
+									//this.keyValueAction(key, val);
+									action.value(val)
+								}
+						});
+						//========================================
+						//delayTime=delayTimes[key]??{0.0};
 						if (nrt, {
-							//ws hoeft hier helemaal geen delayTime wait!
 							this[\routinesJT][key]={arg time;
-								actions[key].value(value)
-								//func.value((time-delayTime).clip(0, duration+delayTime)*resolution)
+								func.value((time-delayTime).clip(0, duration+delayTime)*resolution)
 							};
 						},{
 							this[\routinesJT][key]={
 								delayTime.wait;
+								step.do{arg i;
+									func.value(i);
+									waitTime.wait;
+								};
 								actions[key].value(value)
 							}.fork;
 						});
-					})
-				},{
-					//====================================================================== FORKS
-					cs=specs[key];
-					step=steps[key]??{steps[\common]};
-					stepSize=stepSizes[key]??{stepSizes[\common]};
-					action=actions[key];
-					func=if (cs==nil
-						, {
-							rico=(value-startValue)*stepSize;
-							{|i|
-								val=rico*i+startValue;
-								//this.keyValueAction(key, val);
-								action.value(val)
-							}
-						},{
-							start=cs.unmap(startValue);
-							end=cs.unmap(value);
-							rico=(end-start)*stepSize;
-							if (cs.step==0.0, {cs=cs.warp});
-							{|i|
-								val=cs.map(rico*i+start);
-								//this.keyValueAction(key, val);
-								action.value(val)
-							}
+						//========================================
 					});
-					//========================================
-					//delayTime=delayTimes[key]??{0.0};
-					if (nrt, {
-						this[\routinesJT][key]={arg time;
-							func.value((time-delayTime).clip(0, duration+delayTime)*resolution)
-						};
-					},{
-						this[\routinesJT][key]={
-							delayTime.wait;
-							step.do{arg i;
-								func.value(i);
-								waitTime.wait;
-							};
-							actions[key].value(value)
-						}.fork;
-					});
-					//========================================
-				});
+				};
+				if (defer) {
+					{doFunc.value}.defer;
+				}{
+					doFunc.value;
+				}
 			};
 		})
 	}

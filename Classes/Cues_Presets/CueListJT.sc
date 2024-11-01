@@ -40,6 +40,7 @@ CueListJT {
 			};
 			*/
 			this.changeCuesDirectory(pm.currentPathName, deepFoldersRelative, keys);
+
 			entriesFullPath.do{arg path,i;
 				var key, cue, index;
 				key=keys[i];

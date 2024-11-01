@@ -259,3 +259,57 @@ MIDItoGUI : MapToGUI {
 	learnMIDI {arg ch=true, srcID=false, post=true, action;
 		^MIDItoGUIlearn(this, ch, srcID, true, post, action) }
 }
+
+
++ RoundView {
+	mapToMIDI {arg type=\noteOn, num, chan, srcID, argTemplate, dispatcher, controlSpec
+		, mode=\toggle, glitch, timeThreshold, midiOutChan, midiOutPort
+		, guiRun=true, show=false, method=\dynamic, midiThru=false;
+		var midiMap=this.midiMap, index;
+		if (midiMap!=nil, {
+			if (midiMap.class==MIDItoGUI, {midiMap=[midiMap]});
+			midiMap.do{|mm,i|
+				if ([if (type==\cc, {\control},{type}), num, chan, srcID]==[mm.type, mm.num, mm.chan, mm.srcID], {
+					index=i;
+				})
+			};
+		});
+		^if (index!=nil, {
+			//"EZGui is already mapped to MIDI with the same settings".postln;
+			midiMap[index]
+		},{
+			MIDItoGUI.new(this, type, num, chan, srcID, argTemplate, dispatcher, controlSpec
+				, mode, glitch, timeThreshold, midiOutChan, midiOutPort, guiRun
+				, show, method, midiThru)
+		})
+	}
+	unmapToMIDI {arg id;
+		if (id==nil, { this.midiMap.do(_.free); },{ this.midiMap(id).do(_.free); })
+	}
+	midiMap {arg id;
+		var ids;
+		^if (this.dragLabel!=nil, {
+			if (this.dragLabel.class==Event, {
+				ids=this.dragLabel[\MIDItoGUI].keys.asArray.sort;
+				id=id??{ids};
+				id=id.asArray;
+				id.collect{|id,i|
+					if (id<1000, {id=ids[i]}); this.dragLabel[\MIDItoGUI][id]}.unbubble
+			},{
+				nil
+			})
+		},{
+			nil
+		})
+	}
+	pauseMIDImap { this.midiMap.pause }
+	resumeMIDImap { this.midiMap.resume }
+	isMIDImapped {
+		^(if (this.dragLabel.class==Event, {
+			this.dragLabel[\MIDItoGUI].class==Event
+		},{false}))
+		//^(this.alwaysOnTop.class==MIDItoGUI)
+	}
+	learnMIDI {arg ch=true, srcID=false, post=true, action;
+		^MIDItoGUIlearn(this, ch, srcID, true, post, action) }
+}

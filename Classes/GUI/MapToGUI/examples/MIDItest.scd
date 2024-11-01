@@ -3,7 +3,7 @@ MIDIIn.connectAll
 MIDIClient.destinations
 
 e=EZSlider(nil, 350@20, \freq, \freq.asSpec, {|ez| ez.value.postln})
-e.mapToMIDI(\cc, 1, midiOutPort:5)
+e.mapToMIDI(\cc, 1)
 e.controlSpec_(ControlSpec(400,4000,\exp))
 e.midiMap.setUnmap(ControlSpec(500,700))
 e.midiMap

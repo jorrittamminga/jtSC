@@ -76,11 +76,13 @@
 					rate.neg
 				},{rate})
 			};
+
 			//---------------------------------------------------- sync
 			maxDur=pp[\dur].maxItem;
 			pp[\startTime]=pp[\dur].collect{|dur,i|
 				((maxDur-dur)*p[\sync])+(pp[\delayTime][i])
 			};
+
 			//---------------------------------------------------- convert buffers
 			//only when rendering a score (instead of realtime playback)
 			if (type==\render, {

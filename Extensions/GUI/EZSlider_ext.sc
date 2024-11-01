@@ -206,3 +206,25 @@
 	}
 
 }
+
++ EZText {
+	mouseUpAction_ {arg f;
+		this.textField.mouseUpAction_(f);
+		//this.numberView.mouseUpAction_(f);
+	}
+
+	mouseUpAction {arg f;
+		^this.textField.mouseUpAction;
+	}
+
+	mouseDownAction_ {arg f;
+		this.textField.mouseDownAction_(f);
+	//	this.numberView.mouseDownAction_(f);
+	//	this.labelView.mouseDownAction_(f);
+	}
+	mouseDownAction {
+		var out=[this.textField, this.labelView];
+		^if (out.count({|i| i.mouseDownAction==nil})==out.size, {nil},{out})
+	}
+
+}

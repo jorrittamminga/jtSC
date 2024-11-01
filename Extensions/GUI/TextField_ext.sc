@@ -1,4 +1,5 @@
 + TextField {
+
 	value {
 		^this.string.interpret;
 	}
@@ -11,4 +12,5 @@
 		this.string_( val.asCompileString  );
 		this.doAction;
 	}
+
 }

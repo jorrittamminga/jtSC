@@ -38,13 +38,16 @@
 		cmd=cmd++this.path.unixPath;
 		out=cmd.unixCmdGetStdOut;
 		out=out.split($\n);
+
 		out.do{|string|
 			var key, val;
 			var data=string.split($:);
 			key=data[0];
 			key=key.replace(" ", "").replace(".","_");
-			val=data[1].interpret;
-			if (val!=nil, {metadata[key.asSymbol]=val})
+			val=data[1];
+			if (val!=nil, {
+				metadata[key.asSymbol]=val.copyToEnd(1)
+			});
 		};
 		action.value;
 		^metadata

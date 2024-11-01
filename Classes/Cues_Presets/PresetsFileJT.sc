@@ -296,10 +296,8 @@ PresetsFileJT : Numbered {
 		value=preset;//was not here before, is this usefull?
 		//---------------------------------------------------------------------- (DE)SELECT related
 		selectActionArray[index].value;
-
 		//----------------------------------------------------------------------
 		funcs[\restore].value(index);
-
 		^preset
 	}
 	put {arg i, val;
@@ -429,8 +427,10 @@ PresetsFileJT : Numbered {
 		var tmpSelectedKeys=object.keys.deepCopy.asArray;
 		keys.do{|key| tmpSelectedKeys.remove(key)};
 		^{
-			tmpSelectedKeys.do{|key| this.setObjectColor(key, \select)};
-			keys.do{|key| this.setObjectColor(key, \deselect)};
+			{
+				tmpSelectedKeys.do{|key| this.setObjectColor(key, \select)};
+				keys.do{|key| this.setObjectColor(key, \deselect)};
+			}.defer;
 		}
 	}
 	toggleKey {arg key;
@@ -445,7 +445,6 @@ PresetsFileJT : Numbered {
 				})
 			});
 		},{
-			"store preset first".postln;
 		})
 	}
 	setObjectColor {arg key, colorKey=\deselect;

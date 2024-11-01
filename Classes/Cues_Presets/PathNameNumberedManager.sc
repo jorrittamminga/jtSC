@@ -338,7 +338,6 @@ PathNameNumberedGUI {
 			folderInfo=p.deepFolderNamesWithoutNumbers[index];
 			{
 				var boundsPathNames=(bounds.x/folderInfo.size).floor@cListViews.bounds.height;
-				//"GUI func start".postln;
 				cListViews.removeAll;
 				cListViews.decorator.reset;
 				views[\pathNames]=folderInfo.collect{arg folderInfo, depth;
@@ -350,7 +349,6 @@ PathNameNumberedGUI {
 						})
 					}, folderInfo[1], depth, folderInfo[3]);
 				};
-				//views[\pathNames].postln;
 				//[\previous, \currentPath, \upcoming]
 				[\previous, \upcoming, \currentPath]
 				.do{|key,i|

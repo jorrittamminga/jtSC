@@ -1,5 +1,17 @@
 +String {
 
+	smpteSecs {arg frameRate=25, subFrames=80, offset=3600;//subFrames in Logic is 80
+		^this.split($:).collect{|i| i.interpret}.collect{|v,i| if (i<3) {v*[3600,60,1][i]} { ((v.frac*100/subFrames)+v.asInteger)/frameRate} }.sum-offset
+	}
+
+	moveDir {arg depth=1;
+		/*
+		var folders=this.allFolders;
+		^PathName("/"++folders.copyRange(0, (folders.size-1-depth).max(0)).join($/)++"/")
+		*/
+		^PathName(this).moveDir(1).fullPath
+	}
+
 	//calculate fontSize for Font.monospace
 	fontSize {arg bounds=100@20, factor=0.608;
 		^(this.size.fontSize(bounds, factor))
@@ -31,6 +43,12 @@
 
 	deunixPath {
 		^(this.replace("\\","")	)
+	}
+
+	hexToInt {
+		var v=[];
+		this.do{|i| v=v.add(i.digit)};
+		^v.convertDigits(16)
 	}
 
 	hexdec {

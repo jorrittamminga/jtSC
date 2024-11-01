@@ -2,7 +2,7 @@ Server.killAll
 
 (
 s.waitForBoot{
-b=Buffer.read(s, "/Users/jorrittamminga/Music/Samples/malespeaker.aiff", bufnum:1);
+b=Buffer.read(s, "/Users/jorrit/Dropbox/3_RESOURCES/Samples/malespeaker.aiff", bufnum:1);
 //b=Buffer.read(s, "/Users/jorrittamminga/Music/Samples/lacrimaeneuten.aiff");
 s.sync;
 c=ClusterJT(\render, [\buffer, b]);
@@ -16,16 +16,21 @@ c.free
 (
 var path=thisProcess.nowExecutingPath.dirname++"/";
 s.waitForBoot{
-	b=Buffer.read(s, "/Users/jorrittamminga/Music/Samples/malespeaker.aiff");
+	b=Buffer.read(s, "/Users/jorrit/Dropbox/3_RESOURCES/Samples/malespeaker.aiff");
 	//b=Buffer.read(s, "/Users/jorrittamminga/Music/Samples/lacrimaeneuten.aiff");
 	s.sync;
 	c=ClusterJT(\render, [\buffer, b]);
 	{
 		var gui;
+		"makeGUI before".postln;
 		gui=c.makeGUI;
+		"makeGUI after".postln;
+		PresetsJT(gui.viewsPreset, path++"cluster/").makeGui(gui.window);
+		/*
 		p=gui.addPresetSystem(gui.viewsPreset, path, "cluster",parentPS: gui.window
 			, preLoad:false);
 		p.restoreActionType_(1);
+		*/
 	}.defer;
 }
 )

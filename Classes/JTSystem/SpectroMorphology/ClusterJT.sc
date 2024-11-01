@@ -10,7 +10,7 @@ ClusterJT : JT {
 	, clusterPlayBufSynthDef, <addActions, <initFuncsEvent, <initControlSpecs;
 	var args, funcs, <>funcsEvent, <>argsEvent, <buffer, <type;
 	var <bufferDiskIn, <bufferPlayBuf;
-	var <scoreFunction, <score, <>latency, <>serverOptions;
+	var <scoreFunction, <score, <>latency, <>serverOptions, <serverNRT;
 	var <nr, <paths, <oscFuncs, <hasRendered, <>normalize;
 	var <synths;
 	var elapsedTime;
@@ -64,6 +64,8 @@ ClusterJT : JT {
 		serverOptions.verbosity_(-1);
 		serverOptions.maxNodes=65536;
 		normalize=false;
+
+		//serverNRT=Server(\nrt, options: serverOptions.copy);
 	}
 
 
@@ -190,12 +192,13 @@ ClusterJT : JT {
 	}
 
 	render {arg newArgs, newFuncs, action, filename, normalizeFile=false, delete=false;
+		serverNRT=Server(\nrt, options: serverOptions.copy);
 		score=this.makeScore(newArgs, newFuncs);
 		fileName=filename??{fileName};
 		nr=UniqueID.next;
 		path=folderName++fileName++nr++"."++argsEvent[\headerFormat].toLower;
 		if (delete.not, {paths=paths.add(path)});
-		serverOptions.numOutputBusChannels_(argsEvent[\numChannels]);
+		serverNRT.options.numOutputBusChannels_(argsEvent[\numChannels]);
 		hasRendered=true;
 		Score.render(
 			score
@@ -209,8 +212,9 @@ ClusterJT : JT {
 			, normalizeFile??{normalize}
 			, nil//condition
 			, true
-			, serverOptions
-		)
+			, serverNRT.options
+		);
+		serverNRT.remove;
 	}
 
 	stopPlaying {

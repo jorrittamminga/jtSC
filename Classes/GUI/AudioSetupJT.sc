@@ -1,3 +1,15 @@
+/*
+(
+var cond=Condition.new;
+{
+	AudioSetupWindowJT(action: {cond.unhang});
+	cond.hang;
+	s.waitForBoot{
+
+	}
+}.fork
+)
+*/
 AudioSetupWindowJT {
 	var inDevices, outDevices, inDevice, outDevice, <window, views, <>server, <>dict, <path;
 
@@ -46,19 +58,33 @@ AudioSetupWindowJT {
 			}.font_(Font(Font.defaultMonoFace, fontSize)).value_(outDevices.indexOfEqual(dict[\outDevice]));
 
 			Button(window, (fontSize*13)@(fontSize*1.5)).action_{|b|
-				server.options.inDevice=nil;
-				server.options.outDevice=nil;
+				if (server.class==Array) {
+					server.do{|server|
+						server.options.inDevice=nil;
+						server.options.outDevice=nil;
+					}
+				} {
+					server.options.inDevice=nil;
+					server.options.outDevice=nil;
+				};
 				{window.close}.defer;
 				action.value
 			}.states_([ ["x cancel"] ]).font_(Font(Font.defaultMonoFace, fontSize));
 
 			Button(window, (fontSize*13)@(fontSize*1.5)).action_{|b|
-				server.options.inDevice=dict[\inDevice];
-				server.options.outDevice=dict[\outDevice];
+				if (server.class==Array) {
+					server.do{|server|
+						server.options.inDevice=dict[\inDevice];
+						server.options.outDevice=dict[\outDevice];
+					}
+				}{
+					server.options.inDevice=dict[\inDevice];
+					server.options.outDevice=dict[\outDevice];
+				};
 				this.write;
 				{window.close}.defer;
 				action.value
-			}.states_([ ["√ Apply",Color.black,Color.green] ]).font_(Font(Font.defaultMonoFace, fontSize));
+			}.states_([ ["√ Apply",Color.black,Color.green] ]).font_(Font(Font.defaultMonoFace, fontSize)).focus(true);
 
 			window.rebounds
 		}.defer;

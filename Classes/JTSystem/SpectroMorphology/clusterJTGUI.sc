@@ -68,7 +68,7 @@ ClusterJTGUI : GUIJT {
 				, equalLength: false);
 			},{
 				views[key]=StaticText(d, bounds).string_(key)
-			})
+			});
 		};
 		tmpViews=viewsPreset.copy;
 		//--------------------------------------------- FUNCS
@@ -84,20 +84,19 @@ ClusterJTGUI : GUIJT {
 				var d, tmpValue=clusterJT.argsEvent[key];
 				t=if (t.class==TextField, {t.string},{t});//kijk, dit is slim!
 				if ((t.interpret==nil)||(t==""), {
-						clusterJT.funcsEvent.removeAt(key);
-						clusterJT.argsEvent[key]=clusterJT.argsEvent[key].asArray[0];
-						tmpValue=clusterJT.argsEvent[key].asArray[0];
+					clusterJT.funcsEvent.removeAt(key);
+					clusterJT.argsEvent[key]=clusterJT.argsEvent[key].asArray[0];
+					tmpValue=clusterJT.argsEvent[key].asArray[0];
+				},{
+					clusterJT.funcsEvent[key]=t.interpret;
+					clusterJT.argsEvent[key]=
+					if (clusterJT.argsEvent[key].value.size==2, {
+						clusterJT.argsEvent[key].value
 					},{
-						clusterJT.funcsEvent[key]=t.interpret;
-						clusterJT.argsEvent[key]=
-						if (clusterJT.argsEvent[key].value.size==2, {
-							clusterJT.argsEvent[key].value
-						},{
-							{clusterJT.argsEvent[key].asArray[0]}!2
-						});
-						tmpValue=clusterJT.argsEvent[key];
+						{clusterJT.argsEvent[key].asArray[0]}!2
+					});
+					tmpValue=clusterJT.argsEvent[key];
 				});
-
 				if (viewsPreset[key].value.size!=tmpValue.size, {
 					d=viewsPreset[key].view.parent;
 					viewsPreset[key].remove;//alleen als er verandering is
@@ -110,7 +109,7 @@ ClusterJTGUI : GUIJT {
 				},{
 
 
-				})
+				});
 				//tmpFuncs=viewsPreset[(key++\func).asSymbol].string.interpret;
 			};
 		};

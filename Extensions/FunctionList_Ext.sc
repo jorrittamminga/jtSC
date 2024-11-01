@@ -17,4 +17,5 @@
 
 + Function {
 	array { ^[this] }
+	//interpret { ^this.interpretVal }
 }

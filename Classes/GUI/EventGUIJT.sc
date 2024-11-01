@@ -12,6 +12,7 @@ EventGUIJT : GUIJT {
 
 	init {arg argevent, argparent, argbounds, argname, argcontrolSpecs, argonClose
 		, argcanFocus, arglabelWidth, arggap, argmargin, argactions, argexcludeKeys, argScroll;
+		var eventKeys;
 		//var drawName=false;
 		event=argevent;
 		parent=argparent;
@@ -27,11 +28,17 @@ EventGUIJT : GUIJT {
 		argexcludeKeys=argexcludeKeys??{[]};
 		scroll=argScroll;
 
+		eventKeys=event.keys.asArray.deepCopy;
+		if (argexcludeKeys!=nil) {
+			argexcludeKeys.do{|key| eventKeys.remove(key)}};
+
 		argexcludeKeys=argexcludeKeys.addAll([\method_CuesJT, \durations_CuesJT, \extras_CuesJT]);
 
 		this.initVars;
 		this.initGUI;
-		labelWidth=event.keys.asArray.collect{|key| key.asString.size}.maxItem*font.size*0.6;
+
+		labelWidth=eventKeys.collect{|key| key.asString.size}.maxItem*font.size*0.6;
+
 		if ((parent!=nil)&&(name!=nil)&&(name!="Nil"), {
 			nameView=StaticText(parent, bounds).string_(name).font_(font).stringColor_(Color.white).background_(Color.black)
 		});

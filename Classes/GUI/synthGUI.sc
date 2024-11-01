@@ -84,7 +84,7 @@ SynthGUIJT : GUIJT {
 				labelWidth=(cs.keys.collect{|key|
 					key.asString.size}.maxItem*font.size*0.6).ceil;
 			});
-			but=Button(parent, bounds.x@bounds.y)
+			but=RoundButton(parent, bounds.x@bounds.y)
 			.states_([ [onName],[onName, Color.black, Color.green]]).action_{|b|
 				if (p[\gate]!=nil, {
 					if (b.value==1, {synths.do(_.run(true))});
@@ -100,7 +100,7 @@ SynthGUIJT : GUIJT {
 				cs=cs.asSpec;//this is a new feature!
 				views[name]=if (butFlag, {
 					action={synths.do{|syn| syn.set(name, 1)}};
-					Button(parent, bounds).states_([ [name] ]).action_{
+					RoundButton(parent, bounds).states_([ [name] ]).action_{
 						synths.do{|syn| syn.set(name, 1)};
 					}.canFocus_(canFocus).value_(p[name])
 				},{

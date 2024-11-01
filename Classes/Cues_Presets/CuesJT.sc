@@ -84,7 +84,9 @@ CuesJT : PresetsFileJT {
 
 						},{
 							presetsObject[key].action.value(val);
-							{presetsObject[key].value_(val)}.defer;
+							{
+								presetsObject[key].value_(val)
+							}.defer;
 						})
 					};
 				};
@@ -93,7 +95,7 @@ CuesJT : PresetsFileJT {
 					valPreset.sortedKeysValuesDo{|key,val|
 						object[key].action.value(val);
 						{object[key].value_(val)}.defer;
-					}
+					};
 				};
 			});
 			if (val[\method_CuesJT]!=nil, {
@@ -182,12 +184,15 @@ CuesGUIJT {
 		var boundsName=(argbounds.x/3).floor@argbounds.y;
 		var boundsButton=(boundsName.x/7).floor@argbounds.y;
 		var c;
+		//argparent.view.decorator.nextLine;
+
 		bounds=argbounds??{350@20};
 		font=Font("Monaco", bounds.y*0.75);
 		fontNames=Font("Monaco", bounds.y*0.75);
 		views=();
 		c=CompositeView(argparent, bounds.x@(bounds.y*2));
 		c.addFlowLayout(0@0, 0@0);
+
 		views[\addBefore]=Button(c, boundsButton).states_([ ["±"] ]).font_(font)
 		.action_{
 			if (views[\basename].stringColor==Color.red, {
@@ -267,8 +272,16 @@ CuesGUIJT {
 				{presets.object[\method_CuesJT].valueAction_(0)}.defer
 			});
 		}, 0.0, false, 0).round2_(0.01);
+
+
+		/*
 		presets.object[\extras_CuesJT]=TextField(c, (bounds.x*0.8-bounds.y).floor@bounds.y).string_("").action_{arg t;
+
 		};
+		*/
+		presets.object[\extras_CuesJT]=EZText(c, (bounds.x*0.8-bounds.y).floor@bounds.y, nil, {|t| }
+			, "", false, 0, gap: 0@0, margin: 0@0);
+
 		views[\bypass]=Button(c, bounds.y@bounds.y).states_([ [\I],[\I, Color.black, Color.green] ]).action_{|b|
 			presets.bypass_((b.value>0).not)
 		}.canFocus_(false).value_(presets.bypass.not.binaryValue);
@@ -309,5 +322,6 @@ CuesGUIJT {
 		if (presets.cueListJT!=nil, {
 			presets.cueListJT.pathNameNumberedManager.folderID_(presets.cueListJT.pathNameNumberedManager.folderID)//BRUTE FORCE!
 		});
+
 	}
 }
