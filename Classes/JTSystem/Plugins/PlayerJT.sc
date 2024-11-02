@@ -238,6 +238,7 @@ PlayerJT : JT {
 	}
 
 	startPlaying {arg startF, endF, loopFlag;
+		//"Netaddr is ".post; servers[0].addr.postln;
 		if (isPlaying.not, {
 			{
 				var waitTime, restWaitTime, steps, stepTime=0.1;
@@ -251,8 +252,10 @@ PlayerJT : JT {
 				isPlaying=true;
 				if (endF!=nil, {if (endF!=endFrame, {endFrame=endF})});
 				if (endFrame!=startFrame, {
+					//"servers".post; servers.postln;
 					synth=servers.collect{|server,serverID|
 						var synthDef=(\Player++id++serverID).asSymbol;
+						//"play on server ".post; server.postln;
 						Synth(synthDef, [\bufnum, buffer[serverID][ff].bufnum
 							, \fadeIn, fadeIn, \fadeOut, fadeOut
 							, \updateFreq, updateFreq
@@ -267,7 +270,10 @@ PlayerJT : JT {
 
 					oscFunc[\finished]=OSCFunc({
 						this.stopPlaying(loop)
-					}, cmdNameT, servers[0].addr).oneShot;
+					}, cmdNameT
+					, servers[0].addr//nil
+					//, NetAddr.langPort//servers[0].addr
+					).oneShot;
 				},{
 					"WARNING: startTime is equal to endTime".postln
 				})
@@ -535,15 +541,19 @@ PlayerJTGUI : GUIJT {
 			};
 			this.updateFrames;
 		};
+		//"make oscGUI OSCFunc ".post; [classJT.cmdName, if (classJT.servers==nil, {Server.default.addr},{classJT.servers[0].addr})].postln;
 		oscGUI[\playTime]=OSCFunc({arg msg;
+			//"oscfunc playTime ".post; msg.postln;
 			{
 				views[\playTime].string_(
 					(msg[3]/classJT.sampleRate).asTimeString.copyRange(1,9)
 				);
+				//"timeCursorPosition ".post; msg[3].postln;
 				views[\sf].timeCursorPosition=msg[3];
 			}.defer
 		}, classJT.cmdName
-		, if (classJT.server==nil, {Server.default.addr},{classJT.servers[0].addr})
+		, if (classJT.servers==nil, {Server.default.addr},{classJT.servers[0].addr})
+//		, NetAddr.langPort//if (classJT.server==nil, {Server.default.addr},{classJT.servers[0].addr})
 
 		);
 		this.pathsAndFilesNames;
