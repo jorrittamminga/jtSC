@@ -5,4 +5,4 @@
 needs:
 * SCMIR (https://composerprogrammer.com/code/SCMIR.zip)
 * SC3-plugins (https://github.com/supercollider/sc3-plugins/releases)
-* Quarks: ["wblib", "KDTree", "KMeans", "XML", "ZArchive"]
+* Quarks: ["wslib", "KDTree", "KMeans", "XML", "ZArchive"]

@@ -37,13 +37,14 @@ CuesJT : PresetsFileJT {
 			var valObject=(), valPreset=(), index;//oid
 			var actionObject, actionPreset, extras;
 			var presetsObject;
-
 			if (val[\method]!=nil, {val[\method_CuesJT]=val[\method].deepCopy; val.removeAt(\method)});
 			if (val[\durations]!=nil, {val[\durations_CuesJT]=val[\durations].deepCopy; val.removeAt(\durations)});
-			if (val[\extras]!=nil, {val[\extras_CuesJT]=val[\extras].deepCopy; val.removeAt(\extras)});
-
+			if (val[\extras]!=nil, {
+				val[\extras_CuesJT]=val[\extras].deepCopy;
+				val.removeAt(\extras)
+			});
+			if (val[\extras_CuesJT]=="") {val[\extras_CuesJT]=nil};
 			extras=val[\extras_CuesJT].deepCopy??{()};
-
 			if (presetsJT.class==PresetsJT, {
 				presetsObject=presetsJT.object;
 				if (val[\basename]!=nil, {
@@ -67,7 +68,7 @@ CuesJT : PresetsFileJT {
 					valPreset.sortedKeysValuesDo{|key,val|
 						presetsObject[key].action.value(val);
 						{presetsObject[key].value_(val)}.defer;
-					}
+					};
 				};
 			}, {
 				presetsObject=object;

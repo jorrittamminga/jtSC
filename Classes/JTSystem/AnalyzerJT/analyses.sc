@@ -45,6 +45,7 @@
 
 		o=ServerOptions.new;
 		o.memSize = 2**18;
+		o.maxSynthDefs = 2**18;
 
 		// osc file path, output path, input path - input is soundfile to analyze
 		score.recordNRT(oscpath, "/dev/null", sf.path, sampleRate: sf.sampleRate,
