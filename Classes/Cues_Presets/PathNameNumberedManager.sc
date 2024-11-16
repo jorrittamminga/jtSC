@@ -1,4 +1,6 @@
 /*
+Make it compatible with Windows paths, now mac only.... use Plaform things like Platform.pathSeparator
+--------
 folderID_ is nog wat te lomp, voert alle actions nog eens een keertje uit, lijkt me wat overdreven....
 maak voor de gui ook een listView met de deepFolderNamesWithoutNumbers
 of misschien drie type views: \nested, \listview, \combi (nested én listview)
@@ -19,11 +21,17 @@ PathNameNumberedManager : Numbered {
 		var pathName;
 		rootPathName=argPath.asPathName;
 		rootPath=rootPathName.fullPath;
-		if ((rootPathName.isFolder) && (rootPath.last!=$/), {rootPath=rootPath++"/"});
+		if ((rootPathName.isFolder) && (
+			rootPath.last!=$/
+			//Platform.pathSeparator.asSymol
+		), {
+			rootPath=rootPath++"/"
+			//++Platform.pathSeparator.asSymol
+		});
 		numDigits=argnumDigits;//??{4};
 		if (File.exists(rootPath).not, {File.mkdir(rootPath)});
 		if (rootPathName.entries.size==0, {
-			File.mkdir( rootPath++(0.asDigits(10, numDigits).join++"_"++"Init/"))
+			File.mkdir( rootPath++(0.asDigits(10, numDigits).join++"_"++"Init/"))//++Platform.pathSeparator.asSymol
 		});
 		numDigits=numDigits??{argPath.asPathName.getNumDigits.asArray.maxItem.unbubble};
 		updateAction=argupdateAction;
@@ -40,7 +48,9 @@ PathNameNumberedManager : Numbered {
 	updatePaths {arg index, actionArgs, updateActionArgs, method;
 		deepFoldersPathName=rootPathName.deepFolders;
 		deepFolders=deepFoldersPathName.collect(_.fullPath);
-		deepFoldersRelative=deepFolders.collect{|p| p.replace(rootPath, "/")};
+		deepFoldersRelative=deepFolders.collect{|p|
+			p.replace(rootPath, "/")//Platform.pathSeparator.asSymol.asString
+		};
 		deepFilesPathName=deepFoldersPathName.collect{|p| p.entries};
 		deepFiles=deepFilesPathName.collect{|p| p.collect(_.fullPath)};
 		deepKeys=deepFilesPathName.collect{|p|
@@ -87,7 +97,7 @@ PathNameNumberedManager : Numbered {
 					while({
 						event2.class==Event
 					}, {
-						extras[i]="/";
+						extras[i]="/";//Platform.pathSeparator.asString
 						key=event2.keys.asArray.sort[0];
 						event2=event2[key];
 					});
@@ -224,6 +234,7 @@ PathNameNumberedGUI {
 	}
 	makePathNameWithoutNumbers {arg pathName;
 		^PathName(pathName).allFolders.collect{|i| this.removeNumber(i) }.join($/)
+		//Platform.pathSeparator.asSymol
 	}
 	makeDeepestPathNameWithoutNumbers {arg pathName;
 		^PathName(pathName).allFolders.last.asString.copy.split($_).copyToEnd(1).join($_)
@@ -236,6 +247,7 @@ PathNameNumberedGUI {
 			(pathNameNumbered.rootPath++PathName("/"
 				++ (pathNameNumbered.currentFolder.copy.replace(pathNameNumbered.rootPath, "")))
 			.allFolders.copyRange(0, depth).join($/)++ "/")
+			//Platform.pathSeparator.asSymol
 		},{
 			pathNameNumbered.rootPath.copy
 		})
