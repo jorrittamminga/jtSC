@@ -114,7 +114,7 @@ Button zeker bij twee states niet laten interpoleren!
 			if (this[key].respondsTo(\states), {
 				durations[key]=0;
 			});
-			if ([TextField].includesEqual(this[key].class), {
+			if ([TextField, EZText].includesEqual(this[key].class), {
 				durations[key]=0;
 			});
 			actions[key]=actions[key]??{
