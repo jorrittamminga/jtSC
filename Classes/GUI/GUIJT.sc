@@ -287,39 +287,40 @@ GUIJT {
 		^if (controlSpec==nil, {
 			EZText(parent, boundz, label, action, value, false, layout: argmargin, gap:arggap).font_(font)
 		},{
-		if (controlSpec.class==Array, {
-			if ((controlSpec[0].class==String)||(controlSpec[0].class==Symbol), {
-				type=EZPopUpMenu;
-				//action=action.addFunc({|ez| [ez, ez.value].postln})
-			})
-		});
-		type=type??{if (value!=nil, {
-			switch(value.asArray.size, 1, {EZSlider}, 2, {
-				EZRanger
-			}, {
-				//LET OP, hier iets doen! [value, controlSpec, value.class].postln;
-				boundz.y=boundz.x*0.25;
-				EZMultiSlider
-			})
-		},{EZSlider})};
+			if (controlSpec.class==Array, {
+				if ((controlSpec[0].class==String)||(controlSpec[0].class==Symbol), {
+					type=EZPopUpMenu;
+					//action=action.addFunc({|ez| [ez, ez.value].postln})
+				})
+			});
+			type=type??{if (value!=nil, {
+				switch(value.asArray.size, 1, {EZSlider}, 2, {
+					EZRanger
+				}, {
+					//LET OP, hier iets doen! [value, controlSpec, value.class].postln;
+					boundz.y=boundz.x*0.25;
+					EZMultiSlider
+				})
+			},{EZSlider})};
 
-		if ((type==EZRanger) && (equalLength), {
-			labelWidth=labelWidth-numberWidth-4;
-		});
-		if ((type==EZMultiSlider) && ((boundz.x/boundz.y)>8)
-			, {boundz.y=boundz.x*0.125});
-		if (type==EZPopUpMenu, {
+			if ((type==EZRanger) && (equalLength), {
+				//["EZRanger", equalLength].postln;
+				labelWidth=labelWidth-numberWidth-4;
+			});
+			if ((type==EZMultiSlider) && ((boundz.x/boundz.y)>8)
+				, {boundz.y=boundz.x*0.125});
+			if (type==EZPopUpMenu, {
 
-		},{
-			round=controlSpec.step;
-			if (round<0.00000001, {round=defaultRound.copy});
-		});
-		//action=action.addFunc({|ez| [ez, ez.value].postln});
-		//EZText(parent, bounds, label, action, value, false, layout: layout, margin: argmargin, gap: arggap).font_(font);
-		type.new(parent, boundz, label, controlSpec, action
-			, value, false, labelWidth, numberWidth
-			, layout: layout
-			, margin: argmargin, gap: arggap).font_(font).round2_(round, value)
+			},{
+				round=controlSpec.step;
+				if (round<0.00000001, {round=defaultRound.copy});
+			});
+			//action=action.addFunc({|ez| [ez, ez.value].postln});
+			//EZText(parent, bounds, label, action, value, false, layout: layout, margin: argmargin, gap: arggap).font_(font);
+			type.new(parent, boundz, label, controlSpec, action
+				, value, false, labelWidth, numberWidth
+				, layout: layout
+				, margin: argmargin, gap: arggap).font_(font).round2_(round, value)
 		});
 	}
 

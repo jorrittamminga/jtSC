@@ -4,14 +4,14 @@ EventGUIJT : GUIJT {
 
 	*new {arg event, parent, bounds=350@20, name, controlSpecs, onClose=true, canFocus=true
 		, labelWidth
-		, gap=4@4, margin=4@4, actions, excludeKeys, scroll=false;
+		, gap=4@4, margin=4@4, actions, excludeKeys, scroll=false, equalLength=false;
 		^super.new.init(event, parent, bounds, name, controlSpecs, onClose, canFocus
 			, labelWidth
-			, gap, margin, actions, excludeKeys, scroll);
+			, gap, margin, actions, excludeKeys, scroll, equalLength);
 	}
 
 	init {arg argevent, argparent, argbounds, argname, argcontrolSpecs, argonClose
-		, argcanFocus, arglabelWidth, arggap, argmargin, argactions, argexcludeKeys, argScroll;
+		, argcanFocus, arglabelWidth, arggap, argmargin, argactions, argexcludeKeys, argScroll, argequalLength;
 		var eventKeys;
 		//var drawName=false;
 		event=argevent;
@@ -64,7 +64,8 @@ EventGUIJT : GUIJT {
 					event[key]=ez.value}};
 				views[key]=this.makeEZGUI(bounds, key
 					, cs
-					, action, val, false, labelWidth, equalLength:false)
+					, action, val, false, labelWidth
+					, equalLength:argequalLength)
 			},{
 				nil
 			});
