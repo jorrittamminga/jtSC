@@ -41,7 +41,7 @@ AudioSetupWindowJT {
 			height=(fontSize*4.5+(3*4)+8);
 			window=Window("Audio setup", Rect(
 				(Window.screenBounds.width-width)/2
-				,(Window.screenBounds.height-height)/2
+				,((Window.screenBounds.height-height)*(2/3))
 				,width,400), false, true).front;
 			window.addFlowLayout;
 			window.userCanClose_(false);
