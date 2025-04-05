@@ -1,5 +1,34 @@
 +SimpleNumber {
 
+	//delayTime.combfb
+	combfb {arg decayTime=1.0;
+		^0.001.pow(this/decayTime)
+	}
+
+	//http://dewdrop-world.net/sc3/tutorials/index.php?id=3
+	resonzringtime {arg rq=1.0, sampleRate;
+		var log001 = log(0.001);
+		sampleRate = sampleRate??{Server.default.sampleRate};
+		if (sampleRate==nil) {sampleRate=48000};
+		^ (	(log001 / log(1 - (pi/sampleRate * this * rq))) / sampleRate )
+		//~dt.value(1000, 0.1)
+	}
+
+	//after SoftKneeCompressor by Wouter Snoei
+	dbCompress {arg thresh= -12, ratio=0.5, knee=0, makeUp=0;
+		var frac, reduction;
+		makeUp = ( (thresh.neg * ( 1 - ratio )) * makeUp.clip(0.0, 1.0) ); // autogain
+		frac = ((this+(knee-thresh))/(2 * knee.max(1e-12))).clip(0,1);
+		ratio = 1 + (frac * (ratio - 1));
+		thresh = thresh - ( (1-frac) * knee );
+		reduction = ((thresh - this).min(0) * (1-ratio));
+		^(this+reduction+makeUp)
+	}
+
+	ampCompress {arg thresh=0.1, ratio=0.5, knee=1.0;
+		^this.ampdb.dbCompress(thresh.ampdb, ratio, knee.ampdb).dbamp
+	}
+
 	fontSize {arg bounds=100@20, factor=0.608;
 		^if (this*factor>(bounds.x/bounds.y), {bounds.x/(this*factor)},{bounds.y})
 	}
@@ -441,6 +470,13 @@
 		^(24.7 * ((4.37*this) / 1000 + 1))
 	}
 
+	erbhalf {//lower and upper erb
+		var c;
+		c=this.erb/this+1;
+		c=c.ratiomidi*[0.5.neg, 0.5];
+		^((this.cpsmidi+c).midicps-this)
+	}
+
 	ierb {
 		^((1000*this - 24700) / 107.939)
 	}
@@ -449,6 +485,27 @@
 		^(this/700+1).log10*2595
 	}
 
+	masking {arg maskingFreq=1200, dbMasked= -6, dbMasking= 0, bw=1.0;
+		var mask;
+		mask=(
+			dbMasked.asArray -
+			(
+				BBandPass.magResponse(
+					this.asArray
+					, 44100
+					, maskingFreq
+					, (maskingFreq.erb*bw)/maskingFreq
+				).ampdb
+				+ dbMasking
+			)
+		);
+		mask=mask.collect{|mask| mask<0};
+		^if (this.size==0) {
+			mask.unbubble
+		} {
+			mask
+		}
+	}
 
 	coefcps {arg server=Server.default;
 		var sr=server.sampleRate??{44100};
@@ -460,4 +517,25 @@
 		^(exp(-2pi * (this / sr)))
 	}
 
+}
+
++ Array {
+
+	masking {arg maskingFreq=1200, dbMasked= -6, dbMasking= 0, bw=1.0;
+		var mask;
+		mask=(
+			dbMasked.asArray -
+			(
+				BBandPass.magResponse(
+					this
+					, 44100
+					, maskingFreq
+					, (maskingFreq.erb*bw)/maskingFreq
+				).ampdb
+				+ dbMasking
+			)
+		);
+		mask=mask.collect{|mask| mask<0};
+		^mask
+	}
 }

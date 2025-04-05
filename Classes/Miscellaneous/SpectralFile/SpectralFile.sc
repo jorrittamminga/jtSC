@@ -7,22 +7,32 @@ SpectralFile {
 
 	init {arg pathName, ratio=true, frequency=true, normalize=true, round=0.001;
 
-		var file, b, n;
+		var file, b, n, string;
 		var freqs, amps, durs, data, loudest;
+		"reading spectral data, please wait....".postln;
 		file=File(pathName, "r");
+
+		partials=[];
+		4.do{string=file.getLine(65536)};//header
+		while {file.pos<file.length} {
+			string=file.getLine(65536);//header
+			string="["++string++"]";
+			string=string.replace(" ",",");
+			string=string.interpret;
+			partials=partials.add(string);
+		};
+		file.close;
+		/*
 		partials=file.readAllString;
 		file.close;
-
-		"reading spectral data, please wait....".postln;
-
 		partials=partials.copyToEnd(partials.find("partials-data\n")+14);
 		partials=partials.replace("\n", "],[");
 		2.do{partials.removeAt(partials.size-1)};
 		partials=partials.addFirst("[[");
 		partials=partials++"]";
 		partials=partials.replace(" ", ", ");
-
 		partials=partials.interpret;
+		*/
 		n=partials.size/2;
 
 		freqs={}!n;

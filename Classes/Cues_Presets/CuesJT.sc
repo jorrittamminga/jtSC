@@ -168,7 +168,9 @@ CuesJT : PresetsFileJT {
 	addNN{neuralNet=PresetsNNJT(this)}
 	addBlender{blender=PresetsBlenderJT(this)}
 	makeGui {arg parent, bounds=350@20;
-		{gui=CuesGUIJT(this, parent, bounds)}.defer;
+		{
+			gui=CuesGUIJT(this, parent, bounds)
+		}.defer;
 	}
 
 }
@@ -186,14 +188,12 @@ CuesGUIJT {
 		var boundsButton=(boundsName.x/7).floor@argbounds.y;
 		var c;
 		//argparent.view.decorator.nextLine;
-
 		bounds=argbounds??{350@20};
 		font=Font("Monaco", bounds.y*0.75);
 		fontNames=Font("Monaco", bounds.y*0.75);
 		views=();
 		c=CompositeView(argparent, bounds.x@(bounds.y*2));
 		c.addFlowLayout(0@0, 0@0);
-
 		views[\addBefore]=Button(c, boundsButton).states_([ ["±"] ]).font_(font)
 		.action_{
 			if (views[\basename].stringColor==Color.red, {
@@ -273,8 +273,6 @@ CuesGUIJT {
 				{presets.object[\method_CuesJT].valueAction_(0)}.defer
 			});
 		}, 0.0, false, 0).round2_(0.01);
-
-
 		/*
 		presets.object[\extras_CuesJT]=TextField(c, (bounds.x*0.8-bounds.y).floor@bounds.y).string_("").action_{arg t;
 
@@ -322,7 +320,7 @@ CuesGUIJT {
 		};
 		if (presets.cueListJT!=nil, {
 			presets.cueListJT.pathNameNumberedManager.folderID_(presets.cueListJT.pathNameNumberedManager.folderID)//BRUTE FORCE!
+			//PathNameNumberedManager
 		});
-
 	}
 }

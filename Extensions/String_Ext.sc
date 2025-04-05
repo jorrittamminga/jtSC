@@ -1,4 +1,30 @@
 +String {
+	/*
+	45.asAscii -> -
+	46.asAscii -> .
+	47.asAscii -> /
+	48.asAscii- 57.asAscii
+	*/
+	interpretSafeJT {
+		var ascii, allNumbers=true, numberOfDots;
+		var asciiNumbers=[45,46]++(48..57);
+		ascii=this.ascii;
+		allNumbers=ascii.collect{|val| asciiNumbers.includes(val).binaryValue}.sum==this.size;
+		^if ( ascii[0]==47) {
+			this.asSymbol
+		} {
+			if (allNumbers) {
+				numberOfDots=ascii.occurrencesOf(46);
+				if (numberOfDots>1) {
+					this
+				} {
+					this.interpret
+				}
+			} {
+				this
+			}
+		}
+	}
 
 	smpteSecs {arg frameRate=25, subFrames=80, offset=3600;//subFrames in Logic is 80
 		^this.split($:).collect{|i| i.interpret}.collect{|v,i| if (i<3) {v*[3600,60,1][i]} { ((v.frac*100/subFrames)+v.asInteger)/frameRate} }.sum-offset
@@ -9,7 +35,7 @@
 		var folders=this.allFolders;
 		^PathName("/"++folders.copyRange(0, (folders.size-1-depth).max(0)).join($/)++"/")
 		*/
-		^PathName(this).moveDir(1).fullPath
+		^PathName(this).moveDir(depth).fullPath
 	}
 
 	//calculate fontSize for Font.monospace

@@ -126,6 +126,7 @@ PathNameNumberedManager : Numbered {
 			currentFolder=deepFolders[folderID];
 			currentPathName=deepFoldersPathName[folderID];
 			action.value(index, this, actionArgs, method);
+
 		});
 	}
 	prev {arg action;

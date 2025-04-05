@@ -186,6 +186,8 @@ CueListJT {
 				});
 			});
 			[\durations_CuesJT, \method_CuesJT, \extras_CuesJT, \routinesJT].do{|key2| par[key].removeAt(key2)};
+			//
+			//----------- CHANGE or IMRPOVE THE CODE BELOW
 			if (methodFlag&&render,{
 				target=targets[key]??{values[key]};
 				switch(target.class, Synth, {

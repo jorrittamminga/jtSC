@@ -1,6 +1,6 @@
 /*
 client side version of Sanitize
-inf, NaN, denormal
+inf, NaN, denormal, isNaN
 isNumber
 */
 +Array {

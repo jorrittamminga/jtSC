@@ -31,7 +31,7 @@
 		cosy_cosp = 1 - (2 * ((q.y * q.y) + (q.z * q.z)));
 		yaw = atan2(siny_cosp, cosy_cosp);
 
-		^[roll, pitch, yaw]
+		^[roll, pitch, yaw]//x,y,z  azimuth, elevation,
 	}
 	/*
 	EulerAngles ToEulerAngles(Quaternion q) {
