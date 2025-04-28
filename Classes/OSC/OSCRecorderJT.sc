@@ -1,12 +1,9 @@
-//start writing ALL incoming OSC data to file
-//s.boot;
-
 OSCRecorderJT {
 	var <path, <port, <maxFileSize, <>excludePaths;
 	var <dirname, <fileName;
-	var string, i, tmp, w, file, fileName, tmpFileName, newWindow, now, f;
+	var string, i, tmp, file, fileName, tmpFileName, newWindow, now, f;
 	var <window, <recorder, <isRecording;
-
+	var <pathName;
 
 	*new {arg path, port=57120, maxFileSize=5000, excludePaths=['/status.reply'];
 		^super.newCopyArgs(path, port, maxFileSize, excludePaths).init
@@ -30,13 +27,11 @@ OSCRecorderJT {
 			if (recvPort==port) {
 				if(msg[0] != '/status.reply') {
 					if (file.isOpen) {
-						var size=msg.size-1;
-						file.write(  ((Main.elapsedTime-now).asString)++"," );
-						msg.do{|val,i|
-							file.write(val.asString(65536) );
-							if (i<size) {file.write(",")};
-						};
-						file.write("\n");
+						var msgString;
+						msgString = (Main.elapsedTime - now).asString ++ ",";
+						msgString = msgString ++ msg.collect(_.asString(65536)).join(",");
+						msgString = msgString ++ "\n";
+						file.write(msgString);
 					};
 				};
 			};
@@ -44,7 +39,7 @@ OSCRecorderJT {
 				if (file.length>maxFileSize) {
 					i=i+1;
 					file.close;
-					file=File(dirname++tmpFileName++"_"++i++".txt", "w");
+					file=File(pathName=(dirname++tmpFileName++"_"++i++".txt"), "w");
 				};
 			};
 		};
@@ -59,10 +54,10 @@ OSCRecorderJT {
 			isRecording=true;
 			tmpFileName=fileName??{""};
 			tmpFileName=tmpFileName++"_"++(Date.localtime.stamp);
-			file=File(dirname++tmpFileName++"_"++i++".txt", "w");
+			file=File( pathName=(dirname++tmpFileName++"_"++i++".txt"), "w");
 			now=Main.elapsedTime;
 			thisProcess.addOSCRecvFunc(f);
-			"OSCRecorder is recording".postln;
+			"OSCRecorder is recording in ".post;pathName.postln;
 		} {
 			"OSCRecorder is already recording".postln;
 		}
@@ -72,23 +67,34 @@ OSCRecorderJT {
 		thisProcess.removeOSCRecvFunc(f);
 		file.close;
 		isRecording=false;
-		"OSCRecorder stopped recording".postln;
+		"OSCRecorder stopped recording, file written ".post; pathName.postln;
+
 	}
 
+	close {
+		//recorder=false;
+		thisProcess.removeOSCRecvFunc(f);
+		if (file!=nil) {
+			file.close;
+		};
+	}
+	free {
+		this.close
+	}
 	//pauseRecording {}
 	//resumeRecording {}
 
 	gui {
+		var w;
 		w=Window("OSC recorder", Rect(400,400,160,30)).front;
 		w.addFlowLayout; w.alwaysOnTop_(true);
-		w.onClose_{"close window".postln};
+		w.onClose_{
+			//"close window".postln
+			this.close
+		};
 
 		w.onClose=w.onClose.addFunc({
-			//recorder=false;
-			thisProcess.removeOSCRecvFunc(f);
-			if (file!=nil) {
-				file.close;
-			};
+			this.close
 		});
 		Button(w, 40@20).states_([ [\rec],[\REC,Color.black,Color.red] ]).action_{|b|
 			if (b.value==1) {
@@ -98,5 +104,6 @@ OSCRecorderJT {
 			}
 		};
 		TextField(w, 100@20).string_(fileName).action_{|ez| fileName=ez.string.postln};
+		window=w;
 	}
 }
