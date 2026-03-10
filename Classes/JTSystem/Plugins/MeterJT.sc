@@ -21,7 +21,11 @@ MeterJT : JT {
 		id=UniqueID.next;
 		inJT=argInJT;
 
-		gains=inJT.gains;
+		if (inJT!=nil) {
+			gains=inJT.gains;
+		} {
+			gains=nil
+		};
 
 		if (this.isThreaded, {
 			this.initFunc(arginBus, argtarget)
@@ -32,6 +36,7 @@ MeterJT : JT {
 	}
 
 	initFunc {arg arginBus, argtarget;
+		//if (arginBus.class==Bus) {inBus=arginBus.indices};
 		inBus=arginBus.asArray;
 		sumMeters=false;
 		target=argtarget??{target=Server.default};
@@ -76,9 +81,12 @@ MeterJT : JT {
 				numberOfMetersPerServer[serverID]=
 				numberOfMetersPerServer[serverID]+b.numChannels
 			};
+
 			synth=SynthDef((\Meters++id).asSymbol, {
 				var in;
-				in=inBus.asArray.collect{|b| In.ar(b.index, b.numChannels)};
+				in=inBus.asArray.collect{|b|
+					In.ar(b.index, b.numChannels)
+				};
 				//Amplitude.kr(in,0.01, 1.0).ampdb.poll(1);
 				SendPeakRMS.kr(in, updateFreq, peakLag, cmdName[serverID])
 			}).play(targetPerServer[serverID], []

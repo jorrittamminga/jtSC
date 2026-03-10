@@ -13,10 +13,10 @@ var cond=Condition.new;
 AudioSetupWindowJT {
 	var inDevices, outDevices, inDevice, outDevice, <window, views, <>server, <>dict, <path;
 
-	*new {arg server, inDevice, outDevice, path, fontSize=12, action;
-		^super.new.init(server, inDevice, outDevice, path, fontSize, action)
+	*new {arg server, inDevice, outDevice, path, fontSize=12, action, cancelAction;
+		^super.new.init(server, inDevice, outDevice, path, fontSize, action, cancelAction)
 	}
-	init {arg argserver, arginDevice, argoutDevice, argpath, fontSize, action;
+	init {arg argserver, arginDevice, argoutDevice, argpath, fontSize, action, cancelAction;
 		var file, cond, width, height;
 		dict=();
 		server=argserver??{Server.default};
@@ -68,7 +68,7 @@ AudioSetupWindowJT {
 					server.options.outDevice=nil;
 				};
 				{window.close}.defer;
-				action.value
+				cancelAction.value
 			}.states_([ ["x cancel"] ]).font_(Font(Font.defaultMonoFace, fontSize));
 
 			Button(window, (fontSize*13)@(fontSize*1.5)).action_{|b|

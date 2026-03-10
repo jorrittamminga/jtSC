@@ -4,6 +4,7 @@ MeterJTGUI {
 	var <meter, <numberOfMeters, <numberOfMetersPerServer, <>dBLow;
 	var <labels, <orderOfMeters, reorderFlag, <window, <parent, <bounds, <guis;
 	var <oscGUI, <compositeviews, closeFunc, <layout;
+	var <rmsLag, simpleRMSLag;
 
 	*new {arg meter, parent, bounds=20@150, labels, margin=4@4, gap=4@4, font, layout=\vert
 		, showBus=false, orderOfMeters;
@@ -31,6 +32,7 @@ MeterJTGUI {
 					var value=db.linlin(dBLow, 0, 0, 1);
 					var peakdB=msg[i*2+3].ampdb;
 					var peak=peakdB.linlin(dBLow, 0, 0, 1, \min);
+					//value=rmsLag[i].value(value, i);
 					{
 						guis[0][guiOffset+i].value_(value);
 						guis[0][guiOffset+i].peakLevel_(peak);
@@ -65,6 +67,7 @@ MeterJTGUI {
 					//guis[0][i].value_( valuedB.lincurve(dBLow, 0, 0, 1, -0.618) );//.sum
 					//guis[0][i].peakLevel_( peakdB.lincurve(dBLow, 0, 0, 1, -0.618, \min) );//sum
 
+					//if (valuedB<80.neg) {peakdB="-∞"};
 					guis[1][i].value_( peakdB );//sum
 				}.defer
 				}
@@ -86,7 +89,6 @@ MeterJTGUI {
 		, arglayout, showBus, argorderOfMeters, arggains;
 		var c, hasInputGains=false;
 		reorderFlag=true;
-
 		meter=argmeter;
 		bounds=argbounds;
 		hasInputGains=meter.gains.isNil.not;
@@ -101,11 +103,11 @@ MeterJTGUI {
 			parent=window;
 		};
 		orderOfMeters=argorderOfMeters??{reorderFlag=false; (0..meter.numberOfMeters-1)};
-
 		orderOfMeters=meter.inBus.flat.collect{|b|
 			meter.busIndexPerServer.flat.indexOfEqual(b)
 		};
 		//labels=arglabel??{orderOfMeters};
+
 		layout=arglayout;
 		dBLow= -80;//dBLow=dBLow??{ -80 };
 		//font=argfont??{this.initFont(argbounds)};
@@ -117,17 +119,37 @@ MeterJTGUI {
 		guis[1]=Array.newClear(numberOfMeters);
 		if (hasInputGains, {guis[\gainSlider]=()});
 
+		/*
+		simpleRMSLag = { |attackCoeff = 0.1, releaseCoeff = 0.02|
+			var currentRMS = 0;
+			/*
+			{ |newRMS, i|
+				var coeff = if (newRMS > currentRMS) { attackCoeff } { releaseCoeff };
+				currentRMS = (coeff * newRMS) + ((1 - coeff) * currentRMS);
+				currentRMS;
+			}
+			*/
+			{ |newRMS, i|
+				currentRMS = if (newRMS > currentRMS) {
+					newRMS
+				} {
+					currentRMS = (releaseCoeff * newRMS) + ((1 - releaseCoeff) * currentRMS);
+				};
+				currentRMS;
+			}
+		};
+		rmsLag=numberOfMeters.collect{|i| simpleRMSLag.value(0.5, 0.05)};
+		"rmsLag".post; rmsLag.postln;
+		*/
 		compositeviews=numberOfMeters.collect{|i|
 			var c=CompositeView(parent.asArray.wrapAt(i), bounds.x@(bounds.y+bounds.x));
 			var heights=[0.9, 0.1].normalizeSum*bounds.y;
-			var index=orderOfMeters[i], label=arglabels[i];
+			var index=orderOfMeters[i]??{i}, label=arglabels[i];
 			var mouseClickTime=Main.elapsedTime;
-
 			if (showBus, {heights=[0.9, 0.1,0.1].normalizeSum*bounds.y;});
 			c.addFlowLayout(0@0, 0@0);
 			guis[1][index]=NumberBox(c, bounds.x@(heights[1]))
 			.font_(Font(Font.defaultMonoFace, heights[1]*0.5)).canFocus_(false);
-
 			guis[0][index]=LevelIndicator(c, (bounds.x*[1.0, 0.6][hasInputGains.binaryValue])@heights[0])
 			.warning_(0.9).critical_(1.0).drawsPeak_(true);
 			//.numTicks_(9)
@@ -174,7 +196,6 @@ MeterJTGUI {
 			});
 			c
 		};
-
 		if ((meter.servers.asArray.size>1), {
 			if (meter.sumMeters, {this.addOSCFuncSum},{this.addOSCFunc})
 		},{

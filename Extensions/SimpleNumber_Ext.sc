@@ -1,5 +1,24 @@
 +SimpleNumber {
 
+	primeFactors {
+		var num = this;
+		var factors = List.new;
+		while { (num % 2) == 0 } {
+			factors.add(2);
+			num = num / 2;
+		};
+		forBy(3, num.sqrt.floor, 2, { |i|
+			while { (num % i) == 0 } {
+				factors.add(i.asInteger);
+				num = num / i;
+			};
+		});
+		if(num > 2, { factors.add(num.asInteger) });
+
+		^factors.asArray
+	}
+
+
 	//delayTime.combfb
 	combfb {arg decayTime=1.0;
 		^0.001.pow(this/decayTime)
@@ -32,9 +51,21 @@
 	fontSize {arg bounds=100@20, factor=0.608;
 		^if (this*factor>(bounds.x/bounds.y), {bounds.x/(this*factor)},{bounds.y})
 	}
+
+
+	roughness {arg item2=440, weight1=1.0, weight2=1.0, method=\Sethares;
+		^switch(method) {\Sethares} {
+			this.roughnessSethares(item2, weight1, weight2)
+		} {\Vassilakis} {
+			this.roughnessVassilakis(item2, weight1, weight2)
+		} {
+			this.roughnessSethares(item2, weight1, weight2)
+		};
+	}
+
 	//after Vassilakis, 2001 & 2005 http://www.acousticslab.org/learnmoresra/moremodel.html
-	//value between 0.0 and 0.090387257747353
-	roughness {arg item2=440, weight1=1.0, weight2=1.0, normalize=true;
+	//output value between 0.0 and 0.090387257747353
+	roughnessVassilakis {arg item2=440, weight1=1.0, weight2=1.0, normalize=true;
 		var freqMin=this.min(item2), freqMax=item2.max(this);
 		var ampMin=weight1.min(weight2), ampMax=weight2.max(weight1);
 		var x=(ampMin*ampMax);
@@ -45,6 +76,65 @@
 
 		^x.pow(0.1)*0.5*(y.pow(3.11))*z*factor
 	}
+
+	roughnessSethares { arg freq2, amp1=1.0, amp2=1.0;
+		var fmin = this.min(freq2);
+		var fmax = this.max(freq2);
+		var fdiff = fmax - fmin;
+
+		// Sethares' parameters (from his book, p. 366)
+		var b1 = 3.5;
+		var b2 = 5.75;
+		var s1 = 0.0207;
+		var s2 = 18.96;
+
+		// Critical bandwidth calculation
+		var s = 0.24 / (s1 * fmin + s2);
+
+		// Plomp-Levelt curve
+		var diss = amp1 * amp2 * (
+			exp(b1.neg * s * fdiff) - exp(b2.neg * s * fdiff)
+		);
+
+		^diss
+	}
+
+	roughnessSpectrum {arg item2=440, ratios1=[1], ratios2=[1], amps1=[1], amps2=[1], method=\Sethares;
+		switch(method) {\Sethares} {
+			^this.roughnessSpectrumSethares(item2, ratios1, ratios2, amps1, amps2)
+		} {\Vassilakis} {
+			^this.roughnessSpectrumVassilakis(item2, ratios1, ratios2, amps1, amps2)
+		} {
+			^this.roughnessSpectrumSethares(item2, ratios1, ratios2, amps1, amps2)
+		};
+	}
+
+	roughnessSpectrumVassilakis {arg item2=440, ratios1=[1], ratios2=[1], amps1=[1], amps2=[1];
+		var spectrum1=this*ratios1, spectrum2=item2*ratios2;
+		var roughness=0;
+		spectrum1.do{|freq1,i|
+			spectrum2.do{|freq2, j|
+				roughness=roughness+freq1.roughnessVassilakis(freq2, amps1.clipAt(i), amps2.clipAt(j), false)
+			}
+		};
+		^roughness
+	}
+
+	roughnessSpectrumSethares {arg freq2=440, spectrum1=[1], spectrum2=[1], amps1=[1], amps2=[1];
+		var totalRough = 0;
+		spectrum1.do { |ratio1, i|
+			spectrum2.do { |ratio2, j|
+				var f1 = this * ratio1;
+				var f2 = freq2 * ratio2;
+				var a1 = amps1.wrapAt(i);
+				var a2 = amps2.wrapAt(j);
+
+				totalRough = totalRough + f1.roughnessSethares(f2, a1, a2);
+			};
+		};
+		^totalRough
+	}
+
 
 	//inverse formule of roughess. returns [freqMin, freqMax] in relation to this (=centerfreq)
 	bwr {arg roughness=0.24, normalized=true;
@@ -90,7 +180,7 @@
 		});
 		^out
 	}
-	/*
+/*
 	noise {arg i=0, prev, bits=5, w=1.0, maxBits=16, rand={1.0.rand};
 	var that, out;
 	var pot=bits.collect({|k| 2.pow(k)}), sum=pot.sum;
@@ -103,7 +193,7 @@
 	[(rand.sum).linlin(0, sum, 0.0, 1.0), rand]
 	}
 	*/
-	/*
+/*
 	asTimeString {
 
 
@@ -406,7 +496,7 @@
 		time=duration.neg;
 		^[position, time]//startPos in seconds the buffer, offset starttime
 	}
-	/*
+/*
 	-10.findIndex
 
 	[[0,30],[24,49],[45,66]].flat.minItem
@@ -468,6 +558,16 @@
 
 	erb {//equivalent rectangular bandwidth => critical band
 		^(24.7 * ((4.37*this) / 1000 + 1))
+	}
+
+	sensoryDissonance {
+		var erb=this.erb;
+		var offset = 0.25 * erb;
+		^[this - offset, this + offset]
+	}
+
+	dissonance {
+		^this.sensoryDissonance
 	}
 
 	erbhalf {//lower and upper erb

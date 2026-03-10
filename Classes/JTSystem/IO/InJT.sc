@@ -1,5 +1,6 @@
 /*
 - voor PlayerJT moet nog een rerouter (en mixbus) gemaakt worden voor complexere routings
+- en maak een versie voor In.ar ipv SoundIn....
 */
 InJT : IOJT {
 	var <busForMeter, <synthForMeter, <groupForMeter;
@@ -67,14 +68,13 @@ InJT : IOJT {
 	addPlugin {arg type=\Meter, args=[];
 		var plugIn, func;
 		func=switch(type
-			, \Meter, {{arg target, updateFreq=20;
+			, \Meter, {{arg target, updateFreq=20, peakLag=3.0;
 				this.optimizeSynthAndBusForMeter;
 				target=target??{groupForMeter};
-				MeterJT(busForMeter, target, updateFreq, 3.0, this);
+				MeterJT(busForMeter, target, updateFreq, peakLag, this);
 			}}
 			, \Player, {{arg path, monitorBus=0, monitorChannels=2, monitorServerID=0;
 				var buz=bus.copy, player;
-
 				player=PlayerJT(buz, synth, path);
 				player.addMonitor(monitorBus, monitorChannels, 0, monitorServerID);
 				player.startPlayingFunc=player.startPlayingFunc.addFunc({

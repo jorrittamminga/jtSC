@@ -119,7 +119,7 @@ IOJTGUI : GUIJT {
 			if (in[label].plugins!=nil, {
 				in[label].plugins.sortedKeysValuesDo{arg key, plugin;
 					var letter=plugin.class.asString[0];
-					var window, gui;
+					var window, gui, ff=0;
 					var bypassFunc={arg flag;
 						if (flag, {
 							{views[label][key].states_([ [letter, Color.grey] ])}.defer;
@@ -130,6 +130,7 @@ IOJTGUI : GUIJT {
 					};
 					views[label][key]=Button(c, channelbounds).states_([ [letter] ])
 					.action_{
+						ff=ff+1%2;
 						if (plugin.gui==nil, {
 							gui=plugin.makeGUI;
 							if (key==\Compressor, {
@@ -137,15 +138,21 @@ IOJTGUI : GUIJT {
 							},{
 								gui.window.userCanClose_(false);
 							})
-
 							//gui.window.userCanClose_(false);
 						},{
+							if (ff==1) {
+								plugin.gui.window.visible=true;
 							plugin.gui.window.front;
+							} {
+								plugin.gui.window.visible=false;
+							}
 						});
 					}.font_(channelFont).canFocus_(false);
-					if (key!=\Player, {
+					if ( ([\Player, \Recorder].includes(key).not), {
 						bypassFunc.value(plugin.bypass);
 						plugin.bypassFunc=plugin.bypassFunc.addFunc(bypassFunc);
+					}, {
+
 					});
 					plugin
 				};

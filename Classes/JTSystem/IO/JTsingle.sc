@@ -1,16 +1,17 @@
 JTSingle : JT {
 
-	var <muteSynth, <index;
+	var <muteSynth, <index, <realInBus;
 
-	*new {arg inBus, target, label, index;
-		^super.new.init(inBus, target, label, index);
+	*new {arg inBus, target, label, index, realInBus;
+		^super.new.init(inBus, target, label, index, realInBus);
 	}
 
-	init {arg arginBus, argtarget, arglabel, argindex;
+	init {arg arginBus, argtarget, arglabel, argindex, argRealInBus;
 		inBus=arginBus;
 		target=argtarget;
 		label=arglabel;
 		index=argindex;
+		realInBus=argRealInBus;
 
 		synth=[]; group=[]; server=[];
 
@@ -100,6 +101,18 @@ JTSingle : JT {
 					player.monitor.run(false);
 				});
 				player
+			}}
+			, \Recorder, {{arg path, sampleFormat="int24", headerFormat="AIFF", serverID=0, numChannels=1;
+				var ser=servers.asArray[serverID];
+				var bus;
+				bus=(ser.options.numOutputBusChannels+realInBus.asArray[serverID]);
+				if (bus.size.max(1)<numChannels) {
+					bus=numChannels.collect{|i| bus+i};
+				};
+				RecorderJT(
+					bus
+					, ser
+					, path, sampleFormat, headerFormat)
 			}}
 			, \Dry, {{arg settings=(outBus: Bus.new(\audio, 0, 2, Server.default), amp:0
 				, az:0), serverID=0;

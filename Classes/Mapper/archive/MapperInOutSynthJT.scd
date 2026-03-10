@@ -30,10 +30,10 @@ SynthDef(
 
 //------------------------------------------------------------------------------------------------------------------------------------------------
 
-m[\loudness]=Mapper2JT([0, 120, \db].asSpec, \loudness).makeBus;
-m[\amp]=Mapper2JT(\amp.asSpec, \amp).makeBus;
-m[\freq]=Mapper2JT(\freq.asSpec, \freq).makeBus;
-m[\pitch]=Mapper2JT(\freq.asSpec, \pitch).makeBus;
+m[\loudness]=MapperJT([0, 120, \db].asSpec, \loudness).makeBus;
+m[\amp]=MapperJT(\amp.asSpec, \amp).makeBus;
+m[\freq]=MapperJT(\freq.asSpec, \freq).makeBus;
+m[\pitch]=MapperJT(\freq.asSpec, \pitch).makeBus;
 
 
 x=Synth(\Analyzer, [\outBusPitch, m[\pitch].bus, \outBusLoudness, m[\loudness].bus]);

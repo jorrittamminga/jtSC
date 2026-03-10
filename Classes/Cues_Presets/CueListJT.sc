@@ -75,6 +75,22 @@ CueListJT {
 			prevIndex=index;
 		});
 	}
+	currentbasename {
+		^this.pathNameNumberedManager.currentFolder.copy.replace(this.root.fullPath, "").split($/)[0].split($_).copyToEnd(1).join($_)
+	}
+	currentcuename {
+		var name;
+		name=this.pathNameNumberedManager.currentFolder.copy.replace(this.root.fullPath, "").split($/);
+		name=name[name.size-2];
+		^name.split($_).copyToEnd(1).join($_)
+	}
+	currentname {arg slashseperator=$_;
+		var name;
+		name=this.pathNameNumberedManager.currentFolder.copy.replace(this.root.fullPath, "").split($/);
+		name=name.copyRange(0, name.size-2);
+		name=name.collect{|name| name.split($_).copyToEnd(1).join($_)};
+		^name.join(slashseperator)
+	}
 	getCurrent {arg pm;
 		var deepFoldersRelative=pm.deepFoldersRelative[pm.folderID];
 		var entries=pathNameNumberedManager.deepFilesPathName[pathNameNumberedManager.folderID];

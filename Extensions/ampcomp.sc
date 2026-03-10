@@ -34,6 +34,16 @@
 		^((((1+fb.squared)-(2*fb)).pow(power))*(power*2)*((1-coef).reciprocal))
 	}
 
+	//returns a scaling amplitude for Comb filter, delayTime.combamp(decayTime, 0.2155)
+	fbamp {arg power=0.2155;//power=0.2155 for sustained input such as WhiteNoise.ar
+		^((((1+this.squared)-(2*this)).pow(power))*(power*2))
+	}
+	//delayTime.combamp(decayTime, 0.2155, 0.5)
+	fblpamp {arg power=0.2155, coef=0.0;//power=0.2155 for sustained input such as WhiteNoise.ar
+		^((((1+this.squared)-(2*this)).pow(power))*(power*2)*((1-coef).reciprocal))
+	}
+
+
 	cpsamp {arg root=20, exp=0.333;
 		^((root / this) ** exp)
 	}
@@ -105,5 +115,14 @@
 	comblpamp {arg decayTime=3.0, power=0.2155, coef=0.0;//power=0.2155 for sustained input such as WhiteNoise.ar
 		var fb=0.001.pow(this/decayTime);
 		^((((1+fb.squared)-(2*fb)).pow(power))*(power*2)*((1-coef).reciprocal))
+	}
+
+	//returns a scaling amplitude for Comb filter, delayTime.combamp(decayTime, 0.2155)
+	fbamp {arg power=0.2155;//power=0.2155 for sustained input such as WhiteNoise.ar
+		^((((1+this.squared)-(2*this)).pow(power))*(power*2))
+	}
+	//delayTime.combamp(decayTime, 0.2155, 0.5)
+	fblpamp {arg power=0.2155, coef=0.0;//power=0.2155 for sustained input such as WhiteNoise.ar
+		^((((1+this.squared)-(2*this)).pow(power))*(power*2)*((1-coef).reciprocal))
 	}
 }

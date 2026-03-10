@@ -114,6 +114,7 @@ Freezer {
 		ff=(ff+1)%2;
 
 		if (freeze>0, {
+			//[\inBus, index, target, addAction].postln;
 			synthFreeze[ff]=Synth(\Freezer_JT, [\outBus, outbus, \freqBus, freqBus[ff], \ws,ws,\hop,hop,\inBus,index]++p.asKeyValuePairs, target, addAction).register;
 			synthFreeze[ff].map(\shift, freqBus[prevFF]);
 		});

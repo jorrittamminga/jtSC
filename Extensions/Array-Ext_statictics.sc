@@ -1,7 +1,15 @@
 +Array {
 	//---------------------------------------------------- STATISTICS
 	meanWeighted {arg weights;
+		if (weights==nil) {weights=(1..this.size).normalizeSum};
 		^(this.collect{|v,i| v*weights[i]}.sum/weights.sum)
+	}
+
+	removeOutliers {arg val=0.2;
+		var median=this.median;
+		^this.select({ |interval|
+			(interval - median).abs / median < val
+		});
 	}
 
 	geometricmean {

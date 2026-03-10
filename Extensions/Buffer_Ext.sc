@@ -1,5 +1,82 @@
 + Buffer {
 
+	readAndConvert {arg argpath, startFrame = 0, numFrames = -1, completionMessage, action, mono=false, serverNRT;
+		var sf, folder;
+		var headerFormat, sampleFormat, duration, sampleReet, numChannels, numFramez;
+		var tmpPath, score, x, serverOptions, bufN, serverFlag=false;
+
+		path = argpath;
+		this.startFrame = startFrame;
+		tmpPath=PathName.tmp ++ this.hash.asString;
+
+		folder=path.dirname++"/";
+		sf=SoundFile.openRead(path);
+		headerFormat=sf.headerFormat;
+		sampleFormat=sf.sampleFormat;
+		numChannels=sf.numChannels;
+		sampleReet=sf.sampleRate;
+		duration=sf.duration;
+		numFramez=sf.numFrames;
+		sf.close;
+
+		if ((startFrame==0) && (numFrames<=0)) {
+			numFrames=numFramez;
+		} {
+			if (numFrames<=0) {
+				numFrames=numFramez-startFrame;
+				duration=numFrames/sampleReet;
+			} {
+				duration=(numFrames-startFrame)/sampleReet;
+			}
+		};
+		serverOptions=server.options.deepCopy;
+
+		serverOptions.numOutputBusChannels_(if (mono) {1} {numChannels})
+		.numInputBusChannels_(2).verbosity_(-2);
+
+		serverNRT = serverNRT??{
+			serverFlag=true;
+			Server(\nrt, options: serverOptions)
+		};
+		bufN=serverNRT.nextBufferNumber(1);
+
+		score=Score([
+			[0, ['/b_allocRead', bufN, path, startFrame, numFrames]],
+			[0, ['/d_recv', SynthDef(\NRTPlayBufJT, {
+				var out;
+				out=PlayBuf.ar(numChannels, bufN, BufRateScale.ir(bufN), 1, 0, 0, 2);
+				if (mono&&(numChannels>1)) {out=out.sum*numChannels.reciprocal};
+				Out.ar(0, out)
+			}).asBytes
+			]],
+			[0.0, (x = Synth.basicNew(\NRTPlayBufJT, serverNRT, 1000)).newMsg(args: [freq: 400])],
+			[duration, x.freeMsg, [\b_free, bufN], [\c_set, 0, 0]]
+		]
+		);
+		score.recordNRT(nil, tmpPath, nil, server.sampleRate, headerFormat, sampleFormat, serverOptions, "", duration,
+			{
+				numFrames=(server.sampleRate/sampleReet*numFrames).asInteger;
+				{
+					server.listSendMsg(this.allocReadMsg( tmpPath, 0, numFrames, completionMessage));//original allocRead
+					server.sync;
+					if (serverFlag) {serverNRT.remove};
+					File.delete(tmpPath);
+					action.value(this);
+				}.fork
+			}
+		);
+	}
+
+	*readAndConvert {arg server, path, startFrame = 0, numFrames = -1, action, bufnum, mono=false, serverNRT;
+		server = server ? Server.default;
+		bufnum ?? { bufnum = server.nextBufferNumber(1) };
+
+		^super.newCopyArgs(server, bufnum)
+		//.doOnInfo_(action).cache
+		.doOnInfo_(nil).cache
+		.readAndConvert(path, startFrame, numFrames, {|buf| ["/b_query", buf.bufnum]}, action, mono, serverNRT )
+	}
+
 	updateInfoSync { arg action;
 		this.updateInfo(action);
 		if (thisProcess.mainThread.state>3, {server.sync});

@@ -1,4 +1,14 @@
 + TempoClock {
+
+	bpm {
+		^(this.tempo*60)
+
+	}
+
+	bpm_ {arg beatsperminute;
+		this.tempo_(beatsperminute/60)
+	}
+
 	sync {arg routine, server=Server.default, latency=0, action;
 		var now, deltaTime;
 		var beats, tmptempo, tempo;

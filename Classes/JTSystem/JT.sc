@@ -180,6 +180,7 @@ JT {
 			bus=busPerServer;
 		}
 		,{
+
 			busPerServer=busIndexPerServer.collect{arg bus, i;
 				var b=bus.deepCopy;
 				if (bus.class==Array, {
@@ -198,7 +199,6 @@ JT {
 			if (changed, {bus=busPerServer});
 		}
 		);
-
 		^busIndexPerServer
 	}
 

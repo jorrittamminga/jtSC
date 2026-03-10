@@ -1,43 +1,45 @@
 + EZSlider {
-	addMapper {arg parent, bounds, initAction=true, decimals=4, margin, gap, stepCurve=1, width=10, colorRange=Color.green, thumbSize=0, smoothSize, lagAction;
+	//action
+	//addMapper
+	addMapperJT {arg parent, bounds, initAction=true, decimals=4, margin, gap, stepCurve=1, width=10, colorRange=Color.green, changeControlSpec=false, smoothSize, lagAction;
 		var controlSpec, mappingGUI, boundz, rangeSlider, buttons, keys=();
-		var mapper, sliderBounds;
+		var mapper;
 
 		controlSpec=this.controlSpec;
 		boundz=this.sliderView.bounds;
 		boundz.width=boundz.width-width;
+		this.sliderView.bounds_(boundz);
+		boundz.top=boundz.top+2; boundz.height=boundz.height-4;
 
-		sliderBounds=boundz.deepCopy;
-		sliderBounds.height=(sliderBounds.height*0.75).ceil.asInteger;
-		this.sliderView.bounds_(sliderBounds);
-		this.sliderView.thumbSize_(thumbSize);
-
-		boundz.top=boundz.top+2;
-		boundz.height=boundz.height-4;
 		margin=margin??{0@0};
 		gap=gap??{1@1};
 
+		//if (changeControlSpec) {} {
 		this.sliderView.background_(Color.grey(0.5, 0));
 		rangeSlider=SmoothRangeSlider(this.view, boundz).hilightColor_(colorRange).thumbSize_(0).action_{|slider|
 			var val;
-			[\minval, \maxval].collect{|key,i|
-				var val, viewkey=mappingGUI.viewsKeys[key];
+			//slider.value.postln;
+			[\minval, \maxval].do{|key,i|
+				var val, viewkey=mappingGUI[\viewsKeys][key];
 				val=this.controlSpec.map(slider.value[i]);
-				mappingGUI.values[key]=val;
-				{mappingGUI.views[viewkey].value_(val)}.defer;
-				if (i==0) {
-					mapper.controlSpec.minval_(val);
-				}{
-					mapper.controlSpec.maxval_(val);
-				};
+				mappingGUI[\values][key]=val;
+				{mappingGUI[\views][viewkey].value_(val)}.defer;
 				val
 			};
 		};
+		this.sliderView.mouseDownAction_{
+			arg view, x, y, modifiers, buttonNumber, clickCount; if (buttonNumber==1) {rangeSlider.front};
+		};
+		rangeSlider.mouseDownAction_{
+			arg view, x, y, modifiers, buttonNumber, clickCount; if (buttonNumber==0) {this.sliderView.front }
+		};
+		//};
 		this.sliderView.front;
+
 		if (this.view.onClose==nil) {
-			this.view.onClose={mappingGUI.parent.close}
+			this.view.onClose={mappingGUI.parentView.close}
 		} {
-			this.view.onClose=this.view.onClose.addFunc({mappingGUI.parent.close});
+			this.view.onClose=this.view.onClose.addFunc({mappingGUI.parentView.close});
 		};
 
 		boundz=this.numberView.bounds;
@@ -52,7 +54,7 @@
 			boundz.top=i*(boundz.height);
 			if (i==0) {
 				Button(this.view, boundz).states_([ ["x"],["X",Color.black,Color.green] ]).action_{|b|
-					mappingGUI.viewAction=if (b.value==1) {
+					mappingGUI[\viewAction]=if (b.value==1) {
 						{|val| {this.value_(val)}.defer }
 					} {
 						nil
@@ -64,24 +66,43 @@
 					var index=this.view.parent.children.indexOf(this.view);
 					var bounds=this.view.bounds;
 					this.view.parent.children.copyToEnd(index+1);
+					10.postln;
 					if(b.value==1) {
+						11.postln;
+						"bounds ".post; bounds.postln;
+						mappingGUI.postln;
+						bounds.height.postln;
+						mappingGUI.height;
 						bounds.height=bounds.height+mappingGUI.height;
+						12.postln;
 						this.view.bounds_(bounds);
-						//w.view
+						13.postln;
 						this.view.parent.children.copyToEnd(index+1).do{|view|
 							var bounds=view.bounds;
-							bounds.top=bounds.top+mappingGUI.height;
+							bounds.top=bounds.top+mappingGUI[\height];
 							view.bounds_(bounds);
 						};
+						14.postln;
 					} {
-						bounds.height=bounds.height-mappingGUI.height;
+						bounds.height=bounds.height-mappingGUI[\height];
 						this.view.bounds_(bounds);
 						this.view.parent.children.copyToEnd(index+1).do{|view|
 							var bounds=view.bounds;
-							bounds.top=bounds.top-mappingGUI.height;
+							bounds.top=bounds.top-mappingGUI[\height];
 							view.bounds_(bounds);
 						};
 					}
+					/*
+					if (b.value==1)
+					{
+					mappingGUI.parentView.visible_(true);
+					mappingGUI.parentView.front;
+					} {
+					if (mappingGUI.parentView!=this.view) {
+					mappingGUI.parentView.visible_(false)
+					}
+					}
+					*/
 				}.font_(Font(Font.defaultMonoFace, width));
 			}
 		};
@@ -93,7 +114,9 @@
 		this.view.decorator.shift(0, this.bounds.height);
 		this.view.decorator.nextLine;
 
-		mapper=MapperJT(controlSpec, smoothSize, lagAction);
+		//	*new {arg mapper, name, default, lag, smoothSize;
+		mapper=MapperJT(controlSpec, this.label, nil, smoothSize, lagAction);
+		"mapper ".post; mapper.postln;
 		mapper.makeGui(
 			parent??{this.view}
 			, bounds??{this.bounds.width@(this.bounds.height*0.75).floor.asInteger}
@@ -118,6 +141,7 @@
 		, margin
 		, gap
 		, stepCurve
+		, changeControlSpec
 		, smooth
 		, lagAction
 		);
@@ -126,9 +150,11 @@
 
 		mappingGUI.views[keys[\onoff]]=buttons[0];
 		mappingGUI.viewsEditor[keys[\editor]]=buttons[1];
+		//if (changeControlSpec.not) {
 		mappingGUI.views[\rangeSlider]=rangeSlider;
 		mappingGUI.action=mappingGUI.action.addFunc({
-			rangeSlider.value_(this.controlSpec.unmap([mapper.controlSpec.minval,mapper.controlSpec.maxval]))
+			//rangeSlider.value_(this.controlSpec.unmap([mapper.controlSpec.minval,mapper.controlSpec.maxval]))
+			rangeSlider.value_(this.controlSpec.unmap([mapper.minval,mapper.maxval]))
 		});
 		//};
 		if (initAction) {
@@ -136,6 +162,8 @@
 			{mappingGUI.views[keys[\onoff]].value_(1)}.defer;
 		};
 		{mappingGUI.action.value}.defer;
-		^mapper;
+
+		^mappingGUI;
+		/**/
 	}
 }

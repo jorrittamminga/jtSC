@@ -104,7 +104,6 @@ CompressorJT : PluginJT {
 					var in, out;
 					in=In.ar(bus.index, bus.numChannels);
 					//[thresh, slopeAbove, knee, makeUpGain].poll(1);
-
 					out=SoftKneeCompressor.ar(
 						//DelayN.ar(in, 0.1, clampTime)
 						in

@@ -29,7 +29,8 @@ QuasiPsola {
 //make duration and rate ALWAYS audio rate (otherwise you can have artifacts (why?????))
 //check the rate of rate, dur, etc and change the rate of the Impulse accordingly
 
-GrainDelay {
+//this used to be GrainDelay
+GrainDelayJT {
 
 	*ar{ arg in, rate=1.0, dur=0.2, overlap=4.0, maxdelaytime=120, delayTime=0.2, numChannels=2, az=0.0, ampl=0.0;
 		var buf=LocalBuf(SampleRate.ir*maxdelaytime).clear;

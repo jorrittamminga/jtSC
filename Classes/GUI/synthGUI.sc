@@ -5,7 +5,7 @@
 - maak ook een versie van makeGui die args, actions en controlspecs teruggeeft zodat je hier zelf een gui mee kunt bouwen
 */
 SynthGUIJT : GUIJT {
-	var canFocus, <p, <cs, <synth, <server, <buttons, onClose, <waitTime
+	var canFocus, <p, <cs, <>synth, <server, <buttons, onClose, <waitTime
 	, <returnOnSwitch, <synths, <excludeKeys, <nodeID, <nrt, <rebounds, <>action;
 
 	*new {arg synth, parent, bounds, onClose=true, canFocus=true

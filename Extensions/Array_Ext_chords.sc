@@ -5,6 +5,7 @@
 //--------------------------------------------------------------- CHORD
 	sortchord {arg octave=12;
 		var out=this.copy;
+		var isInt=this.collect{|i| i.isInteger};
 
 		out=out.differentiate;
 		out=out.collect{|i|
@@ -13,6 +14,7 @@
 				i+add
 			},{i})
 		}.integrate;
+		out=out.collect{|val,i| if (isInt[i]&&val.isInteger.not) {val.asInteger} {val}};
 		^out
 	}
 

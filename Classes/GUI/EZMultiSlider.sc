@@ -70,6 +70,7 @@ EZMultiSlider : EZGui {
 		action = argAction;
 
 		sliderView.elasticMode=1;
+		sliderView.gap_(0);
 		sliderView.indexThumbSize=sliderBounds.width/initVal.asArray.size;
 
 
@@ -226,18 +227,23 @@ EZMultiSlider : EZGui {
 				popUp.if{view.resize_(2)};
 			},
 			\vert, {
+				/* old version
 				labelView.notNil.if{labelView.resize_(2)};
 				unitView.notNil.if{unitView.resize_(8)};
 				numberView.resize_(8);
 				sliderView.indexIsHorizontal = false;
-				//			sliderView.resize_(5);
 				popUp.if{view.resize_(4)};
+				*/
+				labelView.notNil.if{labelView.resize_(4).align_(\right)};
+				unitView.notNil.if{unitView.resize_(6)};
+				numberView.resize_(6);
+				popUp.if{view.resize_(2)};
+				sliderView.indexIsHorizontal = false;
 			},
 			\horz, {
 				labelView.notNil.if{labelView.resize_(4).align_(\right)};
 				unitView.notNil.if{unitView.resize_(6)};
 				numberView.resize_(6);
-				//			sliderView.resize_(5);
 				popUp.if{view.resize_(2)};
 		});
 
@@ -255,7 +261,6 @@ EZMultiSlider : EZGui {
 
 		switch (layout,
 			\line2, {
-
 				hasLabel.if{ // with label
 					unitBounds = (unitWidth@labelSize.y)
 					.asRect.left_(rect.width-unitWidth);// view to right
@@ -284,6 +289,7 @@ EZMultiSlider : EZGui {
 			},
 
 			\vert, {
+				/* old version
 				hasLabel.not.if{ gap1 = 0@0; labelSize.x = 0 ;};
 				hasLabel.not.if{labelH=0};
 				labelBounds = (rect.width@labelH).asRect; // to top
@@ -299,6 +305,20 @@ EZMultiSlider : EZGui {
 					rect.width,
 					rect.height - labelBounds.height - unitBounds.height
 					- numBounds.height - gap1.y - gap2.y - gap3.y
+				);
+				*/
+				hasLabel.not.if{ gap1 = 0@0; labelSize.x = 0 ;};
+				labelSize.y = rect.height;
+				labelBounds = (labelSize.x@labelSize.y).asRect; //to left
+				unitBounds = (unitWidth@labelSize.y).asRect.left_(rect.width-unitWidth); // to right
+				numBounds = (numSize.x@labelSize.y).asRect
+				.left_(rect.width-unitBounds.width-numSize.x-gap3.x);// to right
+				sliderBounds  =  Rect( // adjust to fit
+					labelBounds.width+gap1.x,
+					0,
+					rect.width - labelBounds.width - unitBounds.width
+					- numBounds.width - gap1.x - gap2.x - gap3.x,
+					labelBounds.height
 				);
 			},
 

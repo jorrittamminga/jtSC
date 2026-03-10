@@ -1,47 +1,28 @@
-+ControlSpec {
-	asMapperJT {arg name, default, lag, smoothSize;
-		^MapperJT(this, name, default, lag, smoothSize)
+MapperInOutJTArray : MapperIOJT {
+	var <>array;
+	*new {arg mapperIn, mapperOut;
+		^super.newCopyArgs(mapperIn, mapperOut).init;
+	}
+	init {
+		array=mapperIn.size.max(mapperOut.size).collect{|i|
+			MapperIOJT.new(mapperIn.wrapAt(i), mapperOut.wrapAt(i) )
+		};
+	}
+	map {arg value;
+		^value.collect{|value,i|
+			[\map, i, value, array[i]].postln;
+			[array[i].mapMethod,array[i].mapMethod.mapperIn, array[i].mapMethod.mapperOut].postln;
+			[
+				array[i].mapMethod,array[i].mapMethod.mapperIn.minval, array[i].mapMethod.mapperIn.maxval,
+				array[i].mapMethod,array[i].mapMethod.mapperOut.minval, array[i].mapMethod.mapperOut.maxval
+			].postln;
+			array[i].mapMethod.map(value)
+		};
 	}
 	mapFast {arg value;
-		^warp.map(value.clip(0.0, 1.0))
+		^array.collect{|m,i| m.mapperOut.mapNoClip(m.mapperIn.unmap(value[i]))}
 	}
-}
-
-+Synth {
-	mapJT { arg ... args;
-		var mapInOut=args.clump(2).flop;
-		var mapMsg, synth, mapper;
-		mapMsg=mapInOut.deepCopy;
-		mapMsg.postln;
-		mapMsg[0]=mapMsg[0].collect{|mapper| mapper.name};
-		mapMsg[1]=mapInOut[0].collect{|mapper| mapper.bus??{mapper.makeBus(this.server)}};
-		mapMsg=mapMsg.flop.flat;
-		this.map(*mapMsg);
-		if ((mapInOut[0].size==1) && (mapInOut[1].size==1)) {
-			mapInOut=mapInOut.collect(_.unbubble)
-		};
-		mapper=MapperInOutJT(mapInOut[1], mapInOut[0]);
-		synth=mapper.makeMapperSynthJT(this, \addBefore, mapMsg);
-		^mapper
-	}
-}
-
-+ Array {
-	//arg mapper, name, default, lag, smoothSize;
-	asMapperJT {
-		if (this[0].class==Symbol) {
-			this[0]=this[0].asSpec;
-		} {
-			if ( (this[0].size>=2) && (this[0].size<=6)) {
-				this[0]=this[0].asSpec;
-			};
-		};
-		^MapperJT(*this)
-	}
-	//	asSpec { ^ControlSpec( *this ) }
-	asMapperInOutJTArray {
-		^MapperInOutJTArray.new(this.size).addAll(this)
-	}
+/*
 	mapSynth {arg target, addAction;
 		var mapMsg;
 		mapMsg=this.collect{|m| [m.mapperOut.name, m.mapperOut.bus.index]}.flat;
@@ -97,4 +78,5 @@
 			}
 		}).add.play(target, nil, addAction);
 	}
+	*/
 }

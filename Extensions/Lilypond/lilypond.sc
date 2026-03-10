@@ -185,7 +185,7 @@
 	*/
 
 
-	renderNotes {arg rhythm=[1/4], dynamics=[""], path="~/tmp".standardizePath, mode="w", version="2.13.40", pre="{", post="}", midi=false, book=true, timeSignature, forceAccidentals=true, showRests=false, splitpoints=[35, 59, 85];//[35, 60, 85]
+	renderNotes {arg rhythm=[1/4], dynamics=[""], path="~/tmp".standardizePath, mode="w", version="2.24.4", pre="{", post="}", midi=false, book=true, timeSignature, forceAccidentals=true, showRests=false, splitpoints=[35, 59, 85];//[35, 60, 85]
 		var thiz, string, notename, ly=""
 		, clefs=["\"treble^15\"", "treble", "bass", "\"bass_15\""]
 		//, splitpoints=[35, 60, 85]
@@ -210,7 +210,7 @@
 		dynamics=dynamics.asArray.add("")?[""];
 
 		if (timeSignature==nil, {
-			ly=ly++"\\override Score.BarLine #'transparent = ##t \\override Score.TimeSignature #'transparent = ##t \\override Score.TimeSignature #'stencil = ##f ";
+			ly=ly++"\n\\override Score.BarLine.transparent = ##t \n\\override Score.TimeSignature.transparent = ##t \n\\override Score.TimeSignature.stencil = ##f ";
 		}, {
 			ly=ly++" \\time " ++ timeSignature[0] ++ "/" ++ timeSignature[1] ++ " ";
 		});
@@ -519,8 +519,8 @@
 		file=File(path++".ly", mode);
 		if (raw==false, {
 			if (version!=nil, {string=string++"\\version \"" ++ version ++ "\"\n"});
-			if (book, {string=string++"\\include \"lilypond-book-preamble.ly\"\n"});
-
+			//if (book, {string=string++"\\include \"lilypond-book-preamble.ly\"\n"});
+			if (book, {string=string++"\n#(ly:set-option 'preview #t)\n"});
 			//\include "lilypond-book-preamble.ly"
 			if (layout&&midi, {pre="\n\\score{\n"++pre; post=post++"\n\\layout{}\n\\midi{}\n}"});
 			if (layout.not&&midi, {pre="\n\\score{\n"++pre; post=post++"\n\\midi{}\n}"});
@@ -540,7 +540,33 @@
 		if (render, {(path++".ly").renderLily(midi)});
 	}
 
-	renderLily {arg midi=false, lilypondPath="/Applications/LilyPond.app/Contents/Resources/bin/lilypond";
+	renderLily {arg midi=false, lilypondPath="/opt/homebrew/bin/lilypond";
+		var directory=PathName(this).pathOnly.unixPath;//dit kan mooier????
+		var fileName=PathName(this).fileName, fileNameWithoutExtension=PathName(this).fileNameWithoutExtension;
+		var pdf=directory++fileNameWithoutExtension++".pdf";
+		var cmd = "export PATH=/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin; "
+		++ "export LANG=C.UTF-8; "
+		++ "export LC_CTYPE=UTF-8; "
+		++ "export HOMEBREW_PREFIX=/opt/homebrew; "
+		++ "cd "++ directory ++ " && "
+		++ "/opt/homebrew/bin/lilypond -o "++fileNameWithoutExtension++" "++fileName++" 2>&1"
+		++ "&& mv "++fileNameWithoutExtension++".preview.pdf "++fileNameWithoutExtension++".pdf && rm "++fileNameWithoutExtension++".preview.eps "++fileNameWithoutExtension++".preview.png"
+		++ " \nopen " ++ pdf
+		;
+		var pipe = Pipe.new(cmd, "r");
+		var line = pipe.getLine;
+		while({ line.notNil }, {
+			line.postln;
+			line = pipe.getLine;
+		});
+		pipe.close;
+	}
+
+/*
+	renderLily {arg midi=false
+		//, lilypondPath="/Applications/LilyPond.app/Contents/Resources/bin/lilypond"
+		, lilypondPath="/opt/homebrew/bin/lilypond"
+		;
 		var directory=PathName(this).pathOnly.unixPath;//dit kan mooier????
 		var fileName=PathName(this).fileNameWithoutExtension.unixPath;
 		var pdf=directory++fileName++".pdf";
@@ -567,8 +593,24 @@
 		/usr/bin/find " ++ directory ++ " -newer " ++ this ++ " -name '*.midi' -exec open {} \\;
 		").unixCmd;
 		*/
-		(lilypondPath ++ " -ddelete-intermediate-files=#t -o " ++ directory ++ " " ++ this.unixPath ++ " \nopen " ++ pdf ++ midiCmd).unixCmd//
+/*
+	var cmd = "export PATH=/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin; "
+    ++ "export LANG=C.UTF-8; "
+    ++ "export LC_CTYPE=UTF-8; "
+    ++ "export HOMEBREW_PREFIX=/opt/homebrew; "
+    ++ "cd /Users/jorrit && "
+    ++ "/opt/homebrew/bin/lilypond -o tmp tmp.ly 2>&1";
+var pipe = Pipe.new(cmd, "r");
+var line = pipe.getLine;
+while({ line.notNil }, {
+    line.postln;
+    line = pipe.getLine;
+});
+pipe.close;
+*/
+		(lilypondPath ++ " -ddelete-intermediate-files=#t -o " ++ directory ++ " " ++ this.unixPath ++ " \nopen " ++ pdf ++ midiCmd).unixCmd
 
+		//(lilypondPath ++ " -ddelete-intermediate-files=#t -o " ++ directory ++ " " ++ this.unixPath ++ " \nopen " ++ pdf ++ midiCmd).postcs
 	}
-
+*/
 }

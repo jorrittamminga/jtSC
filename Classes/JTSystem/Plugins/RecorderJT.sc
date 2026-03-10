@@ -162,7 +162,8 @@ RecorderJT : JT {
 	}
 
 	makeGUI {arg parent, bounds=150@20, margin=0@0, gap=0@0, userCanClose=true;
-		gui=RecorderJTGUI(this, parent, bounds, margin, gap, userCanClose)
+		gui=RecorderJTGUI(this, parent, bounds, margin, gap, userCanClose);
+		^gui
 	}
 }
 

@@ -18,7 +18,7 @@ OutJT : IOJT {
 		},{ {
 			this.initFunc(arginBus, argtarget, arglabel, argaddAction, false)
 		}.fork
-		})
+		});
 	}
 
 	mute_ {arg value=true;
@@ -50,9 +50,8 @@ OutJT : IOJT {
 				*/
 				in=in*amp.lag(lagTime);
 
-				CheckBadValues.ar(in, 0, 2);
+				//CheckBadValues.ar(in, 0, 2);
 				in=Sanitize.ar(in);
-
 
 				busIndexPerServer[serverIndex].collect{|bus,i|
 					ReplaceOut.ar(bus, in[i])

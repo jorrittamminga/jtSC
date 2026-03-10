@@ -16,7 +16,7 @@ JTmulti : JT {
 	makeJTsingles {
 		singles=();
 		label.asArray.do{|label,i|
-			singles[label]=JTSingle(busPerFlatIndex[i], synthPerFlatIndex[i], label, i);
+			singles[label]=JTSingle(busPerFlatIndex[i], synthPerFlatIndex[i], label, i, inBusFlat[i]);
 		}
 
 	}

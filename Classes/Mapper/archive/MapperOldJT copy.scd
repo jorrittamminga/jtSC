@@ -1,3 +1,67 @@
+MapperOldJT {
+	var spec, <smoothSize, <>lagAction;
+	var <>smoothArray, <>controlSpec;
+	var <mapLinFunc;
+	var <gui;
+
+	//*new {arg name, value, spec, lag, smoothSize, uGen;
+	*new {arg spec, smoothSize, lagAction;
+		^super.newCopyArgs(spec, smoothSize, lagAction).init
+	}
+	init {
+		controlSpec=spec.deepCopy;
+		this.changemapLinFunc(controlSpec.warp.asSpecifier);
+		smoothArray=SmoothArrayJT(smoothSize??{2});
+	}
+	map {arg value;
+		^controlSpec.warp.map(value.clip(0.0, 1.0))
+	}
+	linmap {arg value, warp=\unipolar.asSpec;}
+	unmapmap {arg value, warp=\amp.asSpec;}
+	maplin {arg value, warp=\unipolar.asSpec;
+		^mapLinFunc.value(value, warp)
+	}
+
+	mapmap {arg value, warp=\amp.asSpec;
+		^controlSpec.warp.map(warp.unmap(value).clip(0,1.0))
+	}
+	unmap {arg value;
+		^controlSpec.warp.unmap(value).clip(0, 1.0)
+	}
+	smooth {arg value, method;
+		^smoothArray.smooth(value, method);
+	}
+	changemapLinFunc {arg specifier=\lin;
+		mapLinFunc=if (specifier.isKindOf(SimpleNumber)) {
+			{arg value, warp; value.lincurve(warp.minval, warp.maxval
+				, controlSpec.minval, controlSpec.maxval, specifier)}
+		} {
+			switch(specifier)
+			{\exp} {
+				{arg value, warp; value.linexp(warp.minval, warp.maxval, controlSpec.minval, controlSpec.maxval)}
+			}
+			{\lin} {
+				{arg value, warp;value.linlin(warp.minval, warp.maxval, controlSpec.minval, controlSpec.maxval)}
+			}
+			{
+				{
+					arg value, warp;
+					controlSpec.warp.map(warp.unmap(value).clip(0,1.0))
+				}
+			}
+		}
+	}
+
+	//for SynthDef control names
+	namedControl {arg val, fixedLag=true;
+		//^NamedControl.kr(name, value, lag, fixedLag, spec)
+	}
+
+	makeGui {arg parent, bounds=350@20, label="", action={}, numberWidth, labelWidth, margin=0@0, gap=2@2, decimals=4, stepCurve=1;
+		gui=MapperJTGUI(this,parent, bounds, label, action, numberWidth, labelWidth, margin, gap, decimals, stepCurve)
+	}
+}
+
 MapperJTGUI {
 	var <mapper, <parent, bounds, <label, <>action, numberWidth, labelWidth, margin, gap, decimals, stepCurve;
 	var <views, <viewsEditor, <>viewAction;

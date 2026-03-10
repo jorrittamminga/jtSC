@@ -1,28 +1,22 @@
-/*
-+Synth {
-	mapJT { arg ... args;
-		//var mapInOut=args.clump(2).flop;
-		//^MapperInOutJT(mapInOut[0], mapInOut[1]).makeSynth(this, \addBefore)
-	}
-}
-*/
-MapperInOutJT {
+//TODO: make a MapperInOutJTArray version
+MapperIOJT {
 	var <>mapperIn, <>mapperOut;
 	var <uGen, <uGeni, <curvei, <mapFunc;
 	var <mapMethod;
-	var <synthDef, <synth, <target, <addAction, <inBus, <outBus;
+	var <synthDef, <>synth, <>target, <>addAction, <inBus, <outBus;
 
 	*new {arg mapperIn, mapperOut;
-		if ( (mapperIn.isArray) || (mapperOut.isArray)) {
-			^(mapperIn.size.max(mapperOut.size).collect{|i| super.new.initArray(mapperIn.wrapAt(i), mapperOut.wrapAt(i) )})
+		^if ( (mapperIn.isArray) || (mapperOut.isArray)) {
+			//MapperInOutJTArray.new(mapperIn, mapperOut)
+			"not implemented yet".postln;
 		} {
-			^super.newCopyArgs(mapperIn, mapperOut).init
+			MapperInOutJT.new(mapperIn, mapperOut)
 		}
 	}
-	initArray {arg argIn, argOut;
-		mapperIn=argIn;
-		mapperOut=argOut;
-		this.init;
+}
+MapperInOutJT : MapperIOJT {
+	*new {arg mapperIn, mapperOut;
+		^super.newCopyArgs(mapperIn, mapperOut).init
 	}
 	init {
 		uGeni=(in: \lin, out: \lin);
@@ -37,6 +31,11 @@ MapperInOutJT {
 		[mapperIn,mapperOut].do{|mapper,i|
 			this.initFunc(mapper, [\in,\out][i])
 		};
+		if (synth!=nil) {
+			if (target!=nil) {
+				this.makeMapperSynthJT(target, addAction)
+			}
+		}
 	}
 	initFunc {arg mapper, type;
 		var warpName;
@@ -64,67 +63,58 @@ MapperInOutJT {
 	map {arg value;
 		^mapMethod.map(value);
 	}
+	/*
+	map {arg value;
+	if(mapMethod.class == MapperLinLinJT) {
+	^value.linlin(mapperIn.minval, mapperIn.maxval, mapperOut.minval, mapperOut.maxval, \minmax)
+	} {
+	^mapMethod.map(value);
+	}
+	}
+	*/
 	mapFast {arg value;
 		^mapperOut.mapNoClip(mapperIn.unmap(value))
 	}
-	makeMapperSynthJT {arg target, addAction=\addBefore;
-		target = target.asTarget;
-		//server = target.server;
-
-		synth=SynthDef(\blablanewName, {
-			var in, out;
-			/*
-			in[\pitch]=In.kr(bus_pitch, bus_numChannels);
-			if (in_lag) { };
-			out[\freq]=\freq.kr.linexp( \inmin, \inmax, \outmin, \outmax);
-			if (out_lag) {out[\freq]=out[\freq].lag(out_lagU, out_lagD)};
-			Out.kr(out_bus, out[\freq])
-			*/
-		}).add.play;
+	mapSynth {arg target, addAction;
+		target.map(mapperOut.name, mapperOut.bus);
+		this.makeMapperSynthJT(target, \addBefore);
 	}
-	//synth
-	namedControls {arg rate=\control, synthDef;
-		var uGens=();
-		[\in, \out].do{|key,i|
-			var mapper=[mapperIn,mapperOut][i];
-			var name=mapper.name;
-			[\minval, \maxval].do{|key2|
-				var rangeName=(name++key2).asSymbol;
-				uGens[rangeName]=NamedControl(rangeName, mapper.perform(key2), rate);
+	makeMapperSynthJT {arg argtarget, argaddAction=\addBefore;
+		target = argtarget.asTarget;
+		addAction=argaddAction??{\addBefore};
+		synthDef=SystemSynthDefs.generateTempName;
+		synth=SynthDef(synthDef, {
+			var in,out, vals=();
+			var inLagger, outLagger;
+			var array;
+			in=In.kr(mapperIn.bus.index, mapperIn.bus.numChannels);
+			//in.poll(1, \in);
+			if (mapperIn.lag!=nil) {
+				var lagName=(mapperIn.name++\_lag).asSymbol, lagger;
+				lagger=NamedControl(lagName, mapperIn.lag, \control);
+				in=in.lag(*lagger);
 			};
-			if (i==0) {
-				if (mapper.lag!=nil) {
-					var lagName=(mapper.name++\Lag).asSymbol;
-					uGens[lagName]=NamedControl(lagName, mapper.lag, rate);
-					uGens[mapper.name]=NamedControl(mapper.name, mapper.default, rate, nil
-						, spec:mapper.asSpec).lag(*uGens[lagName]);
-				} {
-					uGens[mapper.name]=NamedControl(mapper.name, mapper.default, rate, spec:mapper.asSpec);
+			array=[mapperIn, mapperOut].collect{|mapper,i|
+				var key=[\in,\out][i];
+				[\minval, \maxval].collect{|key,i|
+					var kee=(mapper.name++"_"++key).asSymbol;
+					vals[kee]=NamedControl(kee, [mapper.minval,mapper.maxval][i], \control, nil, spec:mapper.asSpec);
+					vals[kee]
 				};
-			} {
-				uGens[mapper.name]=uGens[mapperIn.name].performList(uGen
-					, [
-						uGens[(mapperIn.name++\minval).asSymbol]
-						, uGens[(mapperIn.name++\maxval).asSymbol]
-						, uGens[(mapperOut.name++\minval).asSymbol]
-						, uGens[(mapperOut.name++\maxval).asSymbol]
-						, \minmax]);
-				if (mapper.lag!=nil) {
-					var lagName=(mapper.name++\Lag).asSymbol;
-					uGens[lagName]=NamedControl(lagName, mapper.lag, rate);
-					uGens[mapper.name]=uGens[mapper.name].lag(*uGens[lagName])
-					//NamedControl(mapper.name, mapper.default, rate, nil
-					//, spec:mapper.asSpec).lag(*uGens[lagName]);
-				} {
-					//uGens[mapper.name]=uGens[\out]
-					//NamedControl(mapper.name, mapper.default, rate, spec:mapper.asSpec);
-				};
-			}
-		};
-		^uGens
+			}.flat;
+			out=in.performList(uGen, array);
+			if (mapperOut.lag!=nil) {
+				var lagName=(mapperOut.name++\_lag).asSymbol, lagger;
+				lagger=NamedControl(lagName, mapperOut.lag, \control);
+				out=out.lag(*lagger);
+			};
+			//out.poll(1, \out);
+			Out.kr(mapperOut.bus, out)
+		}).add.play(target, nil, addAction);
+		synth.register;
+		^synth
 	}
 }
-//Warp
 MapperMethodJT {
 	classvar <>mappingMethods;
 	//var <>mapperInOut;
@@ -175,7 +165,7 @@ MapperLinCurveJT : MapperMethodJT {
 }
 MapperCurveLinJT : MapperMethodJT {
 	map {arg value;
-		^value.expexp(mapperIn.minval, mapperIn.maxval, mapperOut.minval, mapperOut.maxval, mapperIn.curve
+		^value.curvelin(mapperIn.minval, mapperIn.maxval, mapperOut.minval, mapperOut.maxval, mapperIn.curve
 			, \minmax)
 	}
 }

@@ -154,7 +154,6 @@ PresetsBlenderGUIJT {
 		cv.decorator.reset;
 		val=presetsBlender.value??{0};
 		cs=presetsBlender.controlSpec;
-
 		presetsBlender.presets.object[\value]=if (rank<2, {
 			EZMultiSlider(cv, bounds, \in, [0.0, 1.0], {|ez|
 				presetsBlender.blendFunc.value(cs.map(ez.value.asArray[0]), depth)
@@ -168,7 +167,6 @@ PresetsBlenderGUIJT {
 			, val.asArray.collect{|v,i| cs[i].unmap(v)}
 			, false, cv.bounds.width*0.05).decimals_(8).font_(font);
 		});
-
 		presetsBlender.presets.object[\value].sliderView.indexIsHorizontal = false;
 		presetsBlender.presets.object[\value].sliderView.isFilled=true;
 		views[\blender]=presetsBlender.presets.object[\value];
