@@ -75,7 +75,7 @@
 	^this
 	}
 	*/
-
+	/*
 	interpretSafeJT {
 		var firstChar = this[0];
 		// Quick check for Symbol (begins with '/')
@@ -142,7 +142,7 @@
 		// Default case - return the string itself
 		^this
 	}
-
+	*/
 
 	smpteSecs {arg frameRate=25, subFrames=80, offset=3600;//subFrames in Logic is 80
 		^this.split($:).collect{|i| i.interpret}.collect{|v,i| if (i<3) {v*[3600,60,1][i]} { ((v.frac*100/subFrames)+v.asInteger)/frameRate} }.sum-offset
