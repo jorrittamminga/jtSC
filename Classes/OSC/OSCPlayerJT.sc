@@ -62,7 +62,7 @@ OSCPlayerJT {
 	gui {
 		{
 			var w;
-			w=Window("OSCPlayer", Rect(300,300,250+4+4+4,160+4+12+4)).front;
+			w=Window("OSCPlayer", Rect(300,300,250+4+4+4,180+4+12+4)).front;
 			window=w;
 			w.addFlowLayout;
 			w.alwaysOnTop_(true);
@@ -109,7 +109,9 @@ OSCPlayerJT {
 				//File.openDialog(
 				//FileDialog
 				flag=false;
-				{views[\play].value_(0)}.defer;
+				{
+					views[\play].value_(0)
+				}.defer;
 
 				Dialog.openPanel({|pathname|
 					path=PathName(pathname);
@@ -125,7 +127,9 @@ OSCPlayerJT {
 					}.defer;
 				},{
 					cond.unhang; flag=true;
-					{views[\play].value_(1)}.defer;
+					{
+						views[\play].value_(1);
+					}.defer;
 				}, false, path.fullPath)
 			};
 			views[\progressSlider]=Slider(w, (w.view.bounds.width-8)@20).thumbSize_(1).canFocus_(false).background_(Color.white).knobColor_(Color.blue);
@@ -147,6 +151,9 @@ OSCPlayerJT {
 				views[\rangeLoop].hi_(ez.value/duration);
 				this.seek(ez.value)}, duration);
 			views[\endTime]=StaticText(w, 100@20).string_(duration.asTimeString);
+			views[\backward]=Button(w, 100@20).states_([ [\backward] ]).action_{this.backward};
+			views[\forward]=Button(w, 100@20).states_([ [\forward] ]).action_{this.forward};
+
 			//views[\endTime]=EZNumber(w, 100@20, \endTime, [0, 1000], {|ez| this.seek(ez.value)});
 		}.defer
 	}
@@ -154,7 +161,9 @@ OSCPlayerJT {
 	openFile {
 		var tmpFlag=flag.copy, isPlaying=views[\play].value.copy, states;
 		flag=false;
-		{views[\play].value_(0)}.defer;
+		{
+			views[\play].value_(0)
+		}.defer;
 		oscPlayer.stop;
 		if (f.class==File) {
 			f.close;
@@ -217,7 +226,9 @@ OSCPlayerJT {
 		var posEstimation;
 
 		this.pause;
-		{views[\play].value_(0)}.defer;
+		{
+			views[\play].value_(0);
+		}.defer;
 
 		{
 			if (f.isOpen.not) {f=File(path.fullPath, "r");};
@@ -313,8 +324,45 @@ OSCPlayerJT {
 				1.0.wait;//safety loop wait
 			};
 			if (loopOSC.not) {
-				{views[\play].value_(0)}.defer
+				{
+					views[\play].value_(0);
+				}.defer
 			}
 		}.fork(SystemClock,nil, 2.pow(24).asInteger);//30
+	}
+
+	forward {arg size;
+		var scheduler_startTimes, scheduler_deltaTimes, scheduler_msgs, tmpDuration, endFlag, nowTime;
+		#scheduler_startTimes, scheduler_deltaTimes, scheduler_msgs, tmpDuration, endFlag=this.loadBlock(size??{bufferSize}).copy;
+		nowTime=scheduler_startTimes.last.copy;
+		prevTime=nowTime.copy;
+		startTime=nowTime.copy;
+		startPos=f.pos.copy;
+		{
+			views[\time].string_(nowTime.asTimeString);
+			views[\progressSlider].value_(nowTime/duration);
+			views[\rangeLoop].lo_(startPos/f.length).hi_(endPos/f.length).doAction;
+		}.defer;
+		scheduler_msgs.do{|msg| netaddr.sendBundle(latency, msg);};
+	}
+
+	backward {arg size;
+		var scheduler_startTimes, scheduler_deltaTimes, scheduler_msgs, tmpDuration, endFlag, nowTime;
+		var n=size??{bufferSize};
+		f.pos_( (f.pos - (n*3*lineLength)).max(0) );
+		f.getLine(65536);
+		#scheduler_startTimes, scheduler_deltaTimes, scheduler_msgs, tmpDuration, endFlag=this.loadBlock(size??{bufferSize}).copy;
+		scheduler_startTimes.postln;
+		nowTime=scheduler_startTimes.last.copy;
+		prevTime=nowTime.copy;
+		startTime=nowTime.copy;
+		startPos=f.pos.copy;
+		{
+			views[\time].string_(nowTime.asTimeString);
+			views[\progressSlider].value_(nowTime/duration);
+			views[\rangeLoop].lo_(startPos/f.length).hi_(endPos/f.length).doAction;
+		}.defer;
+		scheduler_msgs.do{|msg| netaddr.sendBundle(latency, msg);};
+
 	}
 }
