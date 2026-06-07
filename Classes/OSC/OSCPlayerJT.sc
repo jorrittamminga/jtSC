@@ -9,7 +9,8 @@ OSCPlayerJT {
 	var f, oscPlayer, <>loopOSC, forwind, getLines;
 	var dirname, oscPaths, oscFileNames, index, originalStates, x;
 	var schedulerCondition, prevTime, <duration, <lineLength, <endPos, startPos, startTime, endTime;
-	var scheduler_startTimes, scheduler_deltaTimes, scheduler_msgs;
+	var scheduler_startTimes, scheduler_deltaTimes, scheduler_msgs, skipSize;
+	var <timePos, <stDev;
 
 	*new {arg path, netaddr, bufferSize=20, latency=0.2;
 		^super.newCopyArgs(path, netaddr, bufferSize, latency).init
@@ -34,17 +35,41 @@ OSCPlayerJT {
 		endPos=0;
 		startTime=0;
 		endTime=0;
+		timePos=[0,0];
+		stDev=[0,0];
 		this.initFile;
 	}
 
 	initFile {
 		var x;
+		var tmp=[];
 		if (File.exists(path.fullPath)) {
 			f=File(path.fullPath, "r");
-			x=f.getLine(65536);
-			lineLength=f.pos;
+			lineLength=bufferSize.collect{
+				var x;
+				x=f.getLine(65536);
+				f.pos;
+			}.mean.asInteger;
 			startPos=0;
 			endPos=f.length;
+			//--------------------------------------------- calculate time vector
+			f.pos_(0);
+			tmp=20.collect{|i|
+				var pos, x;
+				f.pos_( ((i/20)*f.length).asInteger );
+				f.getLine(65536);
+				pos=f.pos.copy;
+				x=f.getLine(65536);
+				x=x.replace(" ", "").replace("nan", "0.0");
+				x=x.split($,).collect{|i| i.interpretSafeJT};
+				duration=x[0];
+				[pos, duration]
+			};
+			tmp=tmp.differentiate.copyToEnd(1);
+			stDev=tmp.flop.collect{|i| i.variance.sqrt};
+			timePos=tmp.mean;
+			f.pos_(0);
+			//---------------------------------------------
 			f.pos_( (f.length-(4*lineLength)).max(0) );
 			while {f.pos<f.length} {
 				x=f.getLine(65536);
@@ -54,14 +79,28 @@ OSCPlayerJT {
 			};
 			startTime=0;
 			endTime=duration;
-			if (views!=nil) {if (views[\duration]!=nil) {views[\duration].string_(duration.asTimeString)}.defer};
+			if (views!=nil) {
+				if (views[\duration]!=nil) {
+					{views[\duration].string_(duration.asTimeString)}.defer
+				};
+
+				[\startTimeSecs, \endTimeSecs].do{|key,i|
+					if (views[key]!=nil) {
+						{views[key].controlSpec_([0, duration].asSpec).value_([0, duration][i])}.defer
+					}
+				};
+				if (views[\rangeLoop]!=nil) {
+					{views[\rangeLoop].lo_(0).hi_(1)}.defer
+				}
+
+			};
 			f.close;
 		}
 	}
 
 	gui {
 		{
-			var w;
+			var w, width, range=[0, 1];
 			w=Window("OSCPlayer", Rect(300,300,250+4+4+4,180+4+12+4)).front;
 			window=w;
 			w.addFlowLayout;
@@ -112,7 +151,6 @@ OSCPlayerJT {
 				{
 					views[\play].value_(0)
 				}.defer;
-
 				Dialog.openPanel({|pathname|
 					path=PathName(pathname);
 					oscPlayer.stop;
@@ -139,8 +177,10 @@ OSCPlayerJT {
 				views[\endTime].string_((sl.hi*duration).asTimeString);
 				views[\endTimeSecs].value_((sl.hi*duration));
 			}.mouseUpAction_{|sl|
-				//[sl.lo, sl.hi].postln;
-				this.seek(sl.lo*duration, sl.hi*duration)
+				var lo, hi, diff;
+				diff=(range-[sl.lo,sl.hi]).abs>0.0001;
+				this.seek(if (diff[0]) {sl.lo*duration} {startTime}, if (diff[1]) {sl.hi*duration} {endTime});
+				range=[sl.lo,sl.hi];
 			};
 			views[\startTimeSecs]=EZNumber(w, 120@20, \startTime, [0, duration], {|ez|
 				views[\rangeLoop].lo_(ez.value/duration);
@@ -151,9 +191,9 @@ OSCPlayerJT {
 				views[\rangeLoop].hi_(ez.value/duration);
 				this.seek(ez.value)}, duration);
 			views[\endTime]=StaticText(w, 100@20).string_(duration.asTimeString);
-			views[\backward]=Button(w, 100@20).states_([ [\backward] ]).action_{this.backward};
-			views[\forward]=Button(w, 100@20).states_([ [\forward] ]).action_{this.forward};
-
+			views[\backward]=Button(w, 100@20).states_([ [\backward] ]).action_{this.backward(skipSize)};
+			views[\forward]=Button(w, 100@20).states_([ [\forward] ]).action_{this.forward(skipSize)};
+			views[\skipSize]=EZNumber(w, 40@20, \size, [1, bufferSize, 0, 1], {|ez| skipSize=ez.value.asInteger}, bufferSize, false, 0);
 			//views[\endTime]=EZNumber(w, 100@20, \endTime, [0, 1000], {|ez| this.seek(ez.value)});
 		}.defer
 	}
@@ -162,7 +202,7 @@ OSCPlayerJT {
 		var tmpFlag=flag.copy, isPlaying=views[\play].value.copy, states;
 		flag=false;
 		{
-			views[\play].value_(0)
+			views[\play].value_(0);
 		}.defer;
 		oscPlayer.stop;
 		if (f.class==File) {
@@ -223,29 +263,35 @@ OSCPlayerJT {
 		var nowTime=0, string;
 		var wasPlaying=flag.copy;
 		var tmpDuration, endFlag;
-		var posEstimation;
+		var posEstimation, n=0, m=0;
 
 		this.pause;
 		{
 			views[\play].value_(0);
 		}.defer;
-
 		{
 			if (f.isOpen.not) {f=File(path.fullPath, "r");};
 			if (endT!=nil) {
-				posEstimation=(((endT/duration)*f.length).floor.asInteger-(3*lineLength)).clip(0, f.length-lineLength).asInteger;
-				//"posEstimation ".post; [posEstimation, f.length].postln;
-				f.pos_(posEstimation);
-				f.getLine(65536);
-				endPos=f.pos.copy;
-				endTime=duration.copy;
-				while { (nowTime<endT) && (f.pos<f.length)} {
-					string=f.getLine(65536);
-					nowTime=string.split($,)[0].interpret;
-					//"endTime ".post; nowTime.postln;
-				};
-				endTime=nowTime;
-				endPos=f.pos.copy.min(f.length);
+				if ( (endT-endTime).abs>0.0001) {
+					posEstimation=(((endT-(2*stDev[1])/timePos[1])*timePos[0]).asInteger).clip(0, f.length);
+					//posEstimation=(((endT/timePos[1])*timePos[0]).asInteger-(2*lineLength)).clip(0, f.length-lineLength);
+					//posEstimation=(((endT/duration)*f.length).floor.asInteger-(3*lineLength)).clip(0, f.length-lineLength).asInteger;
+					f.pos_(posEstimation);
+					f.getLine(65536);
+					endPos=f.pos.copy;
+					endTime=duration.copy;
+					nowTime=0;
+					//nowTime=string.split($,)[0].interpret;
+					while { (nowTime<endT) && (f.pos<f.length)} {
+						string=f.getLine(65536);
+						nowTime=string.split($,)[0].interpret;
+						n=n+1;
+					};
+					endTime=nowTime.copy;
+					endPos=f.pos.copy.min(f.length);
+				} {
+					//endTime=endT;
+				}
 			} {
 				endTime=duration;
 				endPos=f.length;
@@ -257,17 +303,24 @@ OSCPlayerJT {
 				startTime=0;
 				startPos=0;
 			} {
-				nowTime=0;
-				posEstimation=(((startT/duration)*f.length).floor.asInteger-(2*lineLength)).clip(0, f.length-lineLength).asInteger;
-				f.pos_(posEstimation);
-				f.getLine(65536);
-				startPos=f.pos.copy;
-				startTime=startT.copy;
-				while {nowTime<startT} {
-					string=f.getLine(65536);
-					nowTime=string.split($,)[0].interpret;
-					//"startTime ".post; nowTime.postln;
-				};
+				if ( (startT-startTime).abs>0.001) {
+					nowTime=0;
+					posEstimation=(((startT-(2*stDev[1])/timePos[1])*timePos[0]).asInteger-(2*lineLength)).clip(0, f.length-lineLength);
+					//posEstimation=(((startT/duration)*f.length).floor.asInteger-(2*lineLength)).clip(0, f.length-lineLength).asInteger;
+					f.pos_(posEstimation);
+					f.getLine(65536);
+					startPos=f.pos.copy;
+					startTime=startT.copy;
+					//nowTime=string.split($,)[0].interpret;
+					while {nowTime<startT} {
+						string=f.getLine(65536);
+						nowTime=string.split($,)[0].interpret;
+						m=m+1;
+					};
+				} {
+					nowTime=startT.copy;
+					f.pos_(startPos.copy);
+				}
 			};
 			prevTime=nowTime.copy;
 			startTime=nowTime.copy;
@@ -275,12 +328,14 @@ OSCPlayerJT {
 			{
 				views[\time].string_(nowTime.asTimeString);
 				views[\progressSlider].value_(nowTime/duration);
-				views[\rangeLoop].lo_(startPos/f.length).hi_(endPos/f.length).doAction;
+				//views[\rangeLoop].lo_(startPos/f.length).hi_(endPos/f.length);
+				views[\startTime].string_(startTime.asTimeString);
+				views[\startTimeSecs].value_(startTime);
+				views[\endTime].string_(endTime.asTimeString);
+				views[\endTimeSecs].value_(endTime);
 			}.defer;
-			//scheduler_msgs[0].postcs;
 			#scheduler_startTimes, scheduler_deltaTimes, scheduler_msgs, tmpDuration, endFlag=this.loadBlock(bufferSize).copy;
 			scheduler_msgs.do{|msg| netaddr.sendBundle(latency, msg);};
-
 		}.fork(SystemClock,0, 65536)
 	}
 
@@ -352,7 +407,6 @@ OSCPlayerJT {
 		f.pos_( (f.pos - (n*3*lineLength)).max(0) );
 		f.getLine(65536);
 		#scheduler_startTimes, scheduler_deltaTimes, scheduler_msgs, tmpDuration, endFlag=this.loadBlock(size??{bufferSize}).copy;
-		scheduler_startTimes.postln;
 		nowTime=scheduler_startTimes.last.copy;
 		prevTime=nowTime.copy;
 		startTime=nowTime.copy;

@@ -1,7 +1,7 @@
 //check makeCompositeView! gebruik eventueel bounds.y
 GUIJT {
 	var <bounds, <parent, <font, <scroll, <window, <compositeView, <labelWidth, <hasWindow;
-	var <views, <>classJT, <viewsPreset;
+	var <>views, <>classJT, <>viewsPreset;
 	var <oscGUI, <>name;
 	var <margin, <gap, <background;
 	var pparent, <>freeOnClose, <presetSystem, <presets, <threaded;
