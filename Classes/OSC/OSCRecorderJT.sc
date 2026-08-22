@@ -1,91 +1,87 @@
 OSCRecorderJT {
-	var <path, <port, <maxFileSize, <>excludePaths;
+	var <path, <port, <>excludePaths, <batchDuration;
 	var <dirname, <fileName;
-	var i, file, tmpFileName, now, f;
+	var file, tmpFileName, startTime, recvFunc;
 	var <window, <recorder, <isRecording;
 	var <pathName;
+	var <tmpFilePath, batch, batchRoutine;
 
-	*new {arg path, port=57120, maxFileSize=5000, excludePaths=['/status.reply'];
-		^super.newCopyArgs(path, port, maxFileSize, excludePaths).init
+	*new {arg path, port=57120, excludePaths=['/status.reply'], batchDuration=0.25;
+		^super.newCopyArgs(path, port, excludePaths, batchDuration).init
 	}
 
 	init {
 		//--------------------------------------------------------------------------
-		i=0;
-		now=Main.elapsedTime;
 		fileName="";
 		isRecording=false;
-
+		batch=List[];
+		batchDuration=batchDuration??{0.25};
 		//------------------------------------------------------
 		path=path??{"~/Desktop/".absolutePath};
 		dirname=PathName(path).fullPath;
 		if (File.exists(dirname).not) {File.mkdir(dirname)};
-		maxFileSize=maxFileSize??{5000};
-		this.maxFileSize_(maxFileSize);
-
 		//------------------------------------------------------
-		f = { |msg, time, replyAddr, recvPort|
+		recvFunc = { |msg, time, replyAddr, recvPort|
 			if (recvPort==port) {
 				if(excludePaths.includes(msg[0]).not) {
-					//if(msg[0] != '/status.reply') {
-					if (file.isOpen) {
-						var msgString;
-						msgString = (Main.elapsedTime - now).asString ++ ",";
-						msgString = msgString ++ msg.collect(_.asString(65536)).join(",");
-						msgString = msgString ++ "\n";
-						file.write(msgString);
-						if (file.length>maxFileSize) {
-							i=i+1;
-							file.close;
-							file=File(pathName=(dirname +/+ tmpFileName ++ "_" ++ i ++ ".txt"), "w");
-						};
-					};
+					batch.add([Main.elapsedTime, msg]);
 				};
 			};
-			/*
-			if (file.isOpen) {
-				if (file.length>maxFileSize) {
-					i=i+1;
-					file.close;
-					file=File(pathName=(dirname +/+ tmpFileName ++ "_" ++ i ++ ".txt"), "w");
-				};
-			};
-			*/
 		};
-	}
-
-	maxFileSize_ {arg fileSize;
-		maxFileSize=fileSize*1000*1000;
 	}
 
 	startRecording {
 		if (isRecording.not) {
 			isRecording=true;
+			startTime=Main.elapsedTime;
 			tmpFileName=fileName??{""};
 			tmpFileName=tmpFileName++"_"++(Date.localtime.stamp);
-			file=File( pathName=(dirname +/+ tmpFileName++"_"++i++".txt"), "w");
-			now=Main.elapsedTime;
-			thisProcess.addOSCRecvFunc(f);
+			file=File( pathName=(dirname +/+ tmpFileName++".txt"), "w");
+			thisProcess.addOSCRecvFunc(recvFunc);
+			batchRoutine={
+				inf.do{
+					batchDuration.wait;
+					this.deserialize;
+				}
+			}.fork;
 			"OSCRecorder is recording in ".post;pathName.postln;
 		} {
 			"OSCRecorder is already recording".postln;
 		}
 	}
 
+	deserialize {
+		var msgString="", batchCopy=batch, lines;
+		batch=List[];
+		if (batchCopy.size>0) {
+			lines=batchCopy.collect{|totalMsg|
+				var time, msg;
+				#time, msg=totalMsg;
+				(time - startTime).asString ++ "," ++ msg.collect(_.asString(65536)).join(",")
+			};
+			if (file.notNil and: { file.isOpen }) {
+				file.write(lines.join("\n") ++ "\n");
+			};
+		}
+	}
+
 	stopRecording {
-		thisProcess.removeOSCRecvFunc(f);
-		if (file.notNil) { file.close };
+		thisProcess.removeOSCRecvFunc(recvFunc);
+		if (batchRoutine!=nil) {batchRoutine.stop};
+		if (file.notNil) {
+			this.deserialize;
+			file.close };
 		isRecording=false;
+		file=nil;
 		"OSCRecorder stopped recording, file written ".post; pathName.postln;
 	}
 
 	close {
-		//recorder=false;
-		thisProcess.removeOSCRecvFunc(f);
-		if (file!=nil) {
-			file.close;
-		};
+		if (isRecording) {
+			this.stopRecording
+		}
 	}
+
 	free {
 		this.close
 	}

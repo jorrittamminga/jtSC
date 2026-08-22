@@ -1,7 +1,7 @@
 /*
 Converts a ratio (=musical interval, for instance a fifth 7.midiratio) to a delaytime, given a modulation speed of a SinOsc.kr.
 Can be usefull to tune for instance a chorus effect, with a constant pitchshift.
-Disclaimer: not sure if this a good forumula.... it estimates the tranposition, based on experiments, not science or mathematics
+Disclaimer: not sure if this a good formula.... it estimates the tranposition, based on experiments, not science or mathematics
 {DelayL.ar(in, 0.1, SinOsc.kr(speed, 0, ratio.ratiosecs(speed).min(delayTime), delayTime), wet, in)}.play
 4pi.reciprocal
 */

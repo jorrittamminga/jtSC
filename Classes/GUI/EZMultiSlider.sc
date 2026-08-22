@@ -73,9 +73,12 @@ EZMultiSlider : EZGui {
 		sliderView.gap_(0);
 		sliderView.indexThumbSize=sliderBounds.width/initVal.asArray.size;
 
-
-		sliderViewActionFunc={arg sl;
-			{labelView.string_(sl.index)}.defer;
+		if (labelView.notNil) {
+			sliderViewActionFunc={arg sl;
+				{labelView.string_(sl.index)}.defer;
+			};
+		} {
+			sliderViewActionFunc={};
 		};
 
 		sliderView.action = {|sl|
@@ -99,8 +102,10 @@ EZMultiSlider : EZGui {
 		labelView.string_(slider.index)
 		};
 		*/
-		sliderView.mouseUpAction={arg slider;
-			labelView.string_(label)
+		if (labelView!=nil) {
+			sliderView.mouseUpAction={arg slider;
+				labelView.string_(label)
+			};
 		};
 
 		numberView.action = { this.valueAction_(numberView.value) };
